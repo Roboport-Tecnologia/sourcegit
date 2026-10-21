@@ -27,7 +27,10 @@ namespace SourceGit.Views
             var content = new Column { AlignItems = Align.Stretch };
             content.Grow = 1;
 
+            // Fills the window, so the page's list has room to grow into: a
+            // list asks for no height of its own.
             var root = new Column { AlignItems = Align.Stretch };
+            root.Grow = 1;
             root.Add(tabs);
             root.Add(content);
 
