@@ -14,14 +14,24 @@ namespace SourceGit.Views
     {
         public static Node Create(ViewModels.Welcome vm)
         {
-            var page = new Column { Padding = 8, Gap = 8, AlignItems = Align.Stretch };
+            var page = new Column { AlignItems = Align.Stretch };
             page.Grow = 1;
-
             page.Add(Toolbar(vm));
+
+            // Upstream's repositories: a column half the page wide, at least
+            // 600 points, with a quarter on each side.
+            var body = new Row { Padding = 8, AlignItems = Align.Stretch };
+            body.Grow = 1;
+            var middle = new Column { Gap = 8, AlignItems = Align.Stretch };
+            middle.Grow = 2;
+            body.Add(Side());
+            body.Add(middle);
+            body.Add(Side());
+            page.Add(body);
 
             var search = new SearchInput { Placeholder = App.Text("Welcome.Search") };
             Bind.Search(search, vm, nameof(vm.SearchFilter), () => vm.SearchFilter, v => vm.SearchFilter = v, owner: page);
-            page.Add(search);
+            middle.Add(search);
 
             var list = new ListView<ViewModels.RepositoryNode>(node => node.Id, node => Row(vm, node))
             {
@@ -38,34 +48,54 @@ namespace SourceGit.Views
                 else
                     vm.ToggleNodeIsExpanded(node);
             };
-            page.Add(list);
+            middle.Add(list);
 
             return page;
+
+            static Node Side()
+            {
+                var side = new Column();
+                side.Grow = 1;
+                return side;
+            }
         }
 
+        /// <summary>
+        /// Upstream's toolbar band (<c>WelcomeToolbar.axaml</c>), 36 points
+        /// high: clone, open and terminal on the left, a new group and a
+        /// rescan on the right, each a borderless icon button 32 points wide,
+        /// its icon sized as upstream's. A window's toolbar would be native,
+        /// but the repository page's band has far more buttons than a
+        /// toolbar holds, and both pages share the band.
+        /// </summary>
         private static Node Toolbar(ViewModels.Welcome vm)
         {
-            // Upstream's toolbar: borderless icon buttons, named by their
-            // tooltips, which say what each does.
-            var bar = new Row { Gap = 2 };
-            Add("Clone", "Welcome.Clone", vm.Clone);
-            Add("Folder.Open", "Welcome.OpenOrInit", vm.OpenLocalRepository);
-            Add("Terminal", "Welcome.OpenTerminal", vm.OpenTerminal);
-            Add("Folder.Add", "Welcome.AddRootFolder", vm.AddRootNode);
-            Add("Scan", "Welcome.ScanDefaultCloneDir", vm.ScanDefaultCloneDir);
-            return bar;
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4) };
+            band.Height = 36;
+            var start = new Row { AlignItems = Align.Center };
+            var end = new Row { AlignItems = Align.Center };
+            band.Add(start);
+            band.Add(end);
 
-            void Add(string icon, string text, Action command)
+            Add(start, Icons.Get("Clone", 16, 2), "Welcome.Clone", vm.Clone);
+            Add(start, Icons.Get("Folder.Open", 14, 1), "Welcome.OpenOrInit", vm.OpenLocalRepository);
+            Add(start, Icons.Get("Terminal", 13), "Welcome.OpenTerminal", vm.OpenTerminal);
+            Add(end, Icons.Get("Folder.Add", 14, 1), "Welcome.AddRootFolder", vm.AddRootNode);
+            Add(end, Icons.Get("Scan", 14), "Welcome.ScanDefaultCloneDir", vm.ScanDefaultCloneDir);
+            return band;
+
+            static void Add(Container group, VectorIcon icon, string text, Action command)
             {
                 var button = new Button(App.Text(text))
                 {
-                    Icon = Icons.Get(icon),
+                    Icon = icon,
                     IconOnly = true,
                     Style = ButtonStyle.Borderless,
                     ToolTip = App.Text(text),
                 };
+                button.Width = 32;
                 button.Click += command;
-                bar.Add(button);
+                group.Add(button);
             }
         }
 

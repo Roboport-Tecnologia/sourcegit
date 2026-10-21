@@ -55,6 +55,7 @@ namespace SourceGit
         {
             s_launcher = new ViewModels.Launcher(startupRepo);
             s_mainWindow = Views.Launcher.Create(s_launcher);
+            CaptureIfAsked();
             return s_launcher;
         }
 
@@ -75,6 +76,28 @@ namespace SourceGit
         /// <summary>mitsuami's run loop ends with its last window; until the
         /// C ABI can end it sooner, the process exits.</summary>
         public static void Quit(int exitCode) => Environment.Exit(exitCode);
+
+        /// <summary>For development: with <c>SOURCEGIT_CAPTURE</c> set to a
+        /// path, captures the main window there once it has settled, so its
+        /// look can be checked without a screenshot permission.
+        /// <c>SOURCEGIT_CAPTURE_TAB</c> picks the tab first: an index, or
+        /// <c>new</c> for a welcome page.</summary>
+        private static async void CaptureIfAsked()
+        {
+            if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE") is not { Length: > 0 } path)
+                return;
+            // SOURCEGIT_CAPTURE_TAB picks a tab by its index, or "new" opens
+            // a welcome page (a repository the workspace reopens takes the
+            // first one's place).
+            var tab = Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_TAB");
+            if (tab == "new")
+                s_launcher.AddNewTab();
+            else if (int.TryParse(tab, out var index) && index < s_launcher.Pages.Count)
+                s_launcher.ActivePage = s_launcher.Pages[index];
+            await Task.Delay(TimeSpan.FromSeconds(3));
+            var ok = await s_mainWindow.CapturePng(path);
+            Console.WriteLine(ok ? $"Captured to {path}" : "Capture failed");
+        }
 
         private static Dictionary<string, string> LoadLocale(string key)
         {

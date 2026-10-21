@@ -25,6 +25,28 @@ namespace SourceGit
             throw new KeyNotFoundException($"mitsuami: no icon {name} in Icons.axaml");
         }
 
+        /// <summary>
+        /// An icon as upstream sizes it in a button: a <c>Path</c> of
+        /// <paramref name="size"/> points in the button's 16-point icon,
+        /// moved down <paramref name="down"/> points (half the top margin
+        /// upstream gives it). Upstream balances its icons this way, so a
+        /// view box padded around the path's bounds does the same.
+        /// </summary>
+        public static VectorIcon Get(string key, float size, float down = 0)
+        {
+            var icon = Get(key);
+            if (VectorIcon.Bounds(icon.Data) is not { } bounds)
+                return icon;
+            var side = Math.Max(bounds.Width, bounds.Height) * ButtonIconSide / size;
+            var unit = side / ButtonIconSide;
+            var x = bounds.X + bounds.Width / 2 - side / 2;
+            var y = bounds.Y + bounds.Height / 2 - side / 2 - down * unit;
+            return icon with { ViewBox = new ViewBox(x, y, side, side) };
+        }
+
+        /// <summary>The side mitsuami gives a button's icon.</summary>
+        private const float ButtonIconSide = 16;
+
         private static Dictionary<string, VectorIcon> Load()
         {
             var icons = new Dictionary<string, VectorIcon>(StringComparer.Ordinal);
