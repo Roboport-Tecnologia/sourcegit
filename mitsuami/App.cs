@@ -48,6 +48,15 @@ namespace SourceGit
 
         public static ViewModels.Launcher GetLauncher() => s_launcher;
 
+        /// <summary>Upstream's startup makes the launcher once the app runs:
+        /// it opens the workspace's repositories, and <paramref name="startupRepo"/>
+        /// (from the command line) if given.</summary>
+        public static ViewModels.Launcher CreateLauncher(string startupRepo)
+        {
+            s_launcher = new ViewModels.Launcher(startupRepo);
+            return s_launcher;
+        }
+
         public static Task<bool> AskConfirmAsync(string message, Models.ConfirmButtonType buttonType = Models.ConfirmButtonType.OkCancel)
         {
             throw new NotImplementedException("mitsuami: confirmations come with the views");

@@ -16,19 +16,19 @@ namespace SourceGit
             // On macOS, it also fixes `PATH`, so git and tools are found.
             Native.OS.SetupApp(new Avalonia.AppBuilder());
 
+            s_startupRepo = args.Length > 0 ? args[0] : null;
             Application.Run("com.sourcegit-scm.SourceGit", "SourceGit", Start);
         }
 
-        /// <summary>For now, the welcome page in a window of its own: the
-        /// launcher, with its tabs, comes next.</summary>
+        private static string s_startupRepo;
+
         private static void Start()
         {
             var pref = ViewModels.Preferences.Instance;
             App.SetLocale(pref.Locale);
 
-            var welcome = ViewModels.Welcome.Instance;
-            _ = new Window("SourceGit", 800, 560) { Content = Views.Welcome.Create(welcome) };
-            _ = welcome.UpdateStatusAsync(false, null);
+            Views.Launcher.Create(App.CreateLauncher(s_startupRepo));
+            _ = ViewModels.Welcome.Instance.UpdateStatusAsync(false, null);
         }
     }
 }

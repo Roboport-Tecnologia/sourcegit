@@ -20,7 +20,7 @@ namespace SourceGit.Views
             page.Add(Toolbar(vm));
 
             var search = new SearchInput { Placeholder = App.Text("Welcome.Search") };
-            Bind.Search(search, vm, nameof(vm.SearchFilter), () => vm.SearchFilter, v => vm.SearchFilter = v);
+            Bind.Search(search, vm, nameof(vm.SearchFilter), () => vm.SearchFilter, v => vm.SearchFilter = v, owner: page);
             page.Add(search);
 
             var list = new ListView<ViewModels.RepositoryNode>(node => node.Id, node => Row(vm, node))
@@ -29,11 +29,13 @@ namespace SourceGit.Views
                 Items = vm.Rows,
             };
             list.Grow = 1;
-            // A repository opens in a tab once the launcher exists; a group
-            // opens or closes, as upstream's double-click does.
+            // A repository opens in a tab, a group opens or closes, as
+            // upstream's double-click does.
             list.Activated += node =>
             {
-                if (!node.IsRepository)
+                if (node.IsRepository)
+                    node.Open();
+                else
                     vm.ToggleNodeIsExpanded(node);
             };
             page.Add(list);
@@ -53,7 +55,7 @@ namespace SourceGit.Views
 
             void Add(string text, Action command, bool needsLauncher)
             {
-                // Those show a popup in the launcher's page, which comes next.
+                // Those show a popup in the launcher's page, which come next.
                 var button = new Button(App.Text(text)) { IsEnabled = !needsLauncher };
                 button.Click += command;
                 bar.Add(button);
