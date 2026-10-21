@@ -28,6 +28,7 @@
     <!-- Upstream's strings and images, read from files next to the app
          where Avalonia embeds them (App.Text, AssetLoader). -->
     <None Include="../src/Resources/Locales/*.axaml" Link="Locales/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../src/Resources/Icons.axaml" Link="Icons.axaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../src/Resources/Images/**/*" Link="Resources/Images/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

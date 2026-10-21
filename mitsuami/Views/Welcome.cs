@@ -45,17 +45,25 @@ namespace SourceGit.Views
 
         private static Node Toolbar(ViewModels.Welcome vm)
         {
-            var bar = new Row { Gap = 4 };
-            Add("Welcome.Clone", vm.Clone);
-            Add("Welcome.OpenOrInit", vm.OpenLocalRepository);
-            Add("Welcome.OpenTerminal", vm.OpenTerminal);
-            Add("Welcome.AddRootFolder", vm.AddRootNode);
-            Add("Welcome.ScanDefaultCloneDir", vm.ScanDefaultCloneDir);
+            // Upstream's toolbar: borderless icon buttons, named by their
+            // tooltips, which say what each does.
+            var bar = new Row { Gap = 2 };
+            Add("Clone", "Welcome.Clone", vm.Clone);
+            Add("Folder.Open", "Welcome.OpenOrInit", vm.OpenLocalRepository);
+            Add("Terminal", "Welcome.OpenTerminal", vm.OpenTerminal);
+            Add("Folder.Add", "Welcome.AddRootFolder", vm.AddRootNode);
+            Add("Scan", "Welcome.ScanDefaultCloneDir", vm.ScanDefaultCloneDir);
             return bar;
 
-            void Add(string text, Action command)
+            void Add(string icon, string text, Action command)
             {
-                var button = new Button(App.Text(text));
+                var button = new Button(App.Text(text))
+                {
+                    Icon = Icons.Get(icon),
+                    IconOnly = true,
+                    Style = ButtonStyle.Borderless,
+                    ToolTip = App.Text(text),
+                };
                 button.Click += command;
                 bar.Add(button);
             }
