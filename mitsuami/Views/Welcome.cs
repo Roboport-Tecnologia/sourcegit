@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Mitsuamia;
@@ -30,6 +31,10 @@ namespace SourceGit.Views
             body.Add(middle);
             body.Add(Side());
             page.Add(body);
+
+            // Folders dropped elsewhere in the list go at its top.
+            middle.FileDrop = Drops;
+            middle.FilesDropped += paths => _ = AddDropped(vm, paths, null);
 
             var search = new SearchInput { Placeholder = App.Text("Welcome.Search") };
             Bind.Search(search, vm, nameof(vm.SearchFilter), () => vm.SearchFilter, v => vm.SearchFilter = v, owner: page);
@@ -114,6 +119,10 @@ namespace SourceGit.Views
         {
             var row = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8, 0, node.Depth * 16) };
             row.Height = 30;
+            row.ContextMenu = Menu(node);
+            // Folders dropped on a group go in it; on a repository, in its group.
+            row.FileDrop = Drops;
+            row.FilesDropped += paths => _ = AddDropped(vm, paths, node.IsRepository ? vm.FindParentGroup(node) : node);
 
             var expander = Slot(16);
             if (!node.IsRepository)
@@ -178,6 +187,78 @@ namespace SourceGit.Views
             }
         }
 
+        /// <summary>Upstream's menu for a row: a group's, or a repository's
+        /// while its folder is there; else only Delete.</summary>
+        private static MenuEntry[] Menu(ViewModels.RepositoryNode node)
+        {
+            var edit = new MenuItem(App.Text("Welcome.Edit"), node.Edit);
+            var move = new MenuItem(App.Text("Welcome.Move"), node.Move);
+            var delete = new MenuItem(App.Text("Welcome.Delete"), node.Delete);
+            if (!node.IsRepository)
+            {
+                var entries = new List<MenuEntry>();
+                if (node.SubNodes.Count > 0)
+                    entries.AddRange([new MenuItem(App.Text("Welcome.OpenAllInNode"), node.Open), MenuSeparator.Instance]);
+                entries.AddRange([new MenuItem(App.Text("Welcome.AddSubFolder"), node.AddSubFolder), edit, move, MenuSeparator.Instance, delete]);
+                return [.. entries];
+            }
+            if (!System.IO.Directory.Exists(node.Id))
+                return [delete];
+            return
+            [
+                new MenuItem(App.Text("Welcome.OpenOrInit"), node.Open),
+                MenuSeparator.Instance,
+                new MenuItem(App.Text("Repository.Explore"), node.OpenInFileManager),
+                new MenuItem(App.Text("Repository.Terminal"), node.OpenTerminal),
+                MenuSeparator.Instance,
+                edit,
+                move,
+                MenuSeparator.Instance,
+                delete,
+            ];
+        }
+
+        /// <summary>Upstream takes dropped folders, and files' folders.</summary>
+        private static readonly FileDrop Drops = new(Folders: true);
+
+        /// <summary>
+        /// Upstream's drop: each folder's repository, added under
+        /// <paramref name="parent"/> (moved there if it's listed); a folder
+        /// git won't trust asks first, one at a time, as upstream does.
+        /// </summary>
+        private static async System.Threading.Tasks.Task AddDropped(ViewModels.Welcome vm, IReadOnlyList<string> paths, ViewModels.RepositoryNode parent)
+        {
+            var refresh = false;
+            foreach (var path in paths)
+            {
+                var root = path;
+                if (!System.IO.Directory.Exists(root))
+                {
+                    if (System.IO.File.Exists(root))
+                        root = System.IO.Path.GetDirectoryName(root);
+                    else
+                        continue;
+                }
+
+                var rs = await vm.GetRepositoryRootAsync(root);
+                if (rs.IsSuccess)
+                {
+                    await vm.AddRepositoryAsync(rs.StdOut.Trim(), parent, true, false);
+                    refresh = true;
+                }
+                else if (Models.SafeDirectories.IsUntrustedRepository(rs.StdErr) &&
+                         Models.SafeDirectories.TryGetSafeDirectoryValue(root, rs.StdErr, out var safeDirectory) &&
+                         App.GetLauncher().ActivePage is { } page)
+                {
+                    page.Popup = new ViewModels.TrustRepository(page.Node.Id, root, rs.StdErr, safeDirectory, parent, false, false, 0);
+                    break;
+                }
+            }
+
+            if (refresh)
+                vm.Refresh();
+        }
+
         /// <summary>Upstream's badges: local changes, ahead and behind, and
         /// the branch beside its icon.</summary>
         private static void ShowStatus(Container status, Models.RepositoryStatus s)
@@ -198,7 +279,7 @@ namespace SourceGit.Views
         }
 
         /// <summary>Upstream's bookmark colours, or the text's for none.</summary>
-        private static Color BookmarkColor(int bookmark) =>
+        public static Color BookmarkColor(int bookmark) =>
             Models.Bookmarks.Get(bookmark) is Avalonia.Media.ISolidColorBrush { Color: var c } ? Color.Rgba(c.R, c.G, c.B, c.A) : Color.Label;
 
         // Upstream's tree expander: a 9-point triangle, turned down when open,

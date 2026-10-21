@@ -152,7 +152,20 @@ namespace SourceGit.Views
                     title = App.Text("OpenLocalRepository");
                     return sheet => Fields(sheet,
                         (App.Text("OpenLocalRepository.Path"), FolderField(sheet, open, nameof(open.RepoPath), () => open.RepoPath, v => open.RepoPath = v)),
-                        (App.Text("OpenLocalRepository.Group"), GroupSelect(sheet, open, open.Groups, () => open.SelectedGroupIndex, v => open.SelectedGroupIndex = v)));
+                        (App.Text("OpenLocalRepository.Group"), GroupSelect(sheet, open, open.Groups, () => open.SelectedGroupIndex, v => open.SelectedGroupIndex = v)),
+                        (App.Text("OpenLocalRepository.Bookmark"), BookmarkField(open, nameof(open.Bookmark), () => open.Bookmark, v => open.Bookmark = v)));
+                case ViewModels.EditRepositoryNode edit:
+                    title = App.Text(edit.IsRepository ? "EditRepositoryNode.TitleForRepository" : "EditRepositoryNode.TitleForGroup");
+                    return sheet => Fields(sheet,
+                        (App.Text("EditRepositoryNode.Target"), new Text(edit.Target)),
+                        (App.Text("EditRepositoryNode.Name"), TextField(sheet, edit, nameof(edit.Name), () => edit.Name, v => edit.Name = v)),
+                        (App.Text("EditRepositoryNode.Bookmark"), BookmarkField(edit, nameof(edit.Bookmark), () => edit.Bookmark, v => edit.Bookmark = v)));
+                case ViewModels.MoveRepositoryNode move:
+                    title = App.Text("MoveRepositoryNode");
+                    return sheet => MoveForm(move);
+                case ViewModels.DeleteRepositoryNode delete:
+                    title = App.Text(delete.Node.IsRepository ? "DeleteRepositoryNode.TitleForRepository" : "DeleteRepositoryNode.TitleForGroup");
+                    return sheet => DeleteForm(sheet, delete);
                 case ViewModels.ScanRepositories scan:
                     title = App.Text("ScanRepositories");
                     return sheet => ScanForm(sheet, scan);
@@ -172,7 +185,6 @@ namespace SourceGit.Views
             var submodules = new Checkbox(App.Text("Clone.RecurseSubmodules"));
             Bind.Checked(submodules, vm, nameof(vm.InitAndUpdateSubmodules), () => vm.InitAndUpdateSubmodules, v => vm.InitAndUpdateSubmodules = v);
 
-            // Bookmarks are colours, which come with mitsuami's colours.
             var form = Fields(sheet,
                 (App.Text("Clone.RemoteURL"), TextField(sheet, vm, nameof(vm.Remote), () => vm.Remote, v => vm.Remote = v)));
             form.Add(sshKey);
@@ -180,6 +192,7 @@ namespace SourceGit.Views
             form.Add(Field(App.Text("Clone.LocalName"), TextField(sheet, vm, nameof(vm.Local), () => vm.Local, v => vm.Local = v, App.Text("Clone.LocalName.Placeholder"))));
             form.Add(Field(App.Text("Clone.AdditionalParam"), TextField(sheet, vm, nameof(vm.ExtraArgs), () => vm.ExtraArgs, v => vm.ExtraArgs = v, App.Text("Clone.AdditionalParam.Placeholder"))));
             form.Add(Field(App.Text("Clone.Group"), GroupSelect(sheet, vm, vm.Groups, () => vm.SelectedGroupIndex, v => vm.SelectedGroupIndex = v)));
+            form.Add(Field(App.Text("Clone.Bookmark"), BookmarkField(vm, nameof(vm.Bookmark), () => vm.Bookmark, v => vm.Bookmark = v)));
             form.Add(Field("", submodules));
             return form;
         }
@@ -208,6 +221,62 @@ namespace SourceGit.Views
             form.Add(custom);
             return form;
         }
+
+        /// <summary>Upstream's move: the new parent, from every group, each
+        /// under its own (indented as the tree is), the top first.</summary>
+        private static Node MoveForm(ViewModels.MoveRepositoryNode vm)
+        {
+            var parents = new Select(App.Text("MoveRepositoryNode.Target"))
+            {
+                Options = vm.Rows.Select(r => new string(' ', r.Depth * 4) + r.Name).ToArray(),
+            };
+            Bind.OneWay(vm, nameof(vm.Selected), () => vm.Rows.IndexOf(vm.Selected), i => parents.SelectedIndex = Math.Max(i, 0), owner: parents);
+            parents.Changed += i => vm.Selected = vm.Rows[i];
+
+            var column = new Column { Gap = 8, AlignItems = Align.Stretch };
+            column.Add(new Text(App.Text("MoveRepositoryNode.Target")));
+            column.Add(new Text(vm.Target.Name) { Style = TextStyle.Headline });
+            column.Add(parents);
+            return column;
+        }
+
+        /// <summary>Upstream's confirmation: what goes, and that a
+        /// repository stays on disk (a group's children go too).</summary>
+        private static Node DeleteForm(Window sheet, ViewModels.DeleteRepositoryNode vm)
+        {
+            var node = vm.Node;
+            var form = Fields(sheet, (App.Text("DeleteRepositoryNode.Target"), new Text(node.Name)));
+            if (node.IsRepository)
+                form.Add(Field(App.Text("DeleteRepositoryNode.Path"), new Text(node.Id) { Color = Color.SecondaryLabel }));
+            var tip = App.Text(node.IsRepository ? "DeleteRepositoryNode.TipForRepository" : "DeleteRepositoryNode.TipForGroup");
+            form.Add(new Text(tip) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
+            return form;
+        }
+
+        /// <summary>
+        /// Upstream's bookmark picker is a row of coloured bookmarks drawn by
+        /// hand. Here it's the platform's drop-down of the colours' names,
+        /// and the bookmark beside it in the one chosen.
+        /// </summary>
+        private static Row BookmarkField(INotifyPropertyChanged vm, string property, Func<int> get, Action<int> set)
+        {
+            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            var preview = new Icon(Icons.Get("Bookmark")) { Size = 14 };
+            var colours = new Select(App.Text("EditRepositoryNode.Bookmark")) { Options = BookmarkNames };
+            Bind.OneWay(vm, property, get, b =>
+            {
+                colours.SelectedIndex = b;
+                preview.Color = Welcome.BookmarkColor(b);
+            }, owner: row);
+            colours.Changed += set;
+            row.Add(preview);
+            row.Add(colours);
+            return row;
+        }
+
+        /// <summary>Upstream's bookmarks, in its order: none, then red,
+        /// orange, gold, forest green, dark cyan, deep sky blue, purple.</summary>
+        private static readonly string[] BookmarkNames = ["None", "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple"];
 
         // Building blocks: a label beside each control, as a form's rows.
 
