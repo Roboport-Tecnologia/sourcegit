@@ -40,4 +40,6 @@
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
     <ProjectReference Include="../../mitsuamia/src/Mitsuamia/Mitsuamia.csproj" />
   </ItemGroup>
+  <!-- What mitsuamia's package will bring in on its own (buildTransitive). -->
+  <Import Project="../../mitsuamia/src/Mitsuamia/buildTransitive/Mitsuamia.targets" />
 </Project>
