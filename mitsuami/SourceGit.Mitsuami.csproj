@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- SourceGit on mitsuami: upstream's models, view models and git
+       commands, compiled where they are; our views and app here. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>SourceGit</AssemblyName>
+    <RootNamespace>SourceGit</RootNamespace>
+    <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/../VERSION").Trim())</Version>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../src/Models/**/*.cs" Exclude="../src/Models/TextMateHelper.cs" />
+    <Compile Include="../src/ViewModels/**/*.cs" />
+    <Compile Include="../src/Commands/**/*.cs" />
+    <Compile Include="../src/AI/**/*.cs" />
+    <Compile Include="../src/Native/**/*.cs" />
+    <Compile Include="../src/App.JsonCodeGen.cs" />
+    <Compile Include="../src/App.Extensions.cs" />
+    <Compile Include="**/*.cs" Exclude="bin/**;obj/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Upstream's strings and images, read from files next to the app
+         where Avalonia embeds them (App.Text, AssetLoader). -->
+    <None Include="../src/Resources/Locales/*.axaml" Link="Locales/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../src/Resources/Images/**/*" Link="Resources/Images/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.9.0-beta.1" />
+    <PackageReference Include="BitMiracle.LibTiff.NET" Version="2.4.660" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="OpenAI" Version="2.10.0" />
+    <PackageReference Include="Pfim" Version="0.11.4" />
+    <PackageReference Include="StbImageSharp" Version="2.30.15" />
+    <ProjectReference Include="../../mitsuamia/src/Mitsuamia/Mitsuamia.csproj" />
+  </ItemGroup>
+</Project>
