@@ -40,7 +40,9 @@ namespace SourceGit.Views
             Bind.Search(search, vm, nameof(vm.SearchFilter), () => vm.SearchFilter, v => vm.SearchFilter = v, owner: page);
             middle.Add(search);
 
-            var list = new ListView<ViewModels.RepositoryNode>(node => node.Id, node => Row(vm, node))
+            // Rows dragged onto a group go in it; onto a repository, in its
+            // group; onto the list's empty part, at the top, as upstream's.
+            var list = new ListView<ViewModels.RepositoryNode>(node => node.Id, node => Row(vm, node), moves: RowMoves.OntoRows)
             {
                 EstimatedRowHeight = 30,
                 Items = vm.Rows,
@@ -54,6 +56,17 @@ namespace SourceGit.Views
                     node.Open();
                 else
                     vm.ToggleNodeIsExpanded(node);
+            };
+            list.Moved += (nodes, drop) =>
+            {
+                var to = drop.Kind == RowDropKind.End ? null : drop.Item;
+                if (to is { IsRepository: true })
+                    to = vm.FindParentGroup(to);
+                foreach (var node in nodes)
+                {
+                    if (node != to)
+                        vm.MoveNode(node, to);
+                }
             };
             middle.Add(list);
 
