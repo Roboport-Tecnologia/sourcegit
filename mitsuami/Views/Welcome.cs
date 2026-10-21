@@ -70,7 +70,9 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Toolbar(ViewModels.Welcome vm)
         {
-            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4) };
+            // The window's header: on macOS in the title bar, under the tabs,
+            // with no line between them, as Safari's bars are.
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4), IsHeader = true };
             band.Height = 36;
             var start = new Row { AlignItems = Align.Center };
             var end = new Row { AlignItems = Align.Center };
