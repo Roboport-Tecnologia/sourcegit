@@ -46,17 +46,16 @@ namespace SourceGit.Views
         private static Node Toolbar(ViewModels.Welcome vm)
         {
             var bar = new Row { Gap = 4 };
-            Add("Welcome.Clone", vm.Clone, needsLauncher: true);
-            Add("Welcome.OpenOrInit", vm.OpenLocalRepository, needsLauncher: true);
-            Add("Welcome.OpenTerminal", vm.OpenTerminal, needsLauncher: false);
-            Add("Welcome.AddRootFolder", vm.AddRootNode, needsLauncher: true);
-            Add("Welcome.ScanDefaultCloneDir", vm.ScanDefaultCloneDir, needsLauncher: true);
+            Add("Welcome.Clone", vm.Clone);
+            Add("Welcome.OpenOrInit", vm.OpenLocalRepository);
+            Add("Welcome.OpenTerminal", vm.OpenTerminal);
+            Add("Welcome.AddRootFolder", vm.AddRootNode);
+            Add("Welcome.ScanDefaultCloneDir", vm.ScanDefaultCloneDir);
             return bar;
 
-            void Add(string text, Action command, bool needsLauncher)
+            void Add(string text, Action command)
             {
-                // Those show a popup in the launcher's page, which come next.
-                var button = new Button(App.Text(text)) { IsEnabled = !needsLauncher };
+                var button = new Button(App.Text(text));
                 button.Click += command;
                 bar.Add(button);
             }

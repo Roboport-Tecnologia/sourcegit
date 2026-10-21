@@ -54,12 +54,17 @@ namespace SourceGit
         public static ViewModels.Launcher CreateLauncher(string startupRepo)
         {
             s_launcher = new ViewModels.Launcher(startupRepo);
+            s_mainWindow = Views.Launcher.Create(s_launcher);
             return s_launcher;
         }
 
-        public static Task<bool> AskConfirmAsync(string message, Models.ConfirmButtonType buttonType = Models.ConfirmButtonType.OkCancel)
+        /// <summary>Upstream's confirmation, as the platform's alert on the
+        /// main window.</summary>
+        public static async Task<bool> AskConfirmAsync(string message, Models.ConfirmButtonType buttonType = Models.ConfirmButtonType.OkCancel)
         {
-            throw new NotImplementedException("mitsuami: confirmations come with the views");
+            var (yes, no) = buttonType == Models.ConfirmButtonType.YesNo ? ("Yes", "No") : ("Sure", "Cancel");
+            var buttons = new[] { Views.Popups.ButtonText(yes), Views.Popups.ButtonText(no) };
+            return await Mitsuamia.Dialogs.Alert(s_mainWindow, message, "", buttons, Mitsuamia.AlertStyle.Warning) == 0;
         }
 
         public static Task<Models.ConfirmEmptyCommitResult> AskConfirmEmptyCommitAsync(bool hasLocalChanges, bool hasSelectedUnstaged)
@@ -90,5 +95,6 @@ namespace SourceGit
         private static readonly Dictionary<string, string> s_fallbackLocale = LoadLocale("en_US");
         private static Dictionary<string, string> s_activeLocale = s_fallbackLocale;
         private static ViewModels.Launcher s_launcher = null;
+        private static Mitsuamia.Window s_mainWindow = null;
     }
 }

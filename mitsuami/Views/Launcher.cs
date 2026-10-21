@@ -84,6 +84,7 @@ namespace SourceGit.Views
             tabs.Moved += (from, to) => vm.MoveTab(vm.Pages[from], vm.Pages[to]);
             tabs.NewTabRequested += vm.AddNewTab;
 
+            Popups.Attach(window, vm);
             return window;
         }
 

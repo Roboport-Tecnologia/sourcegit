@@ -27,7 +27,7 @@ namespace SourceGit
             var pref = ViewModels.Preferences.Instance;
             App.SetLocale(pref.Locale);
 
-            Views.Launcher.Create(App.CreateLauncher(s_startupRepo));
+            App.CreateLauncher(s_startupRepo);
             _ = ViewModels.Welcome.Instance.UpdateStatusAsync(false, null);
         }
     }
