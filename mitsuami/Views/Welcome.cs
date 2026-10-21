@@ -19,8 +19,8 @@ namespace SourceGit.Views
 
             page.Add(Toolbar(vm));
 
-            var search = new TextInput { Placeholder = App.Text("Welcome.Search"), AccessibleName = App.Text("Welcome.Search") };
-            Bind.Value(search, vm, nameof(vm.SearchFilter), () => vm.SearchFilter, v => vm.SearchFilter = v);
+            var search = new SearchInput { Placeholder = App.Text("Welcome.Search") };
+            Bind.Search(search, vm, nameof(vm.SearchFilter), () => vm.SearchFilter, v => vm.SearchFilter = v);
             page.Add(search);
 
             var list = new ListView<ViewModels.RepositoryNode>(node => node.Id, node => Row(vm, node))
