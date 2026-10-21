@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 using Mitsuamia;
 
@@ -24,6 +25,7 @@ namespace SourceGit.Views
             body.Grow = 1;
             var middle = new Column { Gap = 8, AlignItems = Align.Stretch };
             middle.Grow = 2;
+            middle.MinWidth = 600;
             body.Add(Side());
             body.Add(middle);
             body.Add(Side());
@@ -101,55 +103,108 @@ namespace SourceGit.Views
             }
         }
 
-        /// <summary>Upstream's row template: an expander for groups, the
-        /// name, a repository's path, and its status once it's known.</summary>
+        /// <summary>
+        /// Upstream's row template: 30 points high, indented 16 a level; an
+        /// expander for groups in a 16-point slot; a group's folder or a
+        /// repository's bookmark in an 18-point one; the name, a repository's
+        /// path in the secondary colour (an orange error icon if it's gone);
+        /// then its status at the end.
+        /// </summary>
         private static Node Row(ViewModels.Welcome vm, ViewModels.RepositoryNode node)
         {
-            var row = new Row { Gap = 6, AlignItems = Align.Center, Padding = new Thickness(0, 4, 0, 4 + node.Depth * 16) };
+            var row = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8, 0, node.Depth * 16) };
             row.Height = 30;
 
+            var expander = Slot(16);
             if (!node.IsRepository)
             {
-                var expander = new Button { Style = ButtonStyle.Borderless };
+                var button = new Button(node.Name) { IconOnly = true, Style = ButtonStyle.Borderless };
                 Bind.OneWay(node, nameof(node.IsExpanded), () => node.IsExpanded,
-                    expanded => expander.Label = expanded ? "▾" : "▸", owner: row);
-                expander.Click += () => vm.ToggleNodeIsExpanded(node);
-                row.Add(expander);
+                    open => button.Icon = open ? s_open : s_closed, owner: row);
+                button.Click += () => vm.ToggleNodeIsExpanded(node);
+                expander.Add(button);
             }
+            row.Add(expander);
+
+            var mark = Slot(18);
+            if (node.IsRepository)
+            {
+                var bookmark = new Icon(Icons.Get("Bookmark")) { Size = 12 };
+                Bind.OneWay(node, nameof(node.Bookmark), () => node.Bookmark,
+                    b => bookmark.Color = BookmarkColor(b), owner: row);
+                mark.Add(bookmark);
+            }
+            else
+            {
+                var folder = new Icon(Icons.Get("Folder")) { Size = 14 };
+                mark.Add(folder);
+            }
+            row.Add(mark);
 
             var name = new Text();
             Bind.OneWay(node, nameof(node.Name), () => node.Name, v => name.Value = v, owner: row);
             row.Add(name);
 
-            if (node.IsRepository)
+            if (node.IsRepository && node.IsInvalid)
             {
-                // Upstream marks a missing repository with an orange error icon.
-                var path = new Text(node.IsInvalid ? $"({node.Id}) ⚠" : $"({node.Id})") { Style = TextStyle.Caption };
-                path.Grow = 1;
+                var gone = new Icon(Icons.Get("Error")) { Size = 12, Color = Color.Rgba(255, 165, 0) };
+                gone.Margin = new Thickness(0, 0, 0, 2);
+                row.Add(gone);
+            }
+            else if (node.IsRepository)
+            {
+                var path = new Text($"({node.Id})") { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
+                path.Margin = new Thickness(0, 0, 0, 4);
                 row.Add(path);
-
-                var status = new Text { Style = TextStyle.Caption };
-                Bind.OneWay(node, nameof(node.Status), () => node.Status, s => status.Value = Describe(s), owner: row);
-                row.Add(status);
             }
 
+            var space = new Column();
+            space.Grow = 1;
+            row.Add(space);
+
+            if (node.IsRepository)
+            {
+                var status = new Row { Gap = 6, AlignItems = Align.Center };
+                Bind.OneWay(node, nameof(node.Status), () => node.Status, s => ShowStatus(status, s), owner: row);
+                row.Add(status);
+            }
             return row;
+
+            static Mitsuamia.Row Slot(float width)
+            {
+                var slot = new Mitsuamia.Row { AlignItems = Align.Center, Justify = Justify.Center };
+                slot.Width = width;
+                return slot;
+            }
         }
 
-        /// <summary>What upstream shows in badges: local changes, ahead and
-        /// behind, and the branch.</summary>
-        private static string Describe(Models.RepositoryStatus status)
+        /// <summary>Upstream's badges: local changes, ahead and behind, and
+        /// the branch beside its icon.</summary>
+        private static void ShowStatus(Container status, Models.RepositoryStatus s)
         {
-            if (status == null)
-                return string.Empty;
+            foreach (var child in status.Children.ToArray())
+                child.Destroy();
+            if (s == null)
+                return;
 
-            var parts = new System.Collections.Generic.List<string>();
-            if (status.LocalChanges > 0)
-                parts.Add($"{status.LocalChanges} ±");
-            if (status.IsTrackingStatusVisible)
-                parts.Add(status.TrackingDescription);
-            parts.Add(status.CurrentBranch);
-            return string.Join("  ", parts);
+            if (s.LocalChanges > 0)
+                status.Add(new Text(s.LocalChanges.ToString()) { Style = TextStyle.Caption });
+            if (s.IsTrackingStatusVisible)
+                status.Add(new Text(s.TrackingDescription) { Style = TextStyle.Monospace });
+            var branch = new Row { Gap = 2, AlignItems = Align.Center };
+            branch.Add(new Icon(Icons.Get("Branch")) { Size = 12 });
+            branch.Add(new Text(s.CurrentBranch) { Style = TextStyle.Caption });
+            status.Add(branch);
         }
+
+        /// <summary>Upstream's bookmark colours, or the text's for none.</summary>
+        private static Color BookmarkColor(int bookmark) =>
+            Models.Bookmarks.Get(bookmark) is Avalonia.Media.ISolidColorBrush { Color: var c } ? Color.Rgba(c.R, c.G, c.B, c.A) : Color.Label;
+
+        // Upstream's tree expander: a 9-point triangle, turned down when open,
+        // in a button's 16-point icon.
+        private static readonly VectorIcon s_closed = new("M4 0L8 4L4 8Z", new ViewBox(-3.11f, -3.11f, 14.22f, 14.22f));
+        private static readonly VectorIcon s_open = new("M8 4L4 8L0 4Z", new ViewBox(-3.11f, -3.11f, 14.22f, 14.22f));
+
     }
 }
