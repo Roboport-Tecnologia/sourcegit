@@ -15,7 +15,15 @@ namespace SourceGit.Views
     {
         public static Window Create(ViewModels.Launcher vm)
         {
-            var tabs = new DocumentTabs { Closable = true, Reorderable = true, NewTabButton = true };
+            // In the title's row, as Safari's compact tabs: upstream's tab bar
+            // shares its row with the window's buttons too.
+            var tabs = new DocumentTabs
+            {
+                Closable = true,
+                Reorderable = true,
+                NewTabButton = true,
+                Style = DocumentTabsStyle.TitleRow,
+            };
             var content = new Column { AlignItems = Align.Stretch };
             content.Grow = 1;
 
