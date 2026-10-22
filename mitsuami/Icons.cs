@@ -30,10 +30,12 @@ namespace SourceGit
         /// <paramref name="size"/> points in the button's 16-point icon,
         /// moved down <paramref name="down"/> points (half the top margin
         /// upstream gives it). Upstream balances its icons this way, so a
-        /// view box padded around the path's bounds does the same.
+        /// view box padded around the path's bounds does the same. No more
+        /// than the 16 points the button has: a larger one is cut off.
         /// </summary>
         public static VectorIcon Get(string key, float size, float down = 0)
         {
+            size = Math.Min(size, ButtonIconSide);
             var icon = Get(key);
             if (VectorIcon.Bounds(icon.Data) is not { } bounds)
                 return icon;

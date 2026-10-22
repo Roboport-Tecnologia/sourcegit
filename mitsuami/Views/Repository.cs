@@ -147,9 +147,9 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Rail(ViewModels.Repository vm)
         {
-            // Upstream's items: 41 by 42 points, 4 from everything, their
-            // icons 18 (AppKit draws a button that tall as its flexible push
-            // button).
+            // Upstream's items: 41 by 42 points, 4 from everything (AppKit
+            // draws a button that tall as its flexible push button); their
+            // icons are the 16 points a button's icon has, upstream's 18.
             // The window's navigation, which upstream sets apart from the
             // branches beside it: on Windows, on the chosen tab's layer, as
             // the toolbar band is.
@@ -167,7 +167,7 @@ namespace SourceGit.Views
                 var index = i;
                 var button = new ToggleButton(App.Text(pages[i].Text))
                 {
-                    Icon = Icons.Get(pages[i].Icon, 18),
+                    Icon = Icons.Get(pages[i].Icon, 16),
                     IconOnly = true,
                     ToolTip = App.Text(pages[i].Text),
                 };
