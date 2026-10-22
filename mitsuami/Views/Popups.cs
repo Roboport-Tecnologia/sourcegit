@@ -15,6 +15,9 @@ namespace SourceGit.Views
     /// </summary>
     public static class Popups
     {
+        /// <summary>The popup's sheet showing, if any: for captures.</summary>
+        public static Window Shown { get; private set; }
+
         /// <summary>Shows the active page's popup while it has one.</summary>
         public static void Attach(Window window, ViewModels.Launcher vm)
         {
@@ -33,11 +36,11 @@ namespace SourceGit.Views
 
                 Close();
                 shown = page;
-                sheet = Sheet(window, page, page.Popup);
+                sheet = Shown = Sheet(window, page, page.Popup);
                 // Escape or the close button: what Cancel does.
                 sheet.Closed += () =>
                 {
-                    sheet = null;
+                    sheet = Shown = null;
                     page.CancelPopup();
                 };
             }
@@ -47,7 +50,7 @@ namespace SourceGit.Views
                 if (sheet == null)
                     return;
                 var closing = sheet;
-                sheet = null;
+                sheet = Shown = null;
                 shown = null;
                 closing.Destroy();
             }
@@ -258,25 +261,13 @@ namespace SourceGit.Views
         /// hand. Here it's the platform's drop-down of the colours' names,
         /// and the bookmark beside it in the one chosen.
         /// </summary>
-        private static Row BookmarkField(INotifyPropertyChanged vm, string property, Func<int> get, Action<int> set)
+        private static BookmarkSelector BookmarkField(INotifyPropertyChanged vm, string property, Func<int> get, Action<int> set)
         {
-            var row = new Row { Gap = 8, AlignItems = Align.Center };
-            var preview = new Icon(Icons.Get("Bookmark")) { Size = 14 };
-            var colours = new Select(App.Text("EditRepositoryNode.Bookmark")) { Options = BookmarkNames };
-            Bind.OneWay(vm, property, get, b =>
-            {
-                colours.SelectedIndex = b;
-                preview.Color = Welcome.BookmarkColor(b);
-            }, owner: row);
-            colours.Changed += set;
-            row.Add(preview);
-            row.Add(colours);
-            return row;
+            var selector = new BookmarkSelector { Label = App.Text("EditRepositoryNode.Bookmark") };
+            Bind.OneWay(vm, property, get, b => selector.Bookmark = b, owner: selector);
+            selector.Changed += set;
+            return selector;
         }
-
-        /// <summary>Upstream's bookmarks, in its order: none, then red,
-        /// orange, gold, forest green, dark cyan, deep sky blue, purple.</summary>
-        private static readonly string[] BookmarkNames = ["None", "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple"];
 
         // Building blocks: a label beside each control, as a form's rows.
 
