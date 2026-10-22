@@ -106,18 +106,9 @@ namespace SourceGit.Views
                     content.Add(Welcome.Create(welcome));
                     break;
                 case ViewModels.Repository repo:
-                    content.Add(RepositoryPlaceholder(repo));
+                    content.Add(Repository.Create(repo));
                     break;
             }
-        }
-
-        /// <summary>Until the repository view exists.</summary>
-        private static Node RepositoryPlaceholder(ViewModels.Repository repo)
-        {
-            var column = new Column { Padding = 20, Gap = 8 };
-            column.Add(new Text(repo.FullPath) { Style = TextStyle.Headline });
-            column.Add(new Text("The repository view comes next.") { Style = TextStyle.Caption });
-            return column;
         }
     }
 }

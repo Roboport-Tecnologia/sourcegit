@@ -83,7 +83,8 @@ namespace SourceGit
         /// <c>SOURCEGIT_CAPTURE_TAB</c> picks the tab first: an index, or
         /// <c>new</c> for a welcome page. <c>SOURCEGIT_CAPTURE_POPUP</c>
         /// opens a popup and captures its sheet: <c>clone</c>, or <c>move</c>
-        /// (the first repository or group).</summary>
+        /// (the first repository or group). <c>SOURCEGIT_CAPTURE_REPO</c>
+        /// opens a repository by its path first.</summary>
         private static async void CaptureIfAsked()
         {
             if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE") is not { Length: > 0 } path)
@@ -96,6 +97,10 @@ namespace SourceGit
                 s_launcher.AddNewTab();
             else if (int.TryParse(tab, out var index) && index < s_launcher.Pages.Count)
                 s_launcher.ActivePage = s_launcher.Pages[index];
+            // SOURCEGIT_CAPTURE_REPO opens a repository of the welcome
+            // page's by its path, as a double-click does.
+            if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_REPO") is { Length: > 0 } repo)
+                ViewModels.Preferences.Instance.FindNode(repo)?.Open();
             switch (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_POPUP"))
             {
                 case "clone":
