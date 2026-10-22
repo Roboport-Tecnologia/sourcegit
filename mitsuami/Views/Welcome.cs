@@ -122,7 +122,8 @@ namespace SourceGit.Views
         }
 
         /// <summary>
-        /// Upstream's row template: 30 points high, indented 16 a level; an
+        /// Upstream's row template: 30 points high, indented a level per
+        /// group, by the platform's tree indentation; an
         /// expander for groups in a 16-point slot; a group's folder or a
         /// repository's bookmark in an 18-point one; the name, a repository's
         /// path in the secondary colour (an orange error icon if it's gone);
@@ -130,8 +131,12 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Row(ViewModels.Welcome vm, ViewModels.RepositoryNode node)
         {
-            var row = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8, 0, node.Depth * 16) };
+            var row = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8, 0, 0) };
             row.Height = 30;
+            // A level in for each group it's in, as the platform's trees
+            // indent theirs (upstream indents 16 points a level).
+            for (var level = 0; level < node.Depth; level++)
+                row.Add(new Column { Width = Spacing.Indent });
             row.ContextMenu = Menu(node);
             // Folders dropped on a group go in it; on a repository, in its group.
             row.FileDrop = Drops;
