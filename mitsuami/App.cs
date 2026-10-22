@@ -97,10 +97,11 @@ namespace SourceGit
                 s_launcher.AddNewTab();
             else if (int.TryParse(tab, out var index) && index < s_launcher.Pages.Count)
                 s_launcher.ActivePage = s_launcher.Pages[index];
-            // SOURCEGIT_CAPTURE_REPO opens a repository of the welcome
-            // page's by its path, as a double-click does.
+            // SOURCEGIT_CAPTURE_REPO opens a repository by its path, as a
+            // double-click on the welcome page does; one the page doesn't
+            // have is added for this run only (nothing is saved).
             if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_REPO") is { Length: > 0 } repo)
-                ViewModels.Preferences.Instance.FindNode(repo)?.Open();
+                ViewModels.Preferences.Instance.FindOrAddNodeByRepositoryPath(repo, null, false, false).Open();
             switch (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_POPUP"))
             {
                 case "clone":

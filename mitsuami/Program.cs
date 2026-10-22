@@ -26,6 +26,9 @@ namespace SourceGit
         {
             var pref = ViewModels.Preferences.Instance;
             App.SetLocale(pref.Locale);
+            // Upstream's theme sets the graph's colours; the platform's
+            // appearance is the theme here, so they're upstream's defaults.
+            Models.CommitGraph.SetDefaultPens();
 
             App.CreateLauncher(s_startupRepo);
             _ = ViewModels.Welcome.Instance.UpdateStatusAsync(false, null);

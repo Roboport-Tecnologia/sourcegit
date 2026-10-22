@@ -357,20 +357,27 @@ namespace SourceGit.Views
             return row;
         }
 
-        /// <summary>The page the rail picks. Not ported yet: the history,
-        /// local changes and stashes come next.</summary>
+        /// <summary>The page the rail picks: the history; the local changes
+        /// and stashes aren't ported yet.</summary>
         private static Container Page(ViewModels.Repository vm)
         {
-            var page = new Column { Padding = 20, Gap = 8 };
+            var page = new Column { AlignItems = Align.Stretch };
+            var history = Histories.Create(vm.Histories);
+            page.Add(history);
+
+            var other = new Column { Padding = 20, Gap = 8 };
+            other.Grow = 1;
             var title = new Text { Style = TextStyle.Headline };
-            Bind.OneWay(vm, nameof(vm.SelectedViewIndex), () => vm.SelectedViewIndex, i => title.Value = App.Text(i switch
+            other.Add(title);
+            other.Add(new Text("This page isn't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
+            page.Add(other);
+
+            Bind.OneWay(vm, nameof(vm.SelectedViewIndex), () => vm.SelectedViewIndex, i =>
             {
-                1 => "WorkingCopy",
-                2 => "Stashes",
-                _ => "Dashboard",
-            }), owner: page);
-            page.Add(title);
-            page.Add(new Text("This page isn't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
+                history.IsVisible = i == 0;
+                other.IsVisible = i != 0;
+                title.Value = App.Text(i == 1 ? "WorkingCopy" : "Stashes");
+            }, owner: page);
             return page;
         }
     }
