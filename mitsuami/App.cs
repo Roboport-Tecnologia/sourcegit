@@ -81,8 +81,9 @@ namespace SourceGit
         /// path, captures the main window there once it has settled, so its
         /// look can be checked without a screenshot permission.
         /// <c>SOURCEGIT_CAPTURE_TAB</c> picks the tab first: an index, or
-        /// <c>new</c> for a welcome page. <c>SOURCEGIT_CAPTURE_POPUP=clone</c>
-        /// opens the welcome page's clone popup and captures its sheet.</summary>
+        /// <c>new</c> for a welcome page. <c>SOURCEGIT_CAPTURE_POPUP</c>
+        /// opens a popup and captures its sheet: <c>clone</c>, or <c>move</c>
+        /// (the first repository or group).</summary>
         private static async void CaptureIfAsked()
         {
             if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE") is not { Length: > 0 } path)
@@ -95,8 +96,15 @@ namespace SourceGit
                 s_launcher.AddNewTab();
             else if (int.TryParse(tab, out var index) && index < s_launcher.Pages.Count)
                 s_launcher.ActivePage = s_launcher.Pages[index];
-            if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_POPUP") == "clone")
-                ViewModels.Welcome.Instance.Clone();
+            switch (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_POPUP"))
+            {
+                case "clone":
+                    ViewModels.Welcome.Instance.Clone();
+                    break;
+                case "move" when ViewModels.Preferences.Instance.RepositoryNodes is [var first, ..]:
+                    first.Move();
+                    break;
+            }
             await Task.Delay(TimeSpan.FromSeconds(3));
             var ok = await (Views.Popups.Shown ?? s_mainWindow).CapturePng(path);
             Console.WriteLine(ok ? $"Captured to {path}" : "Capture failed");

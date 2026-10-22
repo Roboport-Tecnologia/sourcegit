@@ -325,7 +325,7 @@ namespace SourceGit.Views
         // Upstream's tree expander: a 9-point triangle, turned down when open,
         // in a button's 16-point icon.
         private static readonly VectorIcon s_closed = new("M4 0L8 4L4 8Z", new ViewBox(-3.11f, -3.11f, 14.22f, 14.22f));
-        private static readonly VectorIcon s_open = new("M8 4L4 8L0 4Z", new ViewBox(-3.11f, -3.11f, 14.22f, 14.22f));
+        internal static readonly VectorIcon s_open = new("M8 4L4 8L0 4Z", new ViewBox(-3.11f, -3.11f, 14.22f, 14.22f));
 
     }
 }

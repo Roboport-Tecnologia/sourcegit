@@ -79,7 +79,8 @@ namespace SourceGit.Views
         private static Window Sheet(Window owner, ViewModels.LauncherPage page, ViewModels.Popup popup)
         {
             var form = Form(popup, out var title, out var ported);
-            var sheet = new Window(owner, title, 520);
+            // Upstream's popups are 560 points wide.
+            var sheet = new Window(owner, title, 560);
 
             var column = new Column { Padding = 20, Gap = 12, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
@@ -225,22 +226,57 @@ namespace SourceGit.Views
             return form;
         }
 
-        /// <summary>Upstream's move: the new parent, from every group, each
-        /// under its own (indented as the tree is), the top first.</summary>
+        /// <summary>Upstream's move: the new parent, chosen in a list of
+        /// every group, each under its own (indented as the tree is), the
+        /// top first.</summary>
         private static Node MoveForm(ViewModels.MoveRepositoryNode vm)
         {
-            var parents = new Select(App.Text("MoveRepositoryNode.Target"))
-            {
-                Options = vm.Rows.Select(r => new string(' ', r.Depth * 4) + r.Name).ToArray(),
-            };
-            Bind.OneWay(vm, nameof(vm.Selected), () => vm.Rows.IndexOf(vm.Selected), i => parents.SelectedIndex = Math.Max(i, 0), owner: parents);
-            parents.Changed += i => vm.Selected = vm.Rows[i];
+            // Upstream's: the label, then the name, in a row of their own.
+            var target = new Row { Gap = 8, AlignItems = Align.Center };
+            target.Add(new Text(App.Text("MoveRepositoryNode.Target")));
+            target.Add(new Text(vm.Target.Name));
+            var form = new Column { Gap = 8, AlignItems = Align.Stretch };
+            form.Add(target);
 
-            var column = new Column { Gap = 8, AlignItems = Align.Stretch };
-            column.Add(new Text(App.Text("MoveRepositoryNode.Target")));
-            column.Add(new Text(vm.Target.Name) { Style = TextStyle.Headline });
-            column.Add(parents);
-            return column;
+            // Upstream's framed list of the groups, ROOT first, each open,
+            // 28 to 400 points high: as high as its rows, up to that.
+            var groups = new ListView<ViewModels.RepositoryNode>(node => node.Id, GroupRow)
+            {
+                Style = ListStyle.Framed,
+                EstimatedRowHeight = 30,
+                Items = vm.Rows,
+                SelectedItem = vm.Selected,
+            };
+            groups.Height = Math.Clamp(vm.Rows.Count * 30 + 8, 28, 400);
+            groups.SelectionChanged += selected =>
+            {
+                if (selected.Count > 0)
+                    vm.Selected = selected[0];
+            };
+            form.Add(groups);
+            return form;
+
+            // A group's row: indented a level per group it's in, an open
+            // expander (inert: every group shows), its folder, its name.
+            static Node GroupRow(ViewModels.RepositoryNode node)
+            {
+                var row = new Row { AlignItems = Align.Center };
+                row.Height = 30;
+                for (var level = 0; level < node.Depth; level++)
+                    row.Add(new Column { Width = Spacing.Indent });
+                row.Add(Slot(16, new Icon(Welcome.s_open) { Size = 16 }));
+                row.Add(Slot(18, new Icon(Icons.Get("Folder")) { Size = 14 }));
+                row.Add(new Text(node.Name));
+                return row;
+            }
+
+            static Node Slot(float width, Node content)
+            {
+                var slot = new Row { AlignItems = Align.Center, Justify = Justify.Center };
+                slot.Width = width;
+                slot.Add(content);
+                return slot;
+            }
         }
 
         /// <summary>Upstream's confirmation: what goes, and that a
@@ -256,14 +292,10 @@ namespace SourceGit.Views
             return form;
         }
 
-        /// <summary>
-        /// Upstream's bookmark picker is a row of coloured bookmarks drawn by
-        /// hand. Here it's the platform's drop-down of the colours' names,
-        /// and the bookmark beside it in the one chosen.
-        /// </summary>
+        /// <summary>Upstream's bookmark picker, bound both ways.</summary>
         private static BookmarkSelector BookmarkField(INotifyPropertyChanged vm, string property, Func<int> get, Action<int> set)
         {
-            var selector = new BookmarkSelector { Label = App.Text("EditRepositoryNode.Bookmark") };
+            var selector = new BookmarkSelector();
             Bind.OneWay(vm, property, get, b => selector.Bookmark = b, owner: selector);
             selector.Changed += set;
             return selector;

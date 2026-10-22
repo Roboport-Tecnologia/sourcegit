@@ -5,27 +5,42 @@ using Mitsuamia;
 namespace SourceGit.Views
 {
     /// <summary>
-    /// Upstream's <c>BookmarkSelector</c>: the bookmarks in a row, 26 points
-    /// apart, each a 14-point bookmark icon in its colour, the chosen one in
-    /// a rounded frame in the accent colour; a click chooses one. No
-    /// platform has such a control, so it's drawn, the same everywhere.
-    /// To assistive technology it's a slider over the colours' names.
+    /// Upstream's <c>BookmarkSelector</c>: a bookmark icon per colour, in a
+    /// row, the chosen one marked; choosing one unmarks the others. Here
+    /// they're the platform's toggle buttons, each icon in its colour, the
+    /// chosen one pressed, so they look, move through with the keyboard
+    /// and read out as the platform's own.
     /// </summary>
-    public sealed class BookmarkSelector : DrawnWidget
+    public sealed class BookmarkSelector : Row
     {
         /// <summary>Upstream's bookmarks, in its order: none, then red,
         /// orange, gold, forest green, dark cyan, deep sky blue, purple.</summary>
         public static readonly string[] Names = ["None", "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple"];
 
-        private static readonly VectorIcon s_icon = Icons.Get("Bookmark");
-
+        private readonly ToggleButton[] _buttons = new ToggleButton[Names.Length];
         private int _bookmark;
 
-        // Upstream's measure: eight icons with 12 points between them, and
-        // 2 on each side.
-        public BookmarkSelector() : base(nameof(BookmarkSelector), 8 * 14 + 7 * 12 + 4, 24)
+        public BookmarkSelector()
         {
-            Show();
+            Gap = Spacing.Xs;
+            AlignItems = Align.Center;
+            var icon = Icons.Get("Bookmark");
+            for (var i = 0; i < Names.Length; i++)
+            {
+                var bookmark = i;
+                var button = new ToggleButton(Names[i])
+                {
+                    Icon = icon,
+                    IconOnly = true,
+                    IconColor = Welcome.BookmarkColor(i),
+                    ToolTip = Names[i],
+                    IsChecked = i == 0,
+                };
+                // Pressing the chosen one again keeps it chosen.
+                button.Changed += _ => Choose(bookmark);
+                _buttons[i] = button;
+                Add(button);
+            }
         }
 
         public int Bookmark
@@ -33,72 +48,23 @@ namespace SourceGit.Views
             get => _bookmark;
             set
             {
-                if (value == _bookmark || value < 0 || value >= Names.Length)
+                if (value < 0 || value >= Names.Length)
                     return;
                 _bookmark = value;
-                Show();
+                for (var i = 0; i < _buttons.Length; i++)
+                    _buttons[i].IsChecked = i == value;
             }
         }
 
         /// <summary>The user chose a bookmark.</summary>
         public event Action<int>? Changed;
 
-        protected override void Draw(Canvas canvas)
-        {
-            for (var i = 0; i < Names.Length; i++)
-            {
-                var (x, y, width, height) = HitBox(i);
-                if (i == _bookmark)
-                    canvas.StrokeRect(x, y, width, height, Color.Accent, 1, 3);
-                // Centred in its box, where upstream's sits.
-                canvas.FillIcon(s_icon, x + 2, 5, 14, Welcome.BookmarkColor(i));
-            }
-        }
-
-        protected override void OnPointerPressed(float x, float y)
-        {
-            for (var i = 0; i < Names.Length; i++)
-            {
-                var (bx, by, width, height) = HitBox(i);
-                if (x >= bx && x < bx + width && y >= by && y < by + height)
-                {
-                    Choose(i);
-                    return;
-                }
-            }
-        }
-
-        protected override void OnAction(DrawnActions action, string? value)
-        {
-            switch (action)
-            {
-                case DrawnActions.Increment:
-                    Choose(Math.Min(_bookmark + 1, Names.Length - 1));
-                    break;
-                case DrawnActions.Decrement:
-                    Choose(Math.Max(_bookmark - 1, 0));
-                    break;
-                case DrawnActions.SetValue when Array.FindIndex(Names, n => string.Equals(n, value?.Trim(), StringComparison.OrdinalIgnoreCase)) is >= 0 and var i:
-                    Choose(i);
-                    break;
-            }
-        }
-
         private void Choose(int bookmark)
         {
-            if (bookmark == _bookmark)
-                return;
+            var changed = bookmark != _bookmark;
             Bookmark = bookmark;
-            Changed?.Invoke(bookmark);
+            if (changed)
+                Changed?.Invoke(bookmark);
         }
-
-        private void Show()
-        {
-            SetSemantics(DrawnRole.Slider, Names[_bookmark], DrawnActions.SetValue | DrawnActions.Increment | DrawnActions.Decrement);
-            Redraw();
-        }
-
-        // Upstream's: 18 by 20 points around each icon.
-        private static (float X, float Y, float Width, float Height) HitBox(int i) => (2 + 26 * i - 2.5f, 2.5f, 18, 20);
     }
 }
