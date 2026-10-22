@@ -20,7 +20,7 @@ namespace SourceGit.Views
         public BranchTree(ViewModels.Repository repo)
         {
             _repo = repo;
-            View = new ListView<ViewModels.BranchTreeNode>(node => node.Path, Row)
+            View = new ListView<ViewModels.BranchTreeNode>(node => node.Path, Row, itemAnimations: false)
             {
                 EstimatedRowHeight = 24,
                 Items = Rows,

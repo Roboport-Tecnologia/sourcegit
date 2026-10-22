@@ -150,7 +150,10 @@ namespace SourceGit.Views
             // Upstream's items: 41 by 42 points, 4 from everything, their
             // icons 18 (AppKit draws a button that tall as its flexible push
             // button).
-            var rail = new Column { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(4, 0) };
+            // The window's navigation, which upstream sets apart from the
+            // branches beside it: on Windows, on the chosen tab's layer, as
+            // the toolbar band is.
+            var rail = new Column { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(4, 0), IsSidebarPane = true };
             rail.Width = 49;
             var pages = new List<(string Icon, string Text)> { ("Dashboard", "Dashboard") };
             if (!vm.IsBare)
@@ -210,7 +213,7 @@ namespace SourceGit.Views
                 nameof(vm.IsRemoteGroupExpanded), () => vm.IsRemoteGroupExpanded, v => vm.IsRemoteGroupExpanded = v,
                 remotes.View, [("Remote.Add", "Repository.Remotes.Add", vm.AddRemote)]);
 
-            var tags = new ListView<Models.Tag>(tag => tag.Name, TagRow) { EstimatedRowHeight = 24 };
+            var tags = new ListView<Models.Tag>(tag => tag.Name, TagRow, itemAnimations: false) { EstimatedRowHeight = 24 };
             Bind.OneWay(vm, nameof(vm.VisibleTags), () => vm.VisibleTags as IReadOnlyList<Models.Tag> ?? vm.Tags ?? [],
                 visible => tags.Items = visible, owner: sidebar);
             tags.SelectionChanged += selected =>
@@ -222,14 +225,14 @@ namespace SourceGit.Views
                 nameof(vm.IsTagGroupExpanded), () => vm.IsTagGroupExpanded, v => vm.IsTagGroupExpanded = v,
                 tags, [("Tag.Add", "Repository.Tags.Add", vm.CreateNewTag)]);
 
-            var submodules = new ListView<Models.Submodule>(s => s.Path, SubmoduleRow) { EstimatedRowHeight = 24 };
+            var submodules = new ListView<Models.Submodule>(s => s.Path, SubmoduleRow, itemAnimations: false) { EstimatedRowHeight = 24 };
             Bind.OneWay(vm, nameof(vm.Submodules), () => (IReadOnlyList<Models.Submodule>)vm.Submodules ?? [],
                 visible => submodules.Items = visible, owner: sidebar);
             Group(sidebar, vm, "Submodules", "Repository.Submodules", nameof(vm.Submodules), () => $"({vm.Submodules?.Count ?? 0})",
                 nameof(vm.IsSubmoduleGroupExpanded), () => vm.IsSubmoduleGroupExpanded, v => vm.IsSubmoduleGroupExpanded = v,
                 submodules, []);
 
-            var worktrees = new ListView<ViewModels.Worktree>(w => w.FullPath, WorktreeRow) { EstimatedRowHeight = 24 };
+            var worktrees = new ListView<ViewModels.Worktree>(w => w.FullPath, WorktreeRow, itemAnimations: false) { EstimatedRowHeight = 24 };
             Bind.OneWay(vm, nameof(vm.Worktrees), () => (IReadOnlyList<ViewModels.Worktree>)vm.Worktrees ?? [],
                 visible => worktrees.Items = visible, owner: sidebar);
             Group(sidebar, vm, "Worktree", "Repository.Worktrees", nameof(vm.Worktrees), () => $"({vm.Worktrees?.Count ?? 0})",

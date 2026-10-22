@@ -240,7 +240,7 @@ namespace SourceGit.Views
 
             // Upstream's framed list of the groups, ROOT first, each open,
             // 28 to 400 points high: as high as its rows, up to that.
-            var groups = new ListView<ViewModels.RepositoryNode>(node => node.Id, GroupRow)
+            var groups = new ListView<ViewModels.RepositoryNode>(node => node.Id, GroupRow, itemAnimations: false)
             {
                 Style = ListStyle.Framed,
                 EstimatedRowHeight = 30,
