@@ -50,7 +50,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Toolbar(ViewModels.Repository vm)
         {
-            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4), IsHeader = true };
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             band.Height = 36;
 
             var start = new Row { AlignItems = Align.Center };

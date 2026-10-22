@@ -95,8 +95,10 @@ namespace SourceGit.Views
         private static Node Toolbar(ViewModels.Welcome vm)
         {
             // The window's header: on macOS in the title bar, under the tabs,
-            // with no line between them, as Safari's bars are.
-            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4), IsHeader = true };
+            // with no line between them, as Safari's bars are. macOS draws the
+            // title bar and the content in one colour; its hard edge (26.1)
+            // sets the band apart, as GTK's and WinUI's shades do.
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             band.Height = 36;
             var start = new Row { AlignItems = Align.Center };
             var end = new Row { AlignItems = Align.Center };
