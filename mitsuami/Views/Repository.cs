@@ -60,7 +60,7 @@ namespace SourceGit.Views
             Add(start, "Statistics", 13, "Repository.Statistics", null);
             band.Add(start);
 
-            var middle = new Row { AlignItems = Align.Center, Gap = 16 };
+            var middle = new Row { AlignItems = Align.Center };
             var sync = new Row { AlignItems = Align.Center, Gap = 16 };
             Add(sync, "Fetch", 14, "Fetch", () => _ = vm.FetchAsync(false));
             if (!vm.IsBare)
@@ -72,6 +72,11 @@ namespace SourceGit.Views
                 Add(sync, "ApplyPatch", 14, "Apply.Title", vm.ApplyPatch);
             }
             middle.Add(sync);
+            // Upstream's line between syncing and the rest: 16 high, 16
+            // after patching and 18 before a new branch.
+            var line = new Separator(Orientation.Vertical) { Margin = new Thickness(0, 18, 0, 16) };
+            line.Height = 16;
+            middle.Add(line);
             var tools = new Row { AlignItems = Align.Center, Gap = 12 };
             Add(tools, "Branch.Add", 14, "CreateBranch", vm.CreateNewBranch);
             if (!vm.IsBare)
