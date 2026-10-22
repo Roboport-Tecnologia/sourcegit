@@ -225,6 +225,30 @@ namespace SourceGit.Views
             Group(sidebar, vm, "Worktree", "Repository.Worktrees", nameof(vm.Worktrees), () => $"({vm.Worktrees?.Count ?? 0})",
                 nameof(vm.IsWorktreeGroupExpanded), () => vm.IsWorktreeGroupExpanded, v => vm.IsWorktreeGroupExpanded = v,
                 worktrees, []);
+
+            // One selection in the sidebar: picking in a list unselects the
+            // others, as upstream's lists do.
+            var clears = new List<Action>
+            {
+                () => local.View.SelectedItems = [],
+                () => remotes.View.SelectedItems = [],
+                () => tags.SelectedItems = [],
+                () => submodules.SelectedItems = [],
+                () => worktrees.SelectedItems = [],
+            };
+            void Only(int index)
+            {
+                for (var i = 0; i < clears.Count; i++)
+                {
+                    if (i != index)
+                        clears[i]();
+                }
+            }
+            local.View.SelectionChanged += s => { if (s.Count > 0) Only(0); };
+            remotes.View.SelectionChanged += s => { if (s.Count > 0) Only(1); };
+            tags.SelectionChanged += s => { if (s.Count > 0) Only(2); };
+            submodules.SelectionChanged += s => { if (s.Count > 0) Only(3); };
+            worktrees.SelectionChanged += s => { if (s.Count > 0) Only(4); };
             return sidebar;
         }
 
@@ -258,14 +282,16 @@ namespace SourceGit.Views
             header.Add(space);
             foreach (var (buttonIcon, text, command) in buttons)
             {
+                // As the toolbar's: upstream's 12-point icons in 14-point
+                // buttons came out too small beside the platform's text.
                 var button = new Button(App.Text(text))
                 {
-                    Icon = Icons.Get(buttonIcon, 12),
+                    Icon = Icons.Get(buttonIcon, 14),
                     IconOnly = true,
                     Style = ButtonStyle.Borderless,
                     ToolTip = App.Text(text),
                 };
-                button.Width = 22;
+                button.Width = 28;
                 button.Click += command;
                 header.Add(button);
             }
