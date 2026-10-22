@@ -142,7 +142,10 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Rail(ViewModels.Repository vm)
         {
-            var rail = new Column { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(6, 0) };
+            // Upstream's items: 41 by 42 points, 4 from everything, their
+            // icons 18 (AppKit draws a button that tall as its flexible push
+            // button).
+            var rail = new Column { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(4, 0) };
             rail.Width = 49;
             var pages = new List<(string Icon, string Text)> { ("Dashboard", "Dashboard") };
             if (!vm.IsBare)
@@ -156,10 +159,12 @@ namespace SourceGit.Views
                 var index = i;
                 var button = new ToggleButton(App.Text(pages[i].Text))
                 {
-                    Icon = Icons.Get(pages[i].Icon, 16),
+                    Icon = Icons.Get(pages[i].Icon, 18),
                     IconOnly = true,
                     ToolTip = App.Text(pages[i].Text),
                 };
+                button.Width = 41;
+                button.Height = 42;
                 // Pressing the chosen one again keeps it chosen.
                 button.Changed += _ => vm.SelectedViewIndex = index;
                 buttons.Add(button);
