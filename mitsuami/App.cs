@@ -43,7 +43,7 @@ namespace SourceGit
         public static void SetTheme(string theme, string themeOverridesFile) { }
 
         /// <summary>Native controls use the platform's fonts; the monospace
-        /// one is for the code views (bemtvi), which come later.</summary>
+        /// one is for the code views, which come later.</summary>
         public static void SetFonts(string defaultFont, string monospaceFont) { }
 
         public static ViewModels.Launcher GetLauncher() => s_launcher;
