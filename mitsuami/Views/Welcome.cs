@@ -43,7 +43,10 @@ namespace SourceGit.Views
 
             // Rows dragged onto a group go in it; onto a repository, in its
             // group; onto the list's empty part, at the top, as upstream's.
-            var list = new ListView<ViewModels.RepositoryNode>(node => node.Id, node => Row(vm, node), moves: RowMoves.OntoRows)
+            // Rows just show, as upstream's do: WinUI's list slid and faded
+            // them all in again on each move, expand and search.
+            var list = new ListView<ViewModels.RepositoryNode>(node => node.Id, node => Row(vm, node),
+                moves: RowMoves.OntoRows, itemAnimations: false)
             {
                 EstimatedRowHeight = 30,
                 Items = vm.Rows,
