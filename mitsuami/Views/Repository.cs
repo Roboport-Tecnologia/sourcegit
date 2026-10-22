@@ -230,7 +230,8 @@ namespace SourceGit.Views
 
         /// <summary>
         /// One of the sidebar's groups: upstream's <c>group_expander</c>, 28
-        /// points high, an expander, the group's icon (11 points, in the
+        /// points high, opening and closing at a click anywhere on it but its
+        /// buttons: an expander, the group's icon (11 points, in the
         /// secondary colour), its name and count in bold, also secondary,
         /// and its buttons at the end; then its list, while it's open.
         /// </summary>
@@ -243,6 +244,9 @@ namespace SourceGit.Views
             var expander = new Button(App.Text(title)) { IconOnly = true, Style = ButtonStyle.Borderless };
             expander.Width = 16;
             expander.Click += () => setExpanded(!expanded());
+            // The whole header opens and closes it, as upstream's toggle
+            // button does; the expander is the keyboard's way.
+            header.Clicked += () => setExpanded(!expanded());
             header.Add(expander);
             header.Add(new Icon(Icons.Get(icon)) { Size = 11, Color = Color.SecondaryLabel });
             header.Add(new Text(App.Text(title)) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
@@ -269,13 +273,18 @@ namespace SourceGit.Views
 
             // As tall as its rows, as upstream's; open groups share what
             // room there is when they don't all fit.
-            void Fit() => list.Height = list.ItemCount * 24;
+            // An open group without rows shows nothing under its header.
+            void Fit()
+            {
+                list.Height = list.ItemCount * 24;
+                list.IsVisible = expanded() && list.ItemCount > 0;
+            }
             Fit();
             list.ItemsChanged += Fit;
             Bind.OneWay(vm, expandedProperty, expanded, open =>
             {
                 expander.Icon = open ? Welcome.s_open : Welcome.s_closed;
-                list.IsVisible = open;
+                Fit();
             }, owner: header);
             sidebar.Add(list);
         }
