@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 
 using Mitsuamia;
@@ -134,9 +135,27 @@ namespace SourceGit.Views
             var row = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8, 0, 0) };
             row.Height = 30;
             // A level in for each group it's in, as the platform's trees
-            // indent theirs (upstream indents 16 points a level).
-            for (var level = 0; level < node.Depth; level++)
-                row.Add(new Column { Width = Spacing.Indent });
+            // indent theirs (upstream indents 16 points a level). A moved
+            // node keeps its row, and its depth changes without notice when
+            // the view model rebuilds its rows, so follow those.
+            var indent = new Mitsuamia.Row();
+            var levels = new List<Column>();
+            void ShowDepth()
+            {
+                while (levels.Count < node.Depth)
+                {
+                    var level = new Column { Width = Spacing.Indent };
+                    levels.Add(level);
+                    indent.Add(level);
+                }
+                for (var i = 0; i < levels.Count; i++)
+                    levels[i].IsVisible = i < node.Depth;
+            }
+            ShowDepth();
+            NotifyCollectionChangedEventHandler rebuilt = (_, _) => ShowDepth();
+            vm.Rows.CollectionChanged += rebuilt;
+            row.Forgotten += () => vm.Rows.CollectionChanged -= rebuilt;
+            row.Add(indent);
             row.ContextMenu = Menu(node);
             // Folders dropped on a group go in it; on a repository, in its group.
             row.FileDrop = Drops;
