@@ -60,7 +60,15 @@ namespace SourceGit.Views
                 live.Show(vm.Commits ?? []);
             }, owner: page);
 
-            Bind.OneWay(vm, nameof(vm.SelectedCommits), () => vm.SelectedCommits ?? [], selected => table.SelectedItems = selected, owner: page);
+            // A commit navigated to (a parent, a branch, a tag) is
+            // scrolled to, as upstream's; one the user picked is in view
+            // already.
+            Bind.OneWay(vm, nameof(vm.SelectedCommits), () => vm.SelectedCommits ?? [], selected =>
+            {
+                table.SelectedItems = selected;
+                if (selected is [var commit])
+                    table.ScrollTo(commit);
+            }, owner: page);
             table.SelectionChanged += selected => vm.SelectedCommits = selected.ToList();
             table.Activated += commit =>
             {
