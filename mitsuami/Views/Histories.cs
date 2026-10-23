@@ -25,7 +25,7 @@ namespace SourceGit.Views
 
             var columns = new List<TableColumn<Models.Commit>>
             {
-                new(App.Text("Histories.Header.GraphAndSubject"), c => SubjectCell(c, () => rows, index, live), Expand: true),
+                new(App.Text("Histories.Header.GraphAndSubject"), c => SubjectCell(c, () => rows, index, live, () => vm.HasSingleRemote), Expand: true),
             };
             if (vm.IsAuthorColumnVisible)
                 columns.Add(new(App.Text("Histories.Header.Author"), c => AuthorCell(c, live), Width: (float)Math.Max(80, vm.AuthorColumnWidth)));
@@ -74,20 +74,27 @@ namespace SourceGit.Views
             return page;
         }
 
-        /// <summary>The graph's part in the row, then the subject on one
-        /// line: bold for the commit checked out, and in the secondary
-        /// colour if it isn't in the current branch (upstream fades it).</summary>
-        private static Node SubjectCell(Models.Commit commit, Func<CommitGraphRows> rows, Dictionary<string, int> index, LiveCells live)
+        /// <summary>The graph's part in the row, the commit's branches and
+        /// tags, then the subject on one line: bold for the commit checked
+        /// out, and in the secondary colour if it isn't in the current
+        /// branch (upstream fades it).</summary>
+        private static Node SubjectCell(Models.Commit commit, Func<CommitGraphRows> rows, Dictionary<string, int> index, LiveCells live,
+            Func<bool> hasSingleRemote)
         {
             var cell = new Row { AlignItems = Align.Center };
             var graph = new CommitGraphCell(rows);
             cell.Add(graph);
+            // Upstream's 2 before the labels and 4 after them.
+            var refs = new CommitRefs();
+            refs.View.Margin = new Thickness(0, 4, 0, 2);
+            cell.Add(refs.View);
             var subject = new Text { MaxLines = 1 };
             subject.Grow = 1;
             cell.Add(subject);
             live.Add(cell, commit, c =>
             {
                 graph.Show(index.GetValueOrDefault(c.SHA), c.LeftMargin);
+                refs.Show(c, hasSingleRemote());
                 subject.Value = c.Subject;
                 Emphasis(subject, c);
             });
