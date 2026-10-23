@@ -30,9 +30,24 @@ namespace SourceGit.Views
             var split = new Split { Position = layout.RepositorySidebarWidth };
             split.Grow = 1;
             split.Changed += width => layout.RepositorySidebarWidth = width;
+            // While searching commits, upstream's search panel takes the
+            // sidebar's place.
+            var left = new Column { AlignItems = Align.Stretch };
+            left.MinWidth = 200;
             var sidebar = Sidebar(vm);
-            sidebar.MinWidth = 200;
-            split.Add(sidebar);
+            sidebar.Grow = 1;
+            sidebar.MinHeight = 0;
+            left.Add(sidebar);
+            var search = CommitSearch.Create(vm.Histories.SearchCommitContext);
+            search.Grow = 1;
+            search.MinHeight = 0;
+            left.Add(search);
+            Bind.OneWay(vm.Histories, nameof(vm.Histories.IsSearchingCommits), () => vm.Histories.IsSearchingCommits, on =>
+            {
+                sidebar.IsVisible = !on;
+                search.IsVisible = on;
+            }, owner: left);
+            split.Add(left);
             var right = Page(vm);
             right.MinWidth = 100;
             split.Add(right);
@@ -109,6 +124,10 @@ namespace SourceGit.Views
                 if (vm.CurrentBranch is { } head)
                     vm.NavigateToCommit(head.Head);
             });
+            var divider = new Separator(Orientation.Vertical) { Margin = new Thickness(0, 4) };
+            divider.Height = 16;
+            end.Add(divider);
+            HistoryOptions.AddTo(end, vm.Histories);
             band.Add(end);
             return band;
 

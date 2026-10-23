@@ -26,64 +26,70 @@ namespace SourceGit.Views
             // cell under the pointer.
             var live = new LiveCells(commit => CommitMenu.For(repo, vm, commit));
 
-            var columns = new List<TableColumn<Models.Commit>>
+            // mitsuami's tables can't hide columns: showing or hiding one
+            // makes the table again, which keeps its commits and selection.
+            TableView<Models.Commit> Table()
             {
-                new(App.Text("Histories.Header.GraphAndSubject"), c => SubjectCell(vm, c, () => rows, index, live), Expand: true),
-            };
-            if (vm.IsAuthorColumnVisible)
-                columns.Add(new(App.Text("Histories.Header.Author"), c => AuthorCell(c, live), Width: (float)Math.Max(80, vm.AuthorColumnWidth)));
-            if (vm.IsSHAColumnVisible)
-                columns.Add(new(App.Text("Histories.Header.SHA"), c => ShaCell(c, live), Width: 100));
-            if (vm.IsAuthorTimeColumnVisible)
-                columns.Add(new(App.Text("Histories.Header.AuthorTime"), c => TimeCell(c, live, commit => commit.AuthorTime), Width: 160));
-            if (vm.IsCommitTimeColumnVisible)
-                columns.Add(new(App.Text("Histories.Header.CommitTime"), c => TimeCell(c, live, commit => commit.CommitterTime), Width: 160));
+                var columns = new List<TableColumn<Models.Commit>>
+                {
+                    new(App.Text("Histories.Header.GraphAndSubject"), c => SubjectCell(vm, c, () => rows, index, live), Expand: true),
+                };
+                if (vm.IsAuthorColumnVisible)
+                    columns.Add(new(App.Text("Histories.Header.Author"), c => AuthorCell(c, live), Width: (float)Math.Max(80, vm.AuthorColumnWidth)));
+                if (vm.IsSHAColumnVisible)
+                    columns.Add(new(App.Text("Histories.Header.SHA"), c => ShaCell(c, live), Width: 100));
+                if (vm.IsAuthorTimeColumnVisible)
+                    columns.Add(new(App.Text("Histories.Header.AuthorTime"), c => TimeCell(c, live, commit => commit.AuthorTime), Width: 160));
+                if (vm.IsCommitTimeColumnVisible)
+                    columns.Add(new(App.Text("Histories.Header.CommitTime"), c => TimeCell(c, live, commit => commit.CommitterTime), Width: 160));
 
-            var table = new TableView<Models.Commit>(c => c.SHA, columns, SelectionMode.Multiple, itemAnimations: false)
-            {
-                EstimatedRowHeight = CommitGraphRows.RowHeight,
-            };
-            table.Grow = 1;
+                var table = new TableView<Models.Commit>(c => c.SHA, columns, SelectionMode.Multiple, itemAnimations: false)
+                {
+                    EstimatedRowHeight = CommitGraphRows.RowHeight,
+                };
+                table.Grow = 1;
 
-            // A refresh brings new commits under the same SHAs, whose rows
-            // the table keeps: their cells show the new ones.
-            Bind.OneWay(vm, nameof(vm.Commits), () => vm.Commits ?? [], commits =>
-            {
-                rows = new CommitGraphRows(vm.Graph);
-                index.Clear();
-                for (var i = 0; i < commits.Count; i++)
-                    index[commits[i].SHA] = i;
-                table.Items = commits;
-                live.Show(commits);
-            }, owner: page);
+                // A refresh brings new commits under the same SHAs, whose rows
+                // the table keeps: their cells show the new ones.
+                Bind.OneWay(vm, nameof(vm.Commits), () => vm.Commits ?? [], commits =>
+                {
+                    rows = new CommitGraphRows(vm.Graph);
+                    index.Clear();
+                    for (var i = 0; i < commits.Count; i++)
+                        index[commits[i].SHA] = i;
+                    table.Items = commits;
+                    live.Show(commits);
+                }, owner: table);
+                // A commit navigated to (a parent, a branch, a tag) is
+                // scrolled to, as upstream's; one the user picked is in view
+                // already.
+                Bind.OneWay(vm, nameof(vm.SelectedCommits), () => vm.SelectedCommits ?? [], selected =>
+                {
+                    table.SelectedItems = selected;
+                    if (selected is [var commit])
+                        table.ScrollTo(commit);
+                }, owner: table);
+                table.SelectionChanged += selected => vm.SelectedCommits = selected.ToList();
+                table.Activated += commit =>
+                {
+                    if (vm.Bisect != null)
+                        vm.CheckoutCommitDetached(commit);
+                    else
+                        _ = vm.CheckoutBranchByCommitAsync(commit);
+                };
+                return table;
+            }
+
             // The graph changes alone when the highlighted commits do.
             Bind.OneWay(vm, nameof(vm.Graph), () => vm.Graph, graph =>
             {
                 rows = new CommitGraphRows(graph);
                 live.Show(vm.Commits ?? []);
             }, owner: page);
-
-            // A commit navigated to (a parent, a branch, a tag) is
-            // scrolled to, as upstream's; one the user picked is in view
-            // already.
             // The dots and bisect marks follow the branch's tracking and
             // the bisect.
             Bind.OneWay(vm, nameof(vm.CurrentBranch), () => vm.CurrentBranch, _ => live.Show(vm.Commits ?? []), owner: page);
             Bind.OneWay(vm, nameof(vm.Bisect), () => vm.Bisect, _ => live.Show(vm.Commits ?? []), owner: page);
-            Bind.OneWay(vm, nameof(vm.SelectedCommits), () => vm.SelectedCommits ?? [], selected =>
-            {
-                table.SelectedItems = selected;
-                if (selected is [var commit])
-                    table.ScrollTo(commit);
-            }, owner: page);
-            table.SelectionChanged += selected => vm.SelectedCommits = selected.ToList();
-            table.Activated += commit =>
-            {
-                if (vm.Bisect != null)
-                    vm.CheckoutCommitDetached(commit);
-                else
-                    _ = vm.CheckoutBranchByCommitAsync(commit);
-            };
 
             // The commits over their details, split by the platform's
             // divider; upstream's least heights are 100 and 28.
@@ -92,8 +98,22 @@ namespace SourceGit.Views
             split.MinHeight = 0;
             var top = new Column { AlignItems = Align.Stretch };
             top.MinHeight = 100;
+            var table = Table();
             top.Add(table);
             split.Add(top);
+            var shown = (vm.IsAuthorColumnVisible, vm.IsSHAColumnVisible, vm.IsAuthorTimeColumnVisible, vm.IsCommitTimeColumnVisible);
+            void ColumnsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+            {
+                var now = (vm.IsAuthorColumnVisible, vm.IsSHAColumnVisible, vm.IsAuthorTimeColumnVisible, vm.IsCommitTimeColumnVisible);
+                if (now == shown)
+                    return;
+                shown = now;
+                table.Destroy();
+                table = Table();
+                top.Add(table);
+            }
+            vm.PropertyChanged += ColumnsChanged;
+            page.Forgotten += () => vm.PropertyChanged -= ColumnsChanged;
             // The tab view stands off the divider and the window's edges
             // by the platform's spacing.
             var details = new Column { AlignItems = Align.Stretch, Padding = Spacing.Md };
@@ -102,25 +122,38 @@ namespace SourceGit.Views
             tabs.Grow = 1;
             details.Add(tabs);
             split.Add(details);
-            // Upstream shares the height half and half; a split's divider
-            // is in points, so it's put halfway once the page has a height
-            // (the page may be built hidden, before its tab is chosen).
-            // It stops if the page goes first (a workspace's repository
-            // taking the tab).
+            // Upstream shares the room half and half; a split's divider is
+            // in points, so it's put halfway once the page has a size (the
+            // page may be built hidden, before its tab is chosen). It stops
+            // if the page goes first (a workspace's repository taking the
+            // tab). Upstream's two-column layout puts the details beside
+            // the commits, halfway across.
             var gone = false;
             split.Forgotten += () => gone = true;
+            var halving = 0;
             async void Halve()
             {
-                for (var tries = 0; tries < 100 && split.Position == null; tries++)
+                var mine = ++halving;
+                var across = ViewModels.Preferences.Instance.UseTwoColumnsLayoutInHistories;
+                for (var tries = 0; tries < 100; tries++)
                 {
-                    if (gone)
-                        return;
                     await System.Threading.Tasks.Task.Delay(50);
-                    if (!gone && split.Frame.Height is var height and > 0)
-                        split.Position = Math.Floor(height / 2);
+                    if (gone || mine != halving)
+                        return;
+                    var frame = split.Frame;
+                    if ((across ? frame.Width : frame.Height) is var length and > 0)
+                    {
+                        split.Position = Math.Floor(length / 2);
+                        return;
+                    }
                 }
             }
-            Halve();
+            Bind.OneWay(ViewModels.Preferences.Instance, nameof(ViewModels.Preferences.UseTwoColumnsLayoutInHistories),
+                () => ViewModels.Preferences.Instance.UseTwoColumnsLayoutInHistories, across =>
+                {
+                    split.Orientation = across ? Orientation.Horizontal : Orientation.Vertical;
+                    Halve();
+                }, owner: split);
             page.Add(split);
             return page;
         }
