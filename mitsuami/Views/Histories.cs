@@ -28,7 +28,7 @@ namespace SourceGit.Views
 
             var columns = new List<TableColumn<Models.Commit>>
             {
-                new(App.Text("Histories.Header.GraphAndSubject"), c => SubjectCell(c, () => rows, index, live, () => vm.HasSingleRemote), Expand: true),
+                new(App.Text("Histories.Header.GraphAndSubject"), c => SubjectCell(vm, c, () => rows, index, live), Expand: true),
             };
             if (vm.IsAuthorColumnVisible)
                 columns.Add(new(App.Text("Histories.Header.Author"), c => AuthorCell(c, live), Width: (float)Math.Max(80, vm.AuthorColumnWidth)));
@@ -66,6 +66,10 @@ namespace SourceGit.Views
             // A commit navigated to (a parent, a branch, a tag) is
             // scrolled to, as upstream's; one the user picked is in view
             // already.
+            // The dots and bisect marks follow the branch's tracking and
+            // the bisect.
+            Bind.OneWay(vm, nameof(vm.CurrentBranch), () => vm.CurrentBranch, _ => live.Show(vm.Commits ?? []), owner: page);
+            Bind.OneWay(vm, nameof(vm.Bisect), () => vm.Bisect, _ => live.Show(vm.Commits ?? []), owner: page);
             Bind.OneWay(vm, nameof(vm.SelectedCommits), () => vm.SelectedCommits ?? [], selected =>
             {
                 table.SelectedItems = selected;
@@ -125,12 +129,16 @@ namespace SourceGit.Views
         /// tags, then the subject on one line: bold for the commit checked
         /// out, and in the secondary colour if it isn't in the current
         /// branch (upstream fades it).</summary>
-        private static Node SubjectCell(Models.Commit commit, Func<CommitGraphRows> rows, Dictionary<string, int> index, LiveCells live,
-            Func<bool> hasSingleRemote)
+        private static Node SubjectCell(ViewModels.Histories vm, Models.Commit commit, Func<CommitGraphRows> rows, Dictionary<string, int> index, LiveCells live)
         {
             var cell = new Row { AlignItems = Align.Center };
             var graph = new CommitGraphCell(rows);
             cell.Add(graph);
+            // Upstream's ahead/behind dot and bisect mark, 2 in.
+            var status = new CommitStatusDot { Margin = new Thickness(0, 0, 0, 2) };
+            cell.Add(status);
+            var bisect = new BisectMark();
+            cell.Add(bisect.View);
             // Upstream's 2 before the labels and 4 after them.
             var refs = new CommitRefs();
             refs.View.Margin = new Thickness(0, 4, 0, 2);
@@ -141,7 +149,9 @@ namespace SourceGit.Views
             live.Add(cell, commit, c =>
             {
                 graph.Show(index.GetValueOrDefault(c.SHA), c.LeftMargin);
-                refs.Show(c, hasSingleRemote());
+                status.Show(c, vm.CurrentBranch);
+                bisect.Show(c, vm.Bisect);
+                refs.Show(c, vm.HasSingleRemote);
                 subject.Value = c.Subject;
                 Emphasis(subject, c);
             });
