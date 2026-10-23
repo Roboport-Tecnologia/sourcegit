@@ -79,8 +79,13 @@ namespace SourceGit.Views
             top.MinHeight = 100;
             top.Add(table);
             split.Add(top);
-            var details = CommitDetail.Create(vm);
+            // The tab view stands off the divider and the window's edges
+            // by the platform's spacing.
+            var details = new Column { AlignItems = Align.Stretch, Padding = Spacing.Md };
             details.MinHeight = 28;
+            var tabs = CommitDetail.Create(vm);
+            tabs.Grow = 1;
+            details.Add(tabs);
             split.Add(details);
             // Upstream shares the height half and half; a split's divider
             // is in points, so it's put halfway once the page has a height

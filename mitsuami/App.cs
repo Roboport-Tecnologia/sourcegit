@@ -121,6 +121,22 @@ namespace SourceGit
                 histories.SelectedCommits = [histories.Commits[commit]];
                 await Task.Delay(TimeSpan.FromSeconds(2));
             }
+            // SOURCEGIT_CAPTURE_PAGES picks the rail's pages in turn, as
+            // clicks do: "1,0" goes to the local changes and back.
+            if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_PAGES") is { Length: > 0 } pages
+                && s_launcher.ActivePage?.Data is ViewModels.Repository repository)
+            {
+                var shown = 0;
+                foreach (var page in pages.Split(','))
+                {
+                    repository.SelectedViewIndex = int.Parse(page);
+                    // SOURCEGIT_CAPTURE_EACH also captures right after each
+                    // pick, before anything settles, to catch what flashes.
+                    if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_EACH") == "1")
+                        await s_mainWindow.CapturePng(path.Replace(".png", $"-{shown++}.png"));
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+                }
+            }
             var ok = await (Views.Popups.Shown ?? s_mainWindow).CapturePng(path);
             Console.WriteLine(ok ? $"Captured to {path}" : "Capture failed");
         }
