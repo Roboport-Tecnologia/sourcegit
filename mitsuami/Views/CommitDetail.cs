@@ -139,6 +139,7 @@ namespace SourceGit.Views
                     link.Clicked += () => detail.NavigateTo(parent);
                     link.ToolTip = parent;
                     link.ContextMenu = [new MenuItem(App.Text("Copy"), () => Clipboard.SetText(parent))];
+                    ParentTip(link, detail, parent);
                     parents.Add(link);
                 }
                 page.Add(Field(App.Text("CommitDetail.Info.Parents"), parents));
@@ -159,6 +160,19 @@ namespace SourceGit.Views
             holder.Add(message);
             holder.ContextMenu = [new MenuItem(App.Text("CopyAllText"), () => Clipboard.SetText(full))];
             page.Add(Field(App.Text("CommitDetail.Info.Message"), holder));
+        }
+
+        /// <summary>Upstream's tooltip on a parent: its author, date and
+        /// subject, fetched when it's hovered. The platform's tooltip is
+        /// text set ahead, so it's fetched as the link shows (its avatar
+        /// isn't shown).</summary>
+        private static async void ParentTip(Node link, ViewModels.CommitDetail detail, string sha)
+        {
+            var gone = false;
+            link.Forgotten += () => gone = true;
+            var commit = await detail.GetCommitAsync(sha);
+            if (commit != null && !gone)
+                link.ToolTip = $"{commit.Author.Name}  ·  {Models.DateTimeFormat.Format(commit.CommitterTime)}\n\n{commit.Subject}";
         }
 
         /// <summary>
