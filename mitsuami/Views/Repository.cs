@@ -439,10 +439,12 @@ namespace SourceGit.Views
         private static Container Page(ViewModels.Repository vm)
         {
             var page = new Column { AlignItems = Align.Stretch };
-            // Upstream's dashboard: the bisect bar over the history.
+            // Upstream's dashboard: the bisect and filter bars over the
+            // history.
             var history = new Column { AlignItems = Align.Stretch };
             history.Grow = 1;
             history.Add(BisectBar(vm));
+            history.Add(HistoryFilters.Create(vm));
             history.Add(Histories.Create(vm, vm.Histories));
             page.Add(history);
 
