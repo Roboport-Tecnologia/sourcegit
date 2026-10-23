@@ -366,12 +366,84 @@ namespace SourceGit.Views
             return row;
         }
 
+        /// <summary>
+        /// Upstream's bar over the history while bisecting, 28 points high:
+        /// what to do next, in bold, a spinner while a command runs, and
+        /// Bad, Good, Skip (while waiting for a mark) and Abort. Upstream's
+        /// colour is a pale yellow in its light theme and a dark amber in
+        /// its dark one: a translucent amber over the window gives each.
+        /// </summary>
+        private static Node BisectBar(ViewModels.Repository vm)
+        {
+            var bar = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 8) };
+            bar.Height = 28;
+            bar.Shrink = 0;
+            bar.Add(new Tint { Inset = new Thickness(0) });
+            var text = new Text { Weight = FontWeight.Bold, MaxLines = 1 };
+            text.Grow = 1;
+            text.Width = 0;
+            bar.Add(text);
+            var spinner = new Spinner();
+            bar.Add(spinner);
+            Button Command(string title, string subcmd)
+            {
+                var button = new Button(App.Text(title));
+                button.Click += async () =>
+                {
+                    if (!vm.IsBisectCommandRunning && vm.CanCreatePopup())
+                        await vm.ExecBisectCommandAsync(subcmd);
+                };
+                bar.Add(button);
+                return button;
+            }
+            var bad = Command("Bisect.Bad", "bad");
+            var good = Command("Bisect.Good", "good");
+            var skip = Command("Bisect.Skip", "skip");
+            var abort = Command("Bisect.Abort", "reset");
+
+            void Show()
+            {
+                var state = vm.BisectState;
+                var running = vm.IsBisectCommandRunning;
+                bar.IsVisible = state != Models.BisectState.None;
+                var message = state switch
+                {
+                    Models.BisectState.WaitingForFirstBad => App.Text("Bisect.WaitingForFirstBad"),
+                    Models.BisectState.WaitingForCheckoutAnother => App.Text("Bisect.WaitingForCheckoutAnother"),
+                    Models.BisectState.WaitingForFirstGood => App.Text("Bisect.WaitingForFirstGood"),
+                    Models.BisectState.WaitingForMark => App.Text("Bisect.WaitingForMark"),
+                    _ => "",
+                };
+                text.Value = message;
+                text.ToolTip = message;
+                spinner.IsVisible = running;
+                bad.IsEnabled = !running && state != Models.BisectState.WaitingForCheckoutAnother;
+                good.IsEnabled = !running && state is not (Models.BisectState.WaitingForFirstBad or Models.BisectState.WaitingForCheckoutAnother);
+                skip.IsVisible = state == Models.BisectState.WaitingForMark;
+                skip.IsEnabled = !running;
+                abort.IsEnabled = !running;
+            }
+            Bind.OneWay(vm, nameof(vm.BisectState), () => vm.BisectState, _ => Show(), owner: bar);
+            Bind.OneWay(vm, nameof(vm.IsBisectCommandRunning), () => vm.IsBisectCommandRunning, _ => Show(), owner: bar);
+            return bar;
+        }
+
+        /// <summary>Behind the bisect bar: amber at a quarter.</summary>
+        private sealed class Tint() : DrawnWidget("BisectBar", 0, 0)
+        {
+            protected override void Draw(Canvas canvas) => canvas.FillRect(0, 0, canvas.Width, canvas.Height, Color.Rgba(255, 196, 0, 64));
+        }
+
         /// <summary>The page the rail picks: the history; the local changes
         /// and stashes aren't ported yet.</summary>
         private static Container Page(ViewModels.Repository vm)
         {
             var page = new Column { AlignItems = Align.Stretch };
-            var history = Histories.Create(vm, vm.Histories);
+            // Upstream's dashboard: the bisect bar over the history.
+            var history = new Column { AlignItems = Align.Stretch };
+            history.Grow = 1;
+            history.Add(BisectBar(vm));
+            history.Add(Histories.Create(vm, vm.Histories));
             page.Add(history);
 
             var other = new Column { Padding = 20, Gap = 8 };
