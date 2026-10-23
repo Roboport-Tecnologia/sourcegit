@@ -205,13 +205,13 @@ namespace SourceGit.Views
             Bind.OneWay(vm, nameof(vm.LocalBranchTrees), () => vm.LocalBranchTrees, trees => local.Nodes = trees, owner: sidebar);
             Group(sidebar, vm, "Local", "Repository.LocalBranches", nameof(vm.LocalBranchesCount), () => $"({vm.LocalBranchesCount})",
                 nameof(vm.IsLocalBranchGroupExpanded), () => vm.IsLocalBranchGroupExpanded, v => vm.IsLocalBranchGroupExpanded = v,
-                local.View, []);
+                local.View, [], branches: true);
 
             var remotes = new BranchTree(vm);
             Bind.OneWay(vm, nameof(vm.RemoteBranchTrees), () => vm.RemoteBranchTrees, trees => remotes.Nodes = trees, owner: sidebar);
             Group(sidebar, vm, "Remotes", "Repository.Remotes", nameof(vm.Remotes), () => $"({vm.Remotes?.Count ?? 0})",
                 nameof(vm.IsRemoteGroupExpanded), () => vm.IsRemoteGroupExpanded, v => vm.IsRemoteGroupExpanded = v,
-                remotes.View, [("Remote.Add", "Repository.Remotes.Add", vm.AddRemote)]);
+                remotes.View, [("Remote.Add", "Repository.Remotes.Add", vm.AddRemote)], branches: true);
 
             var tags = new ListView<Models.Tag>(tag => tag.Name, TagRow, itemAnimations: false) { EstimatedRowHeight = 24 };
             Bind.OneWay(vm, nameof(vm.VisibleTags), () => vm.VisibleTags as IReadOnlyList<Models.Tag> ?? vm.Tags ?? [],
@@ -274,10 +274,11 @@ namespace SourceGit.Views
         /// </summary>
         private static void Group(Container sidebar, ViewModels.Repository vm, string icon, string title,
             string countProperty, Func<string> count, string expandedProperty, Func<bool> expanded, Action<bool> setExpanded,
-            ListView list, (string Icon, string Text, Action Command)[] buttons)
+            ListView list, (string Icon, string Text, Action Command)[] buttons, bool branches = false)
         {
             var header = new Row { AlignItems = Align.Center, Gap = 4 };
             header.Height = 28;
+            header.Shrink = 0;
             var expander = new Button(App.Text(title)) { IconOnly = true, Style = ButtonStyle.Borderless };
             expander.Width = 16;
             expander.Click += () => setExpanded(!expanded());
@@ -310,12 +311,17 @@ namespace SourceGit.Views
             }
             sidebar.Add(header);
 
-            // As tall as its rows, as upstream's; open groups share what
-            // room there is when they don't all fit.
+            // As tall as its rows, as upstream's. When the open groups
+            // don't all fit, upstream's tags, submodules and worktrees give
+            // up their room first, down to 120 points each, and the branches
+            // share what's left; each list then scrolls.
             // An open group without rows shows nothing under its header.
             void Fit()
             {
-                list.Height = list.ItemCount * 24;
+                var rows = list.ItemCount * 24;
+                list.Height = rows;
+                list.MinHeight = branches ? 0 : Math.Min(120, rows);
+                list.Shrink = branches ? 1 : 1000;
                 list.IsVisible = expanded() && list.ItemCount > 0;
             }
             Fit();
