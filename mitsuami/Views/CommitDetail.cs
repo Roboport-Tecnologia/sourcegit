@@ -253,7 +253,7 @@ namespace SourceGit.Views
             var button = new Button(label) { Icon = Icons.Get("Milestone", 14, 1), IconOnly = true, Style = ButtonStyle.Borderless, ToolTip = label };
             holder.Add(button);
 
-            var popover = new Popover { Padding = new Thickness(8, 12), AlignItems = Align.Stretch };
+            var popover = new Popover { AlignItems = Align.Stretch };
             popover.Add(new Text(App.Text("CommitDetail.Info.ContainsIn.Title")) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold, AlignSelf = Align.Center });
             popover.Add(new Separator { Margin = new Thickness(8, 0) });
             var scroll = new ScrollView();

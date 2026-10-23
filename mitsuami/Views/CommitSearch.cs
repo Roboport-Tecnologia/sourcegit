@@ -108,7 +108,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Suggestions(ViewModels.SearchCommitContext ctx)
         {
-            var popover = new Popover { Padding = 4 };
+            var popover = new Popover();
             var list = new ListView<object>(Key, Suggestion, itemAnimations: false) { EstimatedRowHeight = 42 };
             list.MinWidth = 300;
             popover.Add(list);
