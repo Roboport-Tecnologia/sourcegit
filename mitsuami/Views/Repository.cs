@@ -371,7 +371,7 @@ namespace SourceGit.Views
         private static Container Page(ViewModels.Repository vm)
         {
             var page = new Column { AlignItems = Align.Stretch };
-            var history = Histories.Create(vm.Histories);
+            var history = Histories.Create(vm, vm.Histories);
             page.Add(history);
 
             var other = new Column { Padding = 20, Gap = 8 };

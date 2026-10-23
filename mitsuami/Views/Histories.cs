@@ -14,14 +14,17 @@ namespace SourceGit.Views
     /// </summary>
     public static class Histories
     {
-        public static Node Create(ViewModels.Histories vm)
+        public static Node Create(ViewModels.Repository repo, ViewModels.Histories vm)
         {
             var page = new Column { AlignItems = Align.Stretch };
             page.Grow = 1;
 
             var rows = new CommitGraphRows(vm.Graph);
             var index = new Dictionary<string, int>();
-            var live = new LiveCells();
+            // Every cell of a row has upstream's menu, built as it opens for
+            // the row's commit: the platform's tables show the menu of the
+            // cell under the pointer.
+            var live = new LiveCells(commit => CommitMenu.For(repo, vm, commit));
 
             var columns = new List<TableColumn<Models.Commit>>
             {
@@ -231,15 +234,26 @@ namespace SourceGit.Views
 
         /// <summary>The cells the table shows, each with how it shows its
         /// commit, so they follow the commits a refresh brings.</summary>
-        private sealed class LiveCells
+        private sealed class LiveCells(Func<Models.Commit, IReadOnlyList<MenuEntry>> menu)
         {
             private readonly Dictionary<Node, (string Sha, Action<Models.Commit> Show)> _cells = [];
+            private readonly Dictionary<Node, Models.Commit> _shown = [];
 
             public void Add(Node cell, Models.Commit commit, Action<Models.Commit> show)
             {
                 show(commit);
-                _cells[cell] = (commit.SHA, show);
-                cell.Forgotten += () => _cells.Remove(cell);
+                _shown[cell] = commit;
+                _cells[cell] = (commit.SHA, c =>
+                {
+                    _shown[cell] = c;
+                    show(c);
+                });
+                cell.ContextMenuOnOpen = () => menu(_shown[cell]);
+                cell.Forgotten += () =>
+                {
+                    _cells.Remove(cell);
+                    _shown.Remove(cell);
+                };
             }
 
             public void Show(IReadOnlyList<Models.Commit> commits)
