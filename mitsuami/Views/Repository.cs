@@ -52,6 +52,9 @@ namespace SourceGit.Views
         {
             var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             band.Height = 36;
+            // Its height stays when the page below is taller than the
+            // window (a long list in the sidebar) and shrinks to fit.
+            band.Shrink = 0;
 
             var start = new Row { AlignItems = Align.Center };
             start.Grow = 1;
