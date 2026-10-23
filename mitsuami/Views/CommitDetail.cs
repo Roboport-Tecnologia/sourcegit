@@ -179,8 +179,7 @@ namespace SourceGit.Views
         /// Upstream's SHA row: the SHA, a copy button, a button opening
         /// the commit on the remotes' sites (a menu of them when there are
         /// several) and the signature's mark, coloured by how it verified,
-        /// its details in the tooltip. "Contains in" isn't ported yet: it
-        /// needs a popover.
+        /// its details in the tooltip.
         /// </summary>
         private static Node ShaRow(ViewModels.CommitDetail detail, Models.Commit commit)
         {
@@ -188,6 +187,7 @@ namespace SourceGit.Views
             row.Height = 24;
             row.Add(new Text(commit.SHA) { Style = TextStyle.Monospace, Margin = new Thickness(0, 4, 0, 0) });
             row.Add(CopyButton(commit.SHA));
+            row.Add(ContainsIn(detail));
 
             if (detail.WebLinks is { Count: > 0 } links)
             {
@@ -238,6 +238,71 @@ namespace SourceGit.Views
                 }
             }
             return row;
+        }
+
+        /// <summary>
+        /// Upstream's "Contains in" button and its flyout, the platform's
+        /// popover here: its title, a line, then the branches and tags that
+        /// hold the commit as chips that wrap, in 300 to 500 points, up to
+        /// 200 high, then scrolling; a spinner while git looks.
+        /// </summary>
+        private static Node ContainsIn(ViewModels.CommitDetail detail)
+        {
+            var holder = new Row { AlignItems = Align.Center };
+            var label = App.Text("CommitDetail.Info.ContainsIn");
+            var button = new Button(label) { Icon = Icons.Get("Milestone", 14, 1), IconOnly = true, Style = ButtonStyle.Borderless, ToolTip = label };
+            holder.Add(button);
+
+            var popover = new Popover { Padding = new Thickness(8, 12), AlignItems = Align.Stretch };
+            popover.Add(new Text(App.Text("CommitDetail.Info.ContainsIn.Title")) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold, AlignSelf = Align.Center });
+            popover.Add(new Separator { Margin = new Thickness(8, 0) });
+            var scroll = new ScrollView();
+            scroll.MinWidth = 300;
+            scroll.MaxWidth = 500;
+            scroll.MaxHeight = 200;
+            var chips = new Row { Wrap = true, AlignItems = Align.Center };
+            scroll.Content.Add(chips);
+            popover.Add(scroll);
+            var spinner = new Spinner { AlignSelf = Align.Center, Margin = new Thickness(8, 0) };
+            popover.Add(spinner);
+            holder.Add(popover);
+
+            button.Click += async () =>
+            {
+                foreach (var chip in chips.Children.ToArray())
+                    chip.Destroy();
+                spinner.IsVisible = true;
+                scroll.IsVisible = false;
+                popover.IsShown = true;
+                var refs = await detail.GetRefsContainsThisCommitAsync();
+                if (!popover.IsShown)
+                    return;
+                foreach (var d in refs)
+                    chips.Add(Chip(d));
+                spinner.IsVisible = false;
+                scroll.IsVisible = true;
+            };
+            return holder;
+        }
+
+        /// <summary>A ref holding the commit: 20 points high, outlined with
+        /// round ends, its icon and name.</summary>
+        private static Node Chip(Models.Decorator decorator)
+        {
+            var line = new Row { AlignItems = Align.Center, Margin = new Thickness(4, 6, 0, 0) };
+            var chip = new Row { AlignItems = Align.Center, Gap = 2, Padding = new Thickness(0, 8) };
+            chip.Height = 20;
+            chip.Add(new ChipOutline { Inset = new Thickness(0) });
+            chip.Add(new Icon(Icons.Get(decorator.IsTag ? "Tag" : "Branch")) { Size = 10, Color = Color.Label });
+            chip.Add(new Text(decorator.Name) { MaxLines = 1 });
+            line.Add(chip);
+            return line;
+        }
+
+        private sealed class ChipOutline() : DrawnWidget("RefChip", 0, 0)
+        {
+            protected override void Draw(Canvas canvas) =>
+                canvas.StrokeRect(0.5f, 0.5f, canvas.Width - 1, canvas.Height - 1, Color.Separator, 1, (canvas.Height - 1) / 2);
         }
 
         /// <summary>Upstream's <c>CopyButton</c>: its copy icon, which turns
