@@ -19,7 +19,9 @@ namespace SourceGit.Views
     /// </summary>
     public sealed class Avatar : Models.IAvatarHost
     {
-        public Avatar(float size)
+        /// <param name="menu">Upstream's menu to fetch it again or load
+        /// one; the history's rows have none.</param>
+        public Avatar(float size, bool menu = true)
         {
             _size = size;
             var view = new Row { AlignItems = Align.Center, Justify = Justify.Center };
@@ -32,15 +34,16 @@ namespace SourceGit.Views
             _initials = new Text { Style = size >= 32 ? TextStyle.LargeTitle : TextStyle.Caption, Color = Color.Rgba(255, 255, 255), Weight = FontWeight.Bold };
             _initials.IsVisible = false;
             view.Add(_initials);
-            view.ContextMenu =
-            [
-                new MenuItem(App.Text("Avatar.Refetch"), () =>
-                {
-                    if (_user != null)
-                        Models.AvatarManager.Instance.Request(_user.Email, true);
-                }),
-                new MenuItem(App.Text("Avatar.Load"), Load),
-            ];
+            if (menu)
+                view.ContextMenu =
+                [
+                    new MenuItem(App.Text("Avatar.Refetch"), () =>
+                    {
+                        if (_user != null)
+                            Models.AvatarManager.Instance.Request(_user.Email, true);
+                    }),
+                    new MenuItem(App.Text("Avatar.Load"), Load),
+                ];
             View = view;
 
             Models.AvatarManager.Instance.Subscribe(this);

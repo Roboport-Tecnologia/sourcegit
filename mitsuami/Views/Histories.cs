@@ -137,15 +137,24 @@ namespace SourceGit.Views
             return cell;
         }
 
+        /// <summary>Upstream's: the author's 16-point avatar 4 in, then
+        /// their name 8 after it.</summary>
         private static Node AuthorCell(Models.Commit commit, LiveCells live)
         {
+            var cell = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 0, 0, 4) };
+            var avatar = new Avatar(16, menu: false);
+            cell.Add(avatar.View);
             var name = new Text { MaxLines = 1 };
-            live.Add(name, commit, c =>
+            name.Grow = 1;
+            name.Width = 0;
+            cell.Add(name);
+            live.Add(cell, commit, c =>
             {
+                avatar.User = c.Author;
                 name.Value = c.Author.Name;
                 Emphasis(name, c);
             });
-            return name;
+            return cell;
         }
 
         private static Node ShaCell(Models.Commit commit, LiveCells live)
