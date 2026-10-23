@@ -29,6 +29,8 @@ namespace SourceGit
             // Upstream's theme sets the graph's colours; the platform's
             // appearance is the theme here, so they're upstream's defaults.
             Models.CommitGraph.SetDefaultPens();
+            // Fetched avatars come to the UI thread.
+            Models.AvatarManager.Instance.Start();
 
             App.CreateLauncher(s_startupRepo);
             _ = ViewModels.Welcome.Instance.UpdateStatusAsync(false, null);

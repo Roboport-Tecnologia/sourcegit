@@ -35,7 +35,7 @@ namespace SourceGit.Views
             ViewModels.CommitDetail shown = null;
             void Changed(object sender, PropertyChangedEventArgs e)
             {
-                if (e.PropertyName is nameof(shown.Commit) or nameof(shown.FullMessage) or nameof(shown.Changes))
+                if (e.PropertyName is nameof(shown.Commit) or nameof(shown.FullMessage) or nameof(shown.Changes) or nameof(shown.SignInfo))
                     Show(info.Content, vm, shown);
                 else if (e.PropertyName == nameof(shown.ActiveTabIndex))
                     tabs.SelectedIndex = shown.ActiveTabIndex;
@@ -113,10 +113,9 @@ namespace SourceGit.Views
 
         /// <summary>
         /// Upstream's <c>CommitBaseInfo</c>: the author and the committer
-        /// (when they differ) side by side, a line, then the SHA, the
-        /// parents, the refs and the message, labelled in a 96-point column.
-        /// The avatars aren't ported: their column is kept, so the names
-        /// line up with the values below as upstream's do.
+        /// (when they differ) side by side, each with their avatar in a
+        /// 96-point column, a line, then the SHA with its buttons, the
+        /// parents, the refs and the message, labelled in that column.
         /// </summary>
         private static void BaseInfo(Container page, ViewModels.Histories vm, ViewModels.CommitDetail detail, Models.Commit commit)
         {
@@ -127,8 +126,7 @@ namespace SourceGit.Views
             page.Add(people);
             page.Add(new Separator { Margin = new Thickness(8, 0, 8, 8) });
 
-            var sha = new Text(commit.SHA) { Style = TextStyle.Monospace };
-            page.Add(Field(App.Text("CommitDetail.Info.SHA"), sha));
+            page.Add(Field(App.Text("CommitDetail.Info.SHA"), ShaRow(detail, commit)));
 
             if (commit.Parents.Count > 0)
             {
@@ -140,6 +138,7 @@ namespace SourceGit.Views
                     link.Add(new Text(parent.Length > 10 ? parent[..10] : parent) { Style = TextStyle.Monospace, Color = Color.Rgba(255, 140, 0) });
                     link.Clicked += () => detail.NavigateTo(parent);
                     link.ToolTip = parent;
+                    link.ContextMenu = [new MenuItem(App.Text("Copy"), () => Clipboard.SetText(parent))];
                     parents.Add(link);
                 }
                 page.Add(Field(App.Text("CommitDetail.Info.Parents"), parents));
@@ -152,26 +151,148 @@ namespace SourceGit.Views
                 page.Add(Field(App.Text("CommitDetail.Info.Refs"), refs.View));
             }
 
-            var message = new Text(detail.FullMessage?.Message?.Trim() ?? commit.Subject);
-            page.Add(Field(App.Text("CommitDetail.Info.Message"), message));
+            // Selectable, as upstream's; the platform's text has its own
+            // Copy, and Copy All Text is the menu around it.
+            var full = detail.FullMessage?.Message ?? commit.Subject;
+            var message = new Text(full.Trim()) { Selectable = true };
+            var holder = new Column();
+            holder.Add(message);
+            holder.ContextMenu = [new MenuItem(App.Text("CopyAllText"), () => Clipboard.SetText(full))];
+            page.Add(Field(App.Text("CommitDetail.Info.Message"), holder));
         }
 
-        /// <summary>A person's half: their name in the label colour and
-        /// their email in the secondary one, then the date, smaller.</summary>
+        /// <summary>
+        /// Upstream's SHA row: the SHA, a copy button, a button opening
+        /// the commit on the remotes' sites (a menu of them when there are
+        /// several) and the signature's mark, coloured by how it verified,
+        /// its details in the tooltip. "Contains in" isn't ported yet: it
+        /// needs a popover.
+        /// </summary>
+        private static Node ShaRow(ViewModels.CommitDetail detail, Models.Commit commit)
+        {
+            var row = new Row { AlignItems = Align.Center };
+            row.Height = 24;
+            row.Add(new Text(commit.SHA) { Style = TextStyle.Monospace, Margin = new Thickness(0, 4, 0, 0) });
+            row.Add(CopyButton(commit.SHA));
+
+            if (detail.WebLinks is { Count: > 0 } links)
+            {
+                var title = App.Text("CommitDetail.Info.WebLinks");
+                var icon = Icons.Get("Link", 12);
+                Node button;
+                if (links.Count == 1)
+                {
+                    var open = new Button(title) { Icon = icon, IconOnly = true, Style = ButtonStyle.Borderless, IconColor = Color.Accent };
+                    open.Click += () => Native.OS.OpenBrowser($"{links[0].URLPrefix}{commit.SHA}");
+                    button = open;
+                }
+                else
+                {
+                    button = new MenuButton(title)
+                    {
+                        Icon = icon,
+                        IconOnly = true,
+                        Style = ButtonStyle.Borderless,
+                        IconColor = Color.Accent,
+                        Menu = links.Select(link => (MenuEntry)new MenuItem(link.Name, () => Native.OS.OpenBrowser($"{link.URLPrefix}{commit.SHA}"))).ToList(),
+                    };
+                }
+                button.ToolTip = title;
+                row.Add(button);
+            }
+
+            if (detail.SignInfo is { } sign)
+            {
+                Color? color = sign.VerifyResult switch
+                {
+                    'G' or 'U' => Color.Success,
+                    'X' or 'Y' or 'R' => Color.Warning,
+                    'B' or 'E' => Color.Error,
+                    _ => null,
+                };
+                if (color is { } c)
+                {
+                    var mark = new Row { AlignItems = Align.Center, Justify = Justify.Center };
+                    mark.Width = 24;
+                    mark.Add(new Icon(Icons.Get("Verified")) { Size = 14, Color = c, Label = sign.ToolTip });
+                    var tip = sign.ToolTip + "\n";
+                    if (sign.HasSigner)
+                        tip += $"\n{App.Text("CommitDetail.Info.Signer")}  {sign.Signer}";
+                    tip += $"\n{App.Text("CommitDetail.Info.Key")}  {sign.Key}";
+                    mark.ToolTip = tip;
+                    row.Add(mark);
+                }
+            }
+            return row;
+        }
+
+        /// <summary>Upstream's <c>CopyButton</c>: its copy icon, which turns
+        /// into a green check for a second once it has copied. The check is
+        /// a second button in its place, so the copy icon keeps the
+        /// platform's colour.</summary>
+        private static Node CopyButton(string text)
+        {
+            var holder = new Row();
+            var label = App.Text("Copy");
+            var copy = new Button(label) { Icon = Icons.Get("Copy", 12), IconOnly = true, Style = ButtonStyle.Borderless, ToolTip = label };
+            var check = new Button(label) { Icon = Icons.Get("Check", 14, 1), IconOnly = true, Style = ButtonStyle.Borderless, ToolTip = label, IconColor = Color.Success };
+            check.IsVisible = false;
+            var copies = 0;
+            var gone = false;
+            holder.Forgotten += () => gone = true;
+            async void Copy()
+            {
+                Clipboard.SetText(text);
+                copy.IsVisible = false;
+                check.IsVisible = true;
+                var mine = ++copies;
+                await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(1));
+                if (mine == copies && !gone)
+                {
+                    check.IsVisible = false;
+                    copy.IsVisible = true;
+                }
+            }
+            copy.Click += Copy;
+            check.Click += Copy;
+            holder.Add(copy);
+            holder.Add(check);
+            return holder;
+        }
+
+        /// <summary>A person's half: their 64-point avatar at the end of
+        /// the 96-point column, then their name in the label colour and
+        /// their email in the secondary one, then the date, smaller. Each
+        /// has upstream's menu to copy it.</summary>
         private static Node Person(string title, Models.User user, ulong time)
         {
             var half = new Row { AlignItems = Align.Start };
             half.Grow = 1;
             half.Width = 0;
-            var text = new Column { Margin = new Thickness(0, 4, 0, 112) };
+            var face = new Column { AlignItems = Align.End };
+            face.Width = 96;
+            var avatar = new Avatar(64) { User = user };
+            face.Add(avatar.View);
+            half.Add(face);
+            var text = new Column { Margin = new Thickness(0, 4, 0, 16) };
             text.Grow = 1;
             text.Add(new Text(title) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
             var who = new Row { AlignItems = Align.Center, Gap = 4, Margin = new Thickness(10, 0, 8, 0) };
             who.ToolTip = $"{user.Name} <{user.Email}>";
             who.Add(new Text(user.Name) { MaxLines = 1 });
             who.Add(new Text(user.Email) { Color = Color.SecondaryLabel, MaxLines = 1 });
+            who.ContextMenu =
+            [
+                new MenuItem(App.Text("CommitDetail.Info.CopyName"), () => Clipboard.SetText(user.Name)),
+                new MenuItem(App.Text("CommitDetail.Info.CopyEmail"), () => Clipboard.SetText(user.Email)),
+                new MenuItem(App.Text("CommitDetail.Info.CopyNameAndEmail"), () => Clipboard.SetText(user.ToString())),
+            ];
             text.Add(who);
-            text.Add(new Text(Models.DateTimeFormat.Format(time)) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
+            var date = Models.DateTimeFormat.Format(time);
+            var when = new Row { Margin = new Thickness(0, 0, 0, 2) };
+            when.Add(new Text(date) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
+            when.ContextMenu = [new MenuItem(App.Text("Copy"), () => Clipboard.SetText(date))];
+            text.Add(when);
             half.Add(text);
             return half;
         }

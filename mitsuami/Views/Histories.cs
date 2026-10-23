@@ -90,12 +90,18 @@ namespace SourceGit.Views
             // Upstream shares the height half and half; a split's divider
             // is in points, so it's put halfway once the page has a height
             // (the page may be built hidden, before its tab is chosen).
+            // It stops if the page goes first (a workspace's repository
+            // taking the tab).
+            var gone = false;
+            split.Forgotten += () => gone = true;
             async void Halve()
             {
                 for (var tries = 0; tries < 100 && split.Position == null; tries++)
                 {
+                    if (gone)
+                        return;
                     await System.Threading.Tasks.Task.Delay(50);
-                    if (split.Frame.Height is var height and > 0)
+                    if (!gone && split.Frame.Height is var height and > 0)
                         split.Position = Math.Floor(height / 2);
                 }
             }
