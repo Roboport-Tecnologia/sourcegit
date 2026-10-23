@@ -112,6 +112,15 @@ namespace SourceGit
                     break;
             }
             await Task.Delay(TimeSpan.FromSeconds(3));
+            // SOURCEGIT_CAPTURE_COMMIT selects the history's commit at that
+            // index, as a click does, and waits for its details.
+            if (int.TryParse(Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_COMMIT"), out var commit)
+                && s_launcher.ActivePage?.Data is ViewModels.Repository { Histories: { } histories }
+                && commit < histories.Commits.Count)
+            {
+                histories.SelectedCommits = [histories.Commits[commit]];
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            }
             var ok = await (Views.Popups.Shown ?? s_mainWindow).CapturePng(path);
             Console.WriteLine(ok ? $"Captured to {path}" : "Capture failed");
         }

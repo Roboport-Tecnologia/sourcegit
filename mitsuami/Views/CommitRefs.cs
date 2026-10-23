@@ -20,12 +20,14 @@ namespace SourceGit.Views
 
         public Node View => _row;
 
-        public void Show(Models.Commit commit, bool hasSingleRemote)
+        /// <param name="useGraphColor">False: grey labels, the head's
+        /// outlined, as the commit's details show them.</param>
+        public void Show(Models.Commit commit, bool hasSingleRemote, bool useGraphColor = true)
         {
             var prefs = ViewModels.Preferences.Instance;
             var compact = prefs.UseCompactBranchNamesInGraph;
             var shown = string.Join('\n', commit.Decorators.Select(d => $"{d.Type} {d.Name}"))
-                + $"\n{compact} {prefs.ShowTagsInGraph} {hasSingleRemote} {commit.IsHighlightedInGraph} {commit.Color}";
+                + $"\n{compact} {prefs.ShowTagsInGraph} {hasSingleRemote} {useGraphColor && commit.IsHighlightedInGraph} {commit.Color}";
             if (shown == _shown)
                 return;
             _shown = shown;
@@ -34,7 +36,8 @@ namespace SourceGit.Views
                 child.Destroy();
 
             var refs = commit.Decorators;
-            var lane = commit.IsHighlightedInGraph && Models.CommitGraph.Pens.Count > 0
+            var useLane = useGraphColor && commit.IsHighlightedInGraph;
+            var lane = useLane && Models.CommitGraph.Pens.Count > 0
                 ? Models.CommitGraph.Pens[commit.Color % Models.CommitGraph.Pens.Count].Color
                 : new Avalonia.Media.Color(255, 128, 128, 128);
             var gray = new Avalonia.Media.Color(255, 128, 128, 128);
@@ -68,7 +71,7 @@ namespace SourceGit.Views
 
                 var color = decorator.Type == Models.DecoratorType.Tag ? gray : lane;
                 var isHead = decorator.Type is Models.DecoratorType.CurrentBranchHead or Models.DecoratorType.CurrentCommitHead;
-                _row.Add(Label(decorator, Color.Rgba(color.R, color.G, color.B), isHead && commit.IsHighlightedInGraph, isHead, remotes, hasSingleRemote));
+                _row.Add(Label(decorator, Color.Rgba(color.R, color.G, color.B), isHead && useLane, isHead, remotes, hasSingleRemote));
             }
             _row.IsVisible = _row.Children.Count > 0;
         }

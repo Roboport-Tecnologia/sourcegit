@@ -70,7 +70,32 @@ namespace SourceGit.Views
                     _ = vm.CheckoutBranchByCommitAsync(commit);
             };
 
-            page.Add(table);
+            // The commits over their details, split by the platform's
+            // divider; upstream's least heights are 100 and 28.
+            var split = new Split { Orientation = Orientation.Vertical };
+            split.Grow = 1;
+            split.MinHeight = 0;
+            var top = new Column { AlignItems = Align.Stretch };
+            top.MinHeight = 100;
+            top.Add(table);
+            split.Add(top);
+            var details = CommitDetail.Create(vm);
+            details.MinHeight = 28;
+            split.Add(details);
+            // Upstream shares the height half and half; a split's divider
+            // is in points, so it's put halfway once the page has a height
+            // (the page may be built hidden, before its tab is chosen).
+            async void Halve()
+            {
+                for (var tries = 0; tries < 100 && split.Position == null; tries++)
+                {
+                    await System.Threading.Tasks.Task.Delay(50);
+                    if (split.Frame.Height is var height and > 0)
+                        split.Position = Math.Floor(height / 2);
+                }
+            }
+            Halve();
+            page.Add(split);
             return page;
         }
 
