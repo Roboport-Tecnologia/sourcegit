@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+
+using Mitsuamia;
 
 namespace SourceGit
 {
@@ -87,7 +90,10 @@ namespace SourceGit
         /// <c>new</c> for a welcome page. <c>SOURCEGIT_CAPTURE_POPUP</c>
         /// opens a popup and captures its sheet: <c>clone</c>, or <c>move</c>
         /// (the first repository or group). <c>SOURCEGIT_CAPTURE_REPO</c>
-        /// opens a repository by its path first.</summary>
+        /// opens a repository by its path first. <c>SOURCEGIT_CAPTURE_COMMIT</c>
+        /// selects commits of the history (indexes, comma-separated), and
+        /// <c>SOURCEGIT_CAPTURE_MENU</c> then picks the first item of their
+        /// menu whose title starts with that text, as a click on it does.</summary>
         private static async void CaptureIfAsked()
         {
             if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE") is not { Length: > 0 } path)
@@ -115,14 +121,22 @@ namespace SourceGit
                     break;
             }
             await Task.Delay(TimeSpan.FromSeconds(3));
-            // SOURCEGIT_CAPTURE_COMMIT selects the history's commit at that
-            // index, as a click does, and waits for its details.
-            if (int.TryParse(Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_COMMIT"), out var commit)
-                && s_launcher.ActivePage?.Data is ViewModels.Repository { Histories: { } histories }
-                && commit < histories.Commits.Count)
+            // SOURCEGIT_CAPTURE_COMMIT selects the history's commits at those
+            // indexes, as clicks do, and waits for their details.
+            if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_COMMIT") is { Length: > 0 } commits
+                && s_launcher.ActivePage?.Data is ViewModels.Repository { Histories: { } histories } opened)
             {
-                histories.SelectedCommits = [histories.Commits[commit]];
+                var picked = commits.Split(',').Select(int.Parse).Where(i => i < histories.Commits.Count).Select(i => histories.Commits[i]).ToList();
+                histories.SelectedCommits = picked;
                 await Task.Delay(TimeSpan.FromSeconds(2));
+                // SOURCEGIT_CAPTURE_MENU picks an item of their menu by its title.
+                if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_MENU") is { Length: > 0 } title && picked.Count > 0)
+                {
+                    var item = Find(Views.CommitMenu.For(opened, histories, picked[0]), title);
+                    Console.WriteLine(item != null ? $"Picked {item.Title}" : $"No menu item has {title}");
+                    item?.Action();
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+                }
             }
             // SOURCEGIT_CAPTURE_PAGES picks the rail's pages in turn, as
             // clicks do: "1,0" goes to the local changes and back.
@@ -142,6 +156,22 @@ namespace SourceGit
             }
             var ok = await (Views.Popups.Shown ?? s_mainWindow).CapturePng(path);
             Console.WriteLine(ok ? $"Captured to {path}" : "Capture failed");
+        }
+
+        private static MenuItem Find(IReadOnlyList<MenuEntry> entries, string title)
+        {
+            foreach (var entry in entries)
+            {
+                var found = entry switch
+                {
+                    MenuItem item when item.Title.StartsWith(title, StringComparison.OrdinalIgnoreCase) => item,
+                    Submenu submenu => Find(submenu.Entries, title),
+                    _ => null,
+                };
+                if (found != null)
+                    return found;
+            }
+            return null;
         }
 
         private static Dictionary<string, string> LoadLocale(string key)

@@ -13,7 +13,7 @@ namespace SourceGit.Views
     /// OK and Cancel under the form. Here it's a sheet on the window: what
     /// each platform's own Git clients use for a dialog about the window.
     /// </summary>
-    public static class Popups
+    public static partial class Popups
     {
         /// <summary>The popup's sheet showing, if any: for captures.</summary>
         public static Window Shown { get; private set; }
@@ -174,6 +174,8 @@ namespace SourceGit.Views
                     title = App.Text("ScanRepositories");
                     return sheet => ScanForm(sheet, scan);
                 default:
+                    if (RepositoryForm(popup, out title) is { } form)
+                        return form;
                     title = popup.GetType().Name;
                     ported = false;
                     return _ => new Text($"The {popup.GetType().Name} popup isn't ported to mitsuami yet.");
@@ -318,6 +320,9 @@ namespace SourceGit.Views
             var row = new Row { Gap = 8, AlignItems = Align.Center };
             var text = new Text(label);
             text.Width = LabelWidth;
+            // The control gives way, a commit's subject truncating, not
+            // the labels' column.
+            text.Shrink = 0;
             row.Add(text);
             control.Grow = 1;
             row.Add(control);
