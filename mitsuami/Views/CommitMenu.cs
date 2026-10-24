@@ -185,20 +185,22 @@ namespace SourceGit.Views
                 {
                     var rebase = new List<MenuEntry>();
                     if (!isHead)
-                        rebase.AddRange([NotPorted(manually, "Interactive rebase"), MenuSeparator.Instance]);
+                        rebase.AddRange([new MenuItem(manually, () => InteractiveRebase.Show(repo, commit)), MenuSeparator.Instance]);
+                    MenuItem Prefilled(string key, Models.InteractiveRebaseAction action) =>
+                        new(App.Text(key), () => _ = InteractiveRebase.ShowWithAction(repo, commit, action));
                     rebase.AddRange(
                     [
-                        NotPorted(App.Text("CommitCM.InteractiveRebase.Reword"), "Interactive rebase"),
-                        NotPorted(App.Text("CommitCM.InteractiveRebase.Edit"), "Interactive rebase"),
-                        NotPorted(App.Text("CommitCM.InteractiveRebase.Squash"), "Interactive rebase"),
-                        NotPorted(App.Text("CommitCM.InteractiveRebase.Fixup"), "Interactive rebase"),
-                        NotPorted(App.Text("CommitCM.InteractiveRebase.Drop"), "Interactive rebase"),
+                        Prefilled("CommitCM.InteractiveRebase.Reword", Models.InteractiveRebaseAction.Reword),
+                        Prefilled("CommitCM.InteractiveRebase.Edit", Models.InteractiveRebaseAction.Edit),
+                        Prefilled("CommitCM.InteractiveRebase.Squash", Models.InteractiveRebaseAction.Squash),
+                        Prefilled("CommitCM.InteractiveRebase.Fixup", Models.InteractiveRebaseAction.Fixup),
+                        Prefilled("CommitCM.InteractiveRebase.Drop", Models.InteractiveRebaseAction.Drop),
                     ]);
                     menu.Add(new Submenu(App.Text("CommitCM.InteractiveRebase"), rebase));
                 }
                 else
                 {
-                    menu.Add(NotPorted(manually, "Interactive rebase"));
+                    menu.Add(new MenuItem(manually, () => InteractiveRebase.Show(repo, commit)));
                 }
                 menu.Add(MenuSeparator.Instance);
             }

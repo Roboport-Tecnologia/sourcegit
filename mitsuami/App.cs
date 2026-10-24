@@ -154,7 +154,7 @@ namespace SourceGit
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
             }
-            var ok = await (Views.Popups.Shown ?? s_mainWindow).CapturePng(path);
+            var ok = await (Views.Popups.Shown ?? Views.InteractiveRebase.Shown ?? s_mainWindow).CapturePng(path);
             Console.WriteLine(ok ? $"Captured to {path}" : "Capture failed");
         }
 
@@ -195,6 +195,9 @@ namespace SourceGit
         private static readonly Dictionary<string, string> s_fallbackLocale = LoadLocale("en_US");
         private static Dictionary<string, string> s_activeLocale = s_fallbackLocale;
         private static ViewModels.Launcher s_launcher = null;
+        /// <summary>The launcher's window, which dialogs go on.</summary>
+        public static Mitsuamia.Window MainWindow => s_mainWindow;
+
         private static Mitsuamia.Window s_mainWindow = null;
     }
 }

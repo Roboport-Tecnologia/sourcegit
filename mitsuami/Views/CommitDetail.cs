@@ -1,4 +1,5 @@
 using System;
+using INotifyPropertyChanged = System.ComponentModel.INotifyPropertyChanged;
 using PropertyChangedEventArgs = System.ComponentModel.PropertyChangedEventArgs;
 using System.Linq;
 
@@ -16,7 +17,14 @@ namespace SourceGit.Views
     /// </summary>
     public static class CommitDetail
     {
-        public static Node Create(ViewModels.Histories vm)
+        public static Node Create(ViewModels.Histories vm) =>
+            Create(vm, nameof(vm.DetailContext), () => vm.DetailContext, () => vm.HasSingleRemote, tips: true);
+
+        /// <summary>The details of what <paramref name="context"/> gives: a
+        /// commit's view model, a count, or nothing (then the history's tips,
+        /// with <paramref name="tips"/>, or upstream's icon alone).</summary>
+        public static Node Create(INotifyPropertyChanged source, string property, Func<object> context, Func<bool> hasSingleRemote,
+            bool tips)
         {
             var tabs = new Tabs();
             var info = new ScrollView();
@@ -36,7 +44,7 @@ namespace SourceGit.Views
             void Changed(object sender, PropertyChangedEventArgs e)
             {
                 if (e.PropertyName is nameof(shown.Commit) or nameof(shown.FullMessage) or nameof(shown.Changes) or nameof(shown.SignInfo))
-                    Show(info.Content, vm, shown);
+                    Show(info.Content, hasSingleRemote, shown, tips);
                 else if (e.PropertyName == nameof(shown.ActiveTabIndex))
                     tabs.SelectedIndex = shown.ActiveTabIndex;
             }
@@ -45,7 +53,7 @@ namespace SourceGit.Views
                 if (shown != null)
                     shown.ActiveTabIndex = index;
             };
-            Bind.OneWay(vm, nameof(vm.DetailContext), () => vm.DetailContext, context =>
+            Bind.OneWay(source, property, context, context =>
             {
                 if (shown != null)
                     shown.PropertyChanged -= Changed;
@@ -59,7 +67,7 @@ namespace SourceGit.Views
                 {
                     tabs.SelectedIndex = 0;
                 }
-                Show(info.Content, vm, context);
+                Show(info.Content, hasSingleRemote, context, tips);
             }, owner: tabs);
             tabs.Forgotten += () =>
             {
@@ -77,7 +85,7 @@ namespace SourceGit.Views
         }
 
         /// <summary>Fills the Information page for what's selected.</summary>
-        private static void Show(Container page, ViewModels.Histories vm, object context)
+        private static void Show(Container page, Func<bool> hasSingleRemote, object context, bool tips)
         {
             foreach (var child in page.Children.ToArray())
                 child.Destroy();
@@ -85,7 +93,7 @@ namespace SourceGit.Views
             switch (context)
             {
                 case ViewModels.CommitDetail { Commit: { } commit } detail:
-                    BaseInfo(page, vm, detail, commit);
+                    BaseInfo(page, hasSingleRemote, detail, commit);
                     Changes(page, detail);
                     break;
                 case Models.Count count:
@@ -96,7 +104,7 @@ namespace SourceGit.Views
                     break;
                 default:
                     var hint = OperatingSystem.IsMacOS() ? "Histories.Tips.MacOS" : "Histories.Tips";
-                    page.Add(Placeholder($"{App.Text("Histories.Tips.Prefix")} {App.Text(hint)}"));
+                    page.Add(Placeholder(tips ? $"{App.Text("Histories.Tips.Prefix")} {App.Text(hint)}" : null));
                     break;
             }
         }
@@ -107,7 +115,8 @@ namespace SourceGit.Views
         {
             var column = new Column { AlignItems = Align.Center, Gap = 16, Padding = new Thickness(24, 0) };
             column.Add(new Icon(Icons.Get("Detail")) { Size = 128, Color = Color.SecondaryLabel });
-            column.Add(new Text(text) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
+            if (text != null)
+                column.Add(new Text(text) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
             return column;
         }
 
@@ -117,7 +126,7 @@ namespace SourceGit.Views
         /// 96-point column, a line, then the SHA with its buttons, the
         /// parents, the refs and the message, labelled in that column.
         /// </summary>
-        private static void BaseInfo(Container page, ViewModels.Histories vm, ViewModels.CommitDetail detail, Models.Commit commit)
+        private static void BaseInfo(Container page, Func<bool> hasSingleRemote, ViewModels.CommitDetail detail, Models.Commit commit)
         {
             var people = new Row { AlignItems = Align.Start, Padding = new Thickness(8, 0) };
             people.Add(Person(App.Text("CommitDetail.Info.Author"), commit.Author, commit.AuthorTime));
@@ -148,7 +157,7 @@ namespace SourceGit.Views
             if (commit.HasDecorators)
             {
                 var refs = new CommitRefs();
-                refs.Show(commit, vm.HasSingleRemote, useGraphColor: false);
+                refs.Show(commit, hasSingleRemote(), useGraphColor: false);
                 page.Add(Field(App.Text("CommitDetail.Info.Refs"), refs.View));
             }
 
