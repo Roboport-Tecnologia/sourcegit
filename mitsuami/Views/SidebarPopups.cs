@@ -93,8 +93,7 @@ namespace SourceGit.Views
                     title = App.Text("RemoveWorktree");
                     return _ => RemoveWorktreeForm(vm);
                 default:
-                    title = null;
-                    return null;
+                    return LocalChangesForm(popup, out title);
             }
         }
 

@@ -1,0 +1,119 @@
+using System;
+using System.Linq;
+
+using Mitsuamia;
+
+namespace SourceGit.Views
+{
+    /// <summary>
+    /// The popups the local changes open, upstream's views of the same
+    /// names: discarding changes, stashing them, and ignoring a file.
+    /// </summary>
+    public static partial class Popups
+    {
+        /// <summary>A local changes popup's form, or null when it isn't one.</summary>
+        private static Func<Window, Node> LocalChangesForm(ViewModels.Popup popup, out string title)
+        {
+            switch (popup)
+            {
+                case ViewModels.Discard vm:
+                    title = App.Text("Discard");
+                    return _ => DiscardForm(vm);
+                case ViewModels.StashChanges vm:
+                    title = App.Text("Stash.Title");
+                    return _ => StashForm(vm);
+                case ViewModels.AddToIgnore vm:
+                    title = App.Text("AddToIgnore");
+                    return sheet => AddToIgnoreForm(sheet, vm);
+                default:
+                    title = null;
+                    return null;
+            }
+        }
+
+        /// <summary>Upstream's three forms: what's discarded (everything,
+        /// with what kinds to include, one file, or how many), then the
+        /// warning that it can't be undone.</summary>
+        private static Node DiscardForm(ViewModels.Discard vm)
+        {
+            Column form;
+            switch (vm.Mode)
+            {
+                case ViewModels.DiscardAllMode all:
+                    form = Rows((App.Text("Discard.Changes"), new Text(App.Text("Discard.All"))));
+                    Checkbox Include(string label, bool value, Action<bool> set)
+                    {
+                        var box = new Checkbox(App.Text(label)) { IsChecked = value };
+                        box.Changed += set;
+                        return box;
+                    }
+                    form.Add(Field("", Include("Discard.IncludeModified", all.IncludeModified, v => all.IncludeModified = v)));
+                    form.Add(Field("", Include("Discard.IncludeUntracked", all.IncludeUntracked, v => all.IncludeUntracked = v)));
+                    form.Add(Field("", Include("Discard.IncludeIgnored", all.IncludeIgnored, v => all.IncludeIgnored = v)));
+                    break;
+                case ViewModels.DiscardSingleFile single:
+                    form = Rows((App.Text("Discard.Changes"), IconLabel("File", single.Path)));
+                    break;
+                case ViewModels.DiscardMultipleFiles multiple:
+                    form = Rows((App.Text("Discard.Changes"), IconLabel("File", App.Text("Discard.Total", multiple.Count))));
+                    break;
+                default:
+                    form = Rows();
+                    break;
+            }
+            form.Add(Field("", Warning(App.Text("Discard.Warning"))));
+            return form;
+        }
+
+        /// <summary>Upstream's stash form: what's left after stashing, a
+        /// message, and for all the changes, whether only the staged ones go
+        /// and whether untracked files do; for selected files, a tip.</summary>
+        private static Node StashForm(ViewModels.StashChanges vm)
+        {
+            var modes = Models.DealWithChangesAfterStashing.Supported;
+            var mode = new Select(App.Text("Stash.Mode"))
+            {
+                Options = modes.Select(m => $"{m.Label}  ({m.Desc})").ToArray(),
+                SelectedIndex = Math.Clamp(vm.ChangesAfterStashing, 0, modes.Count - 1),
+                MinWidth = 0,
+            };
+            mode.Changed += i => vm.ChangesAfterStashing = i;
+
+            var message = new TextArea { Placeholder = App.Text("Stash.Message.Placeholder"), AccessibleName = App.Text("Stash.Message") };
+            message.Height = 100;
+            message.Value = vm.Message ?? "";
+            message.Changed += v => vm.Message = v;
+
+            var form = Rows((App.Text("Stash.Mode"), mode));
+            form.Add(TopField(App.Text("Stash.Message"), message));
+            if (vm.HasSelectedFiles)
+            {
+                var tip = new Text(App.Text("Stash.TipForSelectedFiles")) { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
+                tip.Shrink = 1;
+                form.Add(Field("", tip));
+            }
+            else
+            {
+                form.Add(Field("", Check(vm, nameof(vm.OnlyStaged), App.Text("Stash.OnlyStagedChanges"), () => vm.OnlyStaged, v => vm.OnlyStaged = v,
+                    "--staged. If file is staged partically, the unstaged part of it will also be stashed.")));
+                var untracked = Field("", Check(vm, nameof(vm.IncludeUntracked), App.Text("Stash.IncludeUntracked"), () => vm.IncludeUntracked,
+                    v => vm.IncludeUntracked = v, "--include-untracked"));
+                Bind.OneWay(vm, nameof(vm.OnlyStaged), () => vm.OnlyStaged, only => untracked.IsVisible = !only, owner: untracked);
+                form.Add(untracked);
+            }
+            return form;
+        }
+
+        /// <summary>Upstream's pattern and the file it goes in: the
+        /// repository's <c>.gitignore</c>s, or <c>.git/info/exclude</c>
+        /// (local only).</summary>
+        private static Node AddToIgnoreForm(Window sheet, ViewModels.AddToIgnore vm)
+        {
+            var storage = Choice(App.Text("AddToIgnore.Storage"), vm, nameof(vm.SelectedStorageFile), vm.StorageFiles,
+                f => f.IsLocalOnly ? $"{f.DisplayName}  (LOCAL ONLY)" : f.DisplayName, () => vm.SelectedStorageFile, f => vm.SelectedStorageFile = f);
+            return Rows(
+                (App.Text("AddToIgnore.Pattern"), TextField(sheet, vm, nameof(vm.Pattern), () => vm.Pattern, v => vm.Pattern = v)),
+                (App.Text("AddToIgnore.Storage"), storage));
+        }
+    }
+}

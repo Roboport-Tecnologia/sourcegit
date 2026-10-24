@@ -74,9 +74,27 @@ namespace SourceGit
             return await Mitsuamia.Dialogs.Alert(s_mainWindow, message, "", buttons, Mitsuamia.AlertStyle.Warning) == 0;
         }
 
-        public static Task<Models.ConfirmEmptyCommitResult> AskConfirmEmptyCommitAsync(bool hasLocalChanges, bool hasSelectedUnstaged)
+        /// <summary>Upstream's <c>ConfirmEmptyCommit</c> window as an alert:
+        /// Cancel first, upstream's primary button, so it's the default;
+        /// then committing empty, and staging all or the selection first
+        /// when there's something to stage.</summary>
+        public static async Task<Models.ConfirmEmptyCommitResult> AskConfirmEmptyCommitAsync(bool hasLocalChanges, bool hasSelectedUnstaged)
         {
-            throw new NotImplementedException("mitsuami: confirmations come with the views");
+            var results = new List<Models.ConfirmEmptyCommitResult> { Models.ConfirmEmptyCommitResult.Cancel, Models.ConfirmEmptyCommitResult.CreateEmptyCommit };
+            var buttons = new List<string> { Views.Popups.ButtonText("Cancel"), Views.Popups.ButtonText("ConfirmEmptyCommit.Continue") };
+            if (hasLocalChanges)
+            {
+                results.Add(Models.ConfirmEmptyCommitResult.StageAllAndCommit);
+                buttons.Add(Views.Popups.ButtonText("ConfirmEmptyCommit.StageAllThenCommit"));
+            }
+            if (hasSelectedUnstaged)
+            {
+                results.Add(Models.ConfirmEmptyCommitResult.StageSelectedAndCommit);
+                buttons.Add(Views.Popups.ButtonText("ConfirmEmptyCommit.StageSelectedThenCommit"));
+            }
+            var message = Text(hasLocalChanges ? "ConfirmEmptyCommit.WithLocalChanges" : "ConfirmEmptyCommit.NoLocalChanges");
+            var chosen = await Mitsuamia.Dialogs.Alert(s_mainWindow, message, "", buttons, Mitsuamia.AlertStyle.Warning);
+            return chosen >= 0 && chosen < results.Count ? results[chosen] : Models.ConfirmEmptyCommitResult.Cancel;
         }
 
         /// <summary>mitsuami's run loop ends with its last window; until the

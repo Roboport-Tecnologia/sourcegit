@@ -347,7 +347,7 @@ namespace SourceGit.Views
             })
             { Enabled = enabled };
 
-        private static void CustomActions(List<MenuEntry> menu, ViewModels.Repository repo, Models.CustomActionScope scope, string title, object target)
+        internal static void CustomActions(List<MenuEntry> menu, ViewModels.Repository repo, Models.CustomActionScope scope, string title, object target)
         {
             var actions = repo.GetCustomActions(scope);
             if (actions.Count == 0)
