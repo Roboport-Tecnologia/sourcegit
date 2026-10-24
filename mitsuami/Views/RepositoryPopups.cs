@@ -117,8 +117,7 @@ namespace SourceGit.Views
                         ("", Check(vm, nameof(vm.Squash), App.Text("GitFlow.FinishWithSquash"), () => vm.Squash, v => vm.Squash = v, "--squash")),
                         ("", Check(vm, nameof(vm.KeepBranch), App.Text("GitFlow.KeepBranchAfterFinish"), () => vm.KeepBranch, v => vm.KeepBranch = v, "--keep")));
                 default:
-                    title = null;
-                    return null;
+                    return SidebarForm(popup, out title);
             }
         }
 
@@ -454,16 +453,24 @@ namespace SourceGit.Views
             return row;
         }
 
-        /// <summary>Upstream's framed list of what a popup acts on (commits
-        /// or branches), 32 to 100 points high: as high as its rows, up to
-        /// that.</summary>
-        private static Node Targets(List<object> targets)
+        /// <summary>Upstream's framed list of what a popup acts on (commits,
+        /// branches or tags), from 32 points high: as high as its rows, up
+        /// to <paramref name="most"/>. Deleting branches shows how far each
+        /// is ahead and behind, as upstream's badge does.</summary>
+        private static Node Targets(List<object> targets, float most = 100, bool trackStatus = false)
         {
-            var list = new ListView<object>(t => t is Models.Commit c ? c.SHA : ((Models.Branch)t).FullName, t =>
+            var list = new ListView<object>(t => t switch
             {
-                var row = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 6) };
+                Models.Commit c => c.SHA,
+                Models.Tag tag => "refs/tags/" + tag.Name,
+                _ => ((Models.Branch)t).FullName,
+            }, t =>
+            {
+                var row = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 6) };
                 row.Height = 26;
                 row.Add(RefLabel(t));
+                if (trackStatus && t is Models.Branch { IsTrackStatusVisible: true } branch)
+                    row.Add(new Text(branch.TrackStatusDescription) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
                 return row;
             }, itemAnimations: false)
             {
@@ -471,7 +478,7 @@ namespace SourceGit.Views
                 EstimatedRowHeight = 26,
                 Items = targets,
             };
-            list.Height = Math.Clamp(targets.Count * 26 + 8, 32, 100);
+            list.Height = Math.Clamp(targets.Count * 26 + 8, 32, most);
             return list;
         }
 
