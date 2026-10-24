@@ -104,6 +104,10 @@ namespace SourceGit.Views
         {
             set
             {
+                // The list's own selection coming back: shown already. Shown
+                // again, a folder picked would give way to its changes.
+                if (ReferenceEquals(value, _selection))
+                    return;
                 _selection = value ?? new(null);
                 ShowSelection();
             }
@@ -186,11 +190,11 @@ namespace SourceGit.Views
             }
         }
 
-        /// <summary>A row stays while its key does: the key has the state,
-        /// so a change that turns from modified to deleted gets its new
-        /// mark.</summary>
+        /// <summary>A row stays while its key does: the key has the view
+        /// mode, so the rows change with it, and the state, so a change that
+        /// turns from modified to deleted gets its new mark.</summary>
         private string ChangeKey(Models.Change c) =>
-            $"{c.Path}\n{(_unstaged ? c.WorkTree : c.Index)}\n{c.ConflictReason}";
+            $"{_mode}\n{c.Path}\n{(_unstaged ? c.WorkTree : c.Index)}\n{c.ConflictReason}";
 
         /// <summary>A folder's row shows whether it's open.</summary>
         private static string FolderKey(ViewModels.ChangeTreeNode node) => $"{(node.IsExpanded ? "open" : "closed")}\n{node.FullPath}";
