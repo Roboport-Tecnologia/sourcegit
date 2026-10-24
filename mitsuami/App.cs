@@ -29,7 +29,10 @@ namespace SourceGit
             if (args == null || args.Length == 0)
                 return fmt;
 
-            return string.Format(fmt, args);
+            // Upstream marks a name it highlights, "${0}$", and its menus and
+            // NameHighlightedTextBlock draw it so. Native text has no such
+            // run (a menu showed "Reset $main$ to …"): the name goes in plain.
+            return string.Format(s_highlighted.Replace(fmt, "{$1}"), args);
         }
 
         public static void SetLocale(string localeKey)
@@ -156,6 +159,8 @@ namespace SourceGit
             }
             return strings;
         }
+
+        private static readonly System.Text.RegularExpressions.Regex s_highlighted = new(@"\$\{(\d+)\}\$");
 
         private static readonly Dictionary<string, string> s_fallbackLocale = LoadLocale("en_US");
         private static Dictionary<string, string> s_activeLocale = s_fallbackLocale;
