@@ -417,7 +417,7 @@ namespace SourceGit.Views
 
         /// <summary>An item showing upstream's popup, when the page can
         /// show one.</summary>
-        private static MenuItem Popup(ViewModels.Repository repo, string title, Func<ViewModels.Popup> popup, bool enabled = true) =>
+        internal static MenuItem Popup(ViewModels.Repository repo, string title, Func<ViewModels.Popup> popup, bool enabled = true) =>
             new(title, () =>
             {
                 if (repo.CanCreatePopup())
@@ -427,7 +427,7 @@ namespace SourceGit.Views
 
         /// <summary>An item for one of upstream's dialogs or windows, which
         /// aren't ported yet: it says so.</summary>
-        private static MenuItem NotPorted(string title, string what) =>
+        internal static MenuItem NotPorted(string title, string what) =>
             new(title, () => _ = Dialogs.Alert(null, $"{what} isn't ported to mitsuami yet.", "", [App.Text("Sure")]));
 
         private static string Lines(List<Models.Commit> commits, Func<Models.Commit, string> line)

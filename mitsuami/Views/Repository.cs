@@ -235,7 +235,10 @@ namespace SourceGit.Views
                 nameof(vm.IsRemoteGroupExpanded), () => vm.IsRemoteGroupExpanded, v => vm.IsRemoteGroupExpanded = v,
                 remotes.View, [("Remote.Add", "Repository.Remotes.Add", vm.AddRemote)], branches: true);
 
-            var tags = new ListView<Models.Tag>(tag => tag.Name, TagRow, itemAnimations: false) { EstimatedRowHeight = 24 };
+            // Several at once, as upstream's: deleting them.
+            ListView<Models.Tag> tags = null;
+            tags = new ListView<Models.Tag>(tag => tag.Name, tag => TagRow(tag, () => TagsMenu(vm, tags, tag.Name)),
+                SelectionMode.Multiple, itemAnimations: false) { EstimatedRowHeight = 24 };
             Bind.OneWay(vm, nameof(vm.VisibleTags), () => vm.VisibleTags as IReadOnlyList<Models.Tag> ?? vm.Tags ?? [],
                 visible => tags.Items = visible, owner: sidebar);
             tags.SelectionChanged += selected =>
@@ -247,14 +250,14 @@ namespace SourceGit.Views
                 nameof(vm.IsTagGroupExpanded), () => vm.IsTagGroupExpanded, v => vm.IsTagGroupExpanded = v,
                 tags, [("Tag.Add", "Repository.Tags.Add", vm.CreateNewTag)]);
 
-            var submodules = new ListView<Models.Submodule>(s => s.Path, SubmoduleRow, itemAnimations: false) { EstimatedRowHeight = 24 };
+            var submodules = new ListView<Models.Submodule>(s => s.Path, s => SubmoduleRow(vm, s), itemAnimations: false) { EstimatedRowHeight = 24 };
             Bind.OneWay(vm, nameof(vm.Submodules), () => (IReadOnlyList<Models.Submodule>)vm.Submodules ?? [],
                 visible => submodules.Items = visible, owner: sidebar);
             Group(sidebar, vm, "Submodules", "Repository.Submodules", nameof(vm.Submodules), () => $"({vm.Submodules?.Count ?? 0})",
                 nameof(vm.IsSubmoduleGroupExpanded), () => vm.IsSubmoduleGroupExpanded, v => vm.IsSubmoduleGroupExpanded = v,
                 submodules, []);
 
-            var worktrees = new ListView<ViewModels.Worktree>(w => w.FullPath, WorktreeRow, itemAnimations: false) { EstimatedRowHeight = 24 };
+            var worktrees = new ListView<ViewModels.Worktree>(w => w.FullPath, w => WorktreeRow(vm, w), itemAnimations: false) { EstimatedRowHeight = 24 };
             Bind.OneWay(vm, nameof(vm.Worktrees), () => (IReadOnlyList<ViewModels.Worktree>)vm.Worktrees ?? [],
                 visible => worktrees.Items = visible, owner: sidebar);
             Group(sidebar, vm, "Worktree", "Repository.Worktrees", nameof(vm.Worktrees), () => $"({vm.Worktrees?.Count ?? 0})",
@@ -356,32 +359,54 @@ namespace SourceGit.Views
             sidebar.Add(list);
         }
 
-        private static Node TagRow(Models.Tag tag)
+        /// <summary>A refresh brings new tags, submodules and worktrees,
+        /// and a row stays while its key does: menus act on what's at its
+        /// key now.</summary>
+        private static IReadOnlyList<MenuEntry> TagsMenu(ViewModels.Repository vm, ListView<Models.Tag> list, string name)
+        {
+            var all = vm.Tags ?? [];
+            var selected = new List<Models.Tag>();
+            foreach (var tag in list.SelectedItems)
+            {
+                if (all.Find(t => t.Name == tag.Name) is { } now)
+                    selected.Add(now);
+            }
+            if (selected.Find(t => t.Name == name) == null)
+                selected = all.FindAll(t => t.Name == name);
+            return SidebarMenus.Tags(vm, selected);
+        }
+
+        private static Node TagRow(Models.Tag tag, Func<IReadOnlyList<MenuEntry>> menu)
         {
             var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 0, 0, 16) };
             row.Height = 24;
             row.Add(new Icon(Icons.Get("Tag")) { Size = 12 });
             row.Add(new Text(tag.Name));
             row.ToolTip = tag.Message ?? tag.Name;
+            row.ContextMenuOnOpen = menu;
             return row;
         }
 
-        private static Node SubmoduleRow(Models.Submodule submodule)
+        private static Node SubmoduleRow(ViewModels.Repository vm, Models.Submodule submodule)
         {
             var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 0, 0, 16) };
             row.Height = 24;
             row.Add(new Icon(Icons.Get("Submodule")) { Size = 12 });
             row.Add(new Text(submodule.Path));
+            var path = submodule.Path;
+            row.ContextMenuOnOpen = () => vm.Submodules?.Find(s => s.Path == path) is { } now ? SidebarMenus.Submodule(vm, now) : [];
             return row;
         }
 
-        private static Node WorktreeRow(ViewModels.Worktree worktree)
+        private static Node WorktreeRow(ViewModels.Repository vm, ViewModels.Worktree worktree)
         {
             var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 0, 0, 16) };
             row.Height = 24;
             row.Add(new Icon(Icons.Get("Worktree")) { Size = 12 });
             row.Add(new Text(worktree.Name));
             row.ToolTip = worktree.FullPath;
+            var path = worktree.FullPath;
+            row.ContextMenuOnOpen = () => vm.Worktrees?.Find(w => w.FullPath == path) is { } now ? SidebarMenus.Worktree(vm, now) : [];
             return row;
         }
 

@@ -16,11 +16,15 @@ namespace SourceGit.Views
     {
         private readonly ViewModels.Repository _repo;
         private List<ViewModels.BranchTreeNode> _nodes = [];
+        // A row stays while its key does, and a refresh brings new nodes:
+        // its menu and keys act on the node now at its path.
+        private readonly Dictionary<string, ViewModels.BranchTreeNode> _byPath = [];
 
         public BranchTree(ViewModels.Repository repo)
         {
             _repo = repo;
-            View = new ListView<ViewModels.BranchTreeNode>(node => node.Path, Row, itemAnimations: false)
+            // Several at once, as upstream's: merging or deleting them.
+            View = new ListView<ViewModels.BranchTreeNode>(node => node.Path, Row, SelectionMode.Multiple, itemAnimations: false)
             {
                 EstimatedRowHeight = 24,
                 Items = Rows,
@@ -36,6 +40,15 @@ namespace SourceGit.Views
                 if (!node.IsBranch)
                     Toggle(node);
             };
+            // Upstream's keys: Delete (and Backspace, the Mac's) deletes the
+            // branches or the remote, F2 renames a local branch.
+            View.OnKey(Shortcut.Of(Key.Delete), Delete);
+            View.OnKey(Shortcut.Of(Key.Backspace), Delete);
+            View.OnKey(Shortcut.Function(2), () =>
+            {
+                if (Current(View.SelectedItems) is [{ Backend: Models.Branch { IsLocal: true } branch }] && _repo.CanCreatePopup())
+                    _repo.ShowPopup(new ViewModels.RenameBranch(_repo, branch));
+            });
         }
 
         public ListView<ViewModels.BranchTreeNode> View { get; }
@@ -66,8 +79,56 @@ namespace SourceGit.Views
             var rows = new List<ViewModels.BranchTreeNode>();
             MakeRows(rows, _nodes, 0);
             Rows.Clear();
+            _byPath.Clear();
             foreach (var row in rows)
+            {
                 Rows.Add(row);
+                _byPath[row.Path] = row;
+            }
+        }
+
+        private List<ViewModels.BranchTreeNode> Current(IEnumerable<ViewModels.BranchTreeNode> nodes)
+        {
+            var current = new List<ViewModels.BranchTreeNode>();
+            foreach (var node in nodes)
+            {
+                if (_byPath.TryGetValue(node.Path, out var now))
+                    current.Add(now);
+            }
+            return current;
+        }
+
+        /// <summary>The menu for the row right-clicked, or for the selection
+        /// when the row is in it.</summary>
+        private IReadOnlyList<MenuEntry> Menu(string path)
+        {
+            var selected = Current(View.SelectedItems);
+            if (selected.Find(n => n.Path == path) == null)
+                selected = _byPath.TryGetValue(path, out var clicked) ? [clicked] : [];
+            return SidebarMenus.Branches(_repo, selected);
+        }
+
+        /// <summary>Upstream's <c>OnTreeKeyDown</c>: a remote's deletion, or
+        /// the branches', but never the current one's.</summary>
+        private void Delete()
+        {
+            var selected = Current(View.SelectedItems);
+            if (_repo.Settings == null || selected.Count == 0)
+                return;
+            if (selected is [{ Backend: Models.Remote remote }])
+            {
+                _repo.DeleteRemote(remote);
+                return;
+            }
+            var branches = new List<Models.Branch>();
+            foreach (var node in selected)
+                SidebarMenus.Collect(branches, node);
+            if (branches.Count == 0 || branches.Find(x => x.IsCurrent) != null)
+                return;
+            if (branches.Count == 1)
+                _repo.DeleteBranch(branches[0]);
+            else
+                _repo.DeleteMultipleBranches(branches, branches[0].IsLocal);
         }
 
         private static void MakeRows(List<ViewModels.BranchTreeNode> rows, List<ViewModels.BranchTreeNode> nodes, int depth)
@@ -91,6 +152,8 @@ namespace SourceGit.Views
         {
             var row = new Row { AlignItems = Align.Center };
             row.Height = 24;
+            var path = node.Path;
+            row.ContextMenuOnOpen = () => Menu(path);
             for (var level = 0; level < node.Depth; level++)
                 row.Add(new Column { Width = Spacing.Indent });
 
