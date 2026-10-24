@@ -71,6 +71,9 @@ namespace SourceGit.Views
                 Show(repo, on, new ViewModels.InteractiveRebasePrefill(target.SHA, action));
         }
 
+        /// <summary>The message's sheet showing, if any: for captures.</summary>
+        public static Window Editing { get; private set; }
+
         /// <summary>The sheet showing, if any: for captures.</summary>
         public static Window Shown { get; private set; }
 
@@ -309,7 +312,11 @@ namespace SourceGit.Views
         /// rebase's: the whole message in the platform's text view.</summary>
         private static void EditMessage(Window owner, ViewModels.InteractiveRebaseItem item)
         {
-            var sheet = new Window(owner, App.Text("CodeEditor"), 640, 360);
+            // As tall as its content: a text view that grows has nothing to
+            // grow into in a sheet, and showed one line.
+            var sheet = new Window(owner, App.Text("CodeEditor"), 640);
+            Editing = sheet;
+            sheet.Closed += () => Editing = null;
             var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
             var message = new TextArea
             {
@@ -317,7 +324,7 @@ namespace SourceGit.Views
                 Placeholder = App.Text("CommitMessageTextBox.Placeholder"),
                 AccessibleName = App.Text("CodeEditor"),
             };
-            message.Grow = 1;
+            message.Height = 280;
             column.Add(message);
 
             var buttons = new Row { Gap = 8, Justify = Justify.End };
