@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 using Mitsuamia;
 
@@ -9,7 +10,7 @@ namespace SourceGit.Views
     /// searching: its title, the platform's search field, what to search
     /// by, whether only in the current branch, then the commits found
     /// (picking one navigates to it). Upstream's suggestions (paths or
-    /// authors) show under the field as the platform's popover.
+    /// authors) are the field's own.
     /// </summary>
     public static class CommitSearch
     {
@@ -24,11 +25,12 @@ namespace SourceGit.Views
                 AlignSelf = Align.Center,
             });
 
-            var field = new SearchInput { Placeholder = App.Text("Repository.Search.ToolTip") };
+            // Upstream searches on Return: git takes a while, and a search
+            // clears the suggestions.
+            var field = new SearchInput { Placeholder = App.Text("Repository.Search.ToolTip"), SearchOnReturn = true };
             Bind.OneWay(ctx, nameof(ctx.Filter), () => ctx.Filter, v => field.Value = v ?? "", owner: panel);
             field.Changed += text => ctx.Filter = text;
-            // The platform's field searches when it does: on Return, or as
-            // the user pauses typing.
+            // On Return, and when the field is cleared.
             field.Search += text =>
             {
                 ctx.Filter = text;
@@ -37,10 +39,27 @@ namespace SourceGit.Views
                 else
                     ctx.StartSearch();
             };
-            var anchor = new Column { AlignItems = Align.Stretch };
-            anchor.Add(field);
-            anchor.Add(Suggestions(ctx));
-            panel.Add(anchor);
+            // Upstream's suggestions while typing a path or an author, as
+            // the platform suggests under a field: a file's name and folder,
+            // or an author's name and email. Picking one searches for it, as
+            // upstream's Enter or tap.
+            Bind.OneWay(ctx, nameof(ctx.Suggestions), () => ctx.Suggestions, suggestions =>
+            {
+                field.Suggestions = (suggestions ?? []).Select(s => s switch
+                {
+                    Models.User user => (user.Name, (string)user.Email),
+                    string path => (System.IO.Path.GetFileName(path), System.IO.Path.GetDirectoryName(path)),
+                    var other => (other.ToString(), null),
+                }).ToList();
+            }, owner: panel);
+            field.SuggestionChosen += index =>
+            {
+                if (ctx.Suggestions is not { } suggestions || index >= suggestions.Count)
+                    return;
+                ctx.Filter = suggestions[index] is Models.User user ? user.ToString().EscapeForBRE() : suggestions[index] as string;
+                ctx.StartSearch();
+            };
+            panel.Add(field);
 
             // Upstream's "SEARCH BY" label beside the methods, and under
             // them the current-branch check for every method but SHA.
@@ -98,63 +117,6 @@ namespace SourceGit.Views
             Bind.OneWay(ctx, nameof(ctx.IsQuerying), () => ctx.IsQuerying, _ => Show(), owner: panel);
             Bind.OneWay(ctx, nameof(ctx.Selected), () => ctx.Selected, c => results.SelectedItems = c == null ? [] : [c], owner: panel);
             return panel;
-        }
-
-        /// <summary>
-        /// Upstream's suggestions while typing a path or an author: a
-        /// popover under the field, each a row 42 high (a file's icon, its
-        /// name and folder; or an author's avatar, name and email), up to
-        /// 400 high. Picking one searches for it, as upstream's Enter or tap.
-        /// </summary>
-        private static Node Suggestions(ViewModels.SearchCommitContext ctx)
-        {
-            var popover = new Popover();
-            var list = new ListView<object>(Key, Suggestion, itemAnimations: false) { EstimatedRowHeight = 42 };
-            list.MinWidth = 300;
-            popover.Add(list);
-            list.SelectionChanged += picked =>
-            {
-                if (picked is not [var chosen])
-                    return;
-                ctx.Filter = chosen is Models.User user ? user.ToString().EscapeForBRE() : chosen as string;
-                ctx.StartSearch();
-            };
-            popover.Closed += ctx.ClearSuggestions;
-            Bind.OneWay(ctx, nameof(ctx.Suggestions), () => ctx.Suggestions, suggestions =>
-            {
-                var shown = suggestions is { Count: > 0 };
-                if (shown)
-                {
-                    list.Items = suggestions;
-                    list.Height = System.Math.Min(400, suggestions.Count * 42);
-                }
-                popover.IsShown = shown;
-            }, owner: popover);
-            return popover;
-        }
-
-        private static string Key(object suggestion) => suggestion is Models.User user ? $"@{user}" : suggestion.ToString();
-
-        private static Node Suggestion(object suggestion)
-        {
-            var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(4, 8) };
-            row.Height = 42;
-            var lines = new Column();
-            if (suggestion is Models.User user)
-            {
-                var avatar = new Avatar(24, menu: false) { User = user };
-                row.Add(avatar.View);
-                lines.Add(new Text(user.Name) { MaxLines = 1 });
-                lines.Add(new Text(user.Email) { Style = TextStyle.Caption, Color = Color.SecondaryLabel, MaxLines = 1, Margin = new Thickness(2, 0, 0, 0) });
-            }
-            else if (suggestion is string path)
-            {
-                row.Add(new Icon(Icons.Get("File")) { Size = 24 });
-                lines.Add(new Text(System.IO.Path.GetFileName(path)) { MaxLines = 1 });
-                lines.Add(new Text(System.IO.Path.GetDirectoryName(path) ?? "") { Style = TextStyle.Caption, Color = Color.SecondaryLabel, MaxLines = 1, Margin = new Thickness(2, 0, 0, 0) });
-            }
-            row.Add(lines);
-            return row;
         }
 
         /// <summary>A commit found: its author's avatar in 24 points, a
