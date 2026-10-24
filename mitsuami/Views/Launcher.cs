@@ -64,6 +64,9 @@ namespace SourceGit.Views
                         ShowPage(content, page);
                 };
                 page.Node.PropertyChanged += NodeRenamed;
+                // Posted: the list can't change while it tells of a change.
+                page.Notifications.CollectionChanged += (_, _) =>
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => Notify(window, vm, page));
             }
             void NodeRenamed(object sender, PropertyChangedEventArgs e)
             {
@@ -75,6 +78,8 @@ namespace SourceGit.Views
             {
                 tabs.SelectedIndex = vm.Pages.IndexOf(page);
                 ShowPage(content, page);
+                if (page != null)
+                    Notify(window, vm, page);
             });
             ShowTitles();
 
@@ -86,6 +91,37 @@ namespace SourceGit.Views
 
             Popups.Attach(window, vm);
             return window;
+        }
+
+        private static readonly System.Collections.Generic.Queue<Models.Notification> s_pending = new();
+        private static bool s_alerting;
+
+        /// <summary>
+        /// Upstream's notifications (git's errors, and what succeeded), which
+        /// it floats over the page, as the platform's alerts: an error is how
+        /// Git clients on each platform show a failed command. One at a time,
+        /// on the popup's sheet when one shows (a failed push keeps it), and
+        /// for the page showing: another page's wait till it's chosen.
+        /// </summary>
+        private static async void Notify(Window window, ViewModels.Launcher vm, ViewModels.LauncherPage page)
+        {
+            if (page != vm.ActivePage || page.Notifications.Count == 0)
+                return;
+            foreach (var notification in page.Notifications)
+                s_pending.Enqueue(notification);
+            page.Notifications.Clear();
+            if (s_alerting)
+                return;
+            s_alerting = true;
+            while (s_pending.TryDequeue(out var notification))
+            {
+                var text = notification.Message.Trim();
+                var lineEnd = text.IndexOf('\n');
+                var (title, message) = lineEnd < 0 ? (text, "") : (text[..lineEnd].Trim(), text[(lineEnd + 1)..].Trim());
+                var style = notification.IsError ? AlertStyle.Critical : AlertStyle.Info;
+                await Dialogs.Alert(Popups.Shown ?? window, title, message, [Popups.ButtonText("Sure")], style);
+            }
+            s_alerting = false;
         }
 
         /// <summary>Upstream's tab titles: the repository's name, or the
