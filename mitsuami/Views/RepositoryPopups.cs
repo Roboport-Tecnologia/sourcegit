@@ -333,11 +333,19 @@ namespace SourceGit.Views
         private static void AskNewBranch(Window owner, ViewModels.Push push)
         {
             var vm = new ViewModels.PushToNewBranch(push.SelectedRemote.Name);
-            var sheet = new Window(owner, App.Text("PushToNewBranch.Title"), 400);
+            var sheet = new Window(owner, App.Text("PushToNewBranch"), 400);
             var column = new Column { Padding = 20, Gap = 12, AlignItems = Align.Stretch };
-            column.Add(new Text(App.Text("PushToNewBranch.Title")) { Style = TextStyle.Headline });
+            column.Add(new Text(App.Text("PushToNewBranch")) { Style = TextStyle.Headline });
+            column.Add(new Text(App.Text("PushToNewBranch.Title")));
+            // Upstream shows the remote inside the field, before the name.
+            var row = new Row { Gap = 4, AlignItems = Align.Center };
+            var remote = new Text($"{vm.Remote}/") { Color = Color.SecondaryLabel };
+            remote.Shrink = 0;
+            row.Add(remote);
             var name = TextField(sheet, vm, nameof(vm.BranchName), () => vm.BranchName, v => vm.BranchName = v);
-            column.Add(Field(App.Text("PushToNewBranch.Remote", vm.Remote), name));
+            name.Grow = 1;
+            row.Add(name);
+            column.Add(row);
             var errors = new Text { Style = TextStyle.Caption, IsVisible = false };
             column.Add(errors);
 
