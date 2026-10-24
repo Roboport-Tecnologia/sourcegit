@@ -164,7 +164,8 @@ namespace SourceGit
             {
                 var found = entry switch
                 {
-                    MenuItem item when item.Title.StartsWith(title, StringComparison.OrdinalIgnoreCase) => item,
+                    // As a click: a disabled item can't be picked.
+                    MenuItem item when item.Enabled && item.Title.StartsWith(title, StringComparison.OrdinalIgnoreCase) => item,
                     Submenu submenu => Find(submenu.Entries, title),
                     _ => null,
                 };
