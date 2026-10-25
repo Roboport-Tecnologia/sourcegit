@@ -137,10 +137,15 @@ namespace SourceGit.Views
                 if (vm.CurrentBranch is { } head)
                     vm.NavigateToCommit(head.Head);
             });
+            // The history's own buttons, while it's the page showing, as
+            // upstream's sit over the history.
+            var history = new Row { AlignItems = Align.Center, Gap = 6 };
             var divider = new Separator(Orientation.Vertical) { Margin = new Thickness(0, 4) };
             divider.Height = 16;
-            end.Add(divider);
-            HistoryOptions.AddTo(end, vm.Histories);
+            history.Add(divider);
+            HistoryOptions.AddTo(history, vm.Histories);
+            Bind.OneWay(vm, nameof(vm.SelectedViewIndex), () => vm.SelectedViewIndex, page => history.IsVisible = page == 0, owner: history);
+            end.Add(history);
             band.Add(end);
             return band;
 
