@@ -44,8 +44,7 @@ namespace SourceGit.Views
                         (App.Text("CheckoutBranchFromStash.Stash"), StashLabel(vm.Target)),
                         (App.Text("CheckoutBranchFromStash.Branch"), TextField(sheet, vm, nameof(vm.BranchName), () => vm.BranchName, v => vm.BranchName = v)));
                 default:
-                    title = null;
-                    return null;
+                    return ToolForm(popup, out title);
             }
         }
 
