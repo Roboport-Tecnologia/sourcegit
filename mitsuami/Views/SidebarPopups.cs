@@ -235,6 +235,7 @@ namespace SourceGit.Views
             var input = TextField(sheet, vm, property, get, set, placeholder);
             input.Grow = 1;
             row.Add(input);
+            MoveMessage(input, row);
             var protocol = new MenuButton { Style = ButtonStyle.Borderless };
             Bind.OneWay(vm, property, get, url =>
             {

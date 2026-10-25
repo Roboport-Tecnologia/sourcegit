@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 using Mitsuamia;
 
@@ -111,11 +113,17 @@ namespace SourceGit.Views
                 if (page.Popup == popup)
                     ShowErrors(errors, popup);
             };
-            Bind.OneWay(popup, nameof(popup.InProgress), () => popup.InProgress, running =>
+            // Not while a field shows an error, as native dialogs keep
+            // their action until it's fixed.
+            void Enable()
             {
-                cancel.IsEnabled = !running;
-                sure.IsEnabled = ported && !running;
-            }, owner: sheet);
+                cancel.IsEnabled = !popup.InProgress;
+                sure.IsEnabled = ported && !popup.InProgress && !popup.HasErrors;
+            }
+            Bind.OneWay(popup, nameof(popup.InProgress), () => popup.InProgress, _ => Enable(), owner: sheet);
+            EventHandler<DataErrorsChangedEventArgs> errorsChanged = (_, _) => Enable();
+            popup.ErrorsChanged += errorsChanged;
+            sheet.Closed += () => popup.ErrorsChanged -= errorsChanged;
             buttons.Add(cancel);
             buttons.Add(sure);
             column.Add(buttons);
@@ -126,7 +134,11 @@ namespace SourceGit.Views
 
         private static void ShowErrors(Text errors, ViewModels.Popup popup)
         {
-            var messages = popup.GetErrors(null).Select(e => e.ErrorMessage).Where(m => !string.IsNullOrEmpty(m)).ToArray();
+            // Those a field shows are under it.
+            var shown = s_shown.TryGetValue(popup, out var properties) ? properties : [];
+            var messages = popup.GetErrors(null)
+                .Where(e => !e.MemberNames.Any(shown.Contains))
+                .Select(e => e.ErrorMessage).Where(m => !string.IsNullOrEmpty(m)).ToArray();
             errors.Value = string.Join("\n", messages);
             errors.IsVisible = messages.Length > 0;
         }
@@ -318,7 +330,45 @@ namespace SourceGit.Views
             return column;
         }
 
+        /// <summary>A label beside its control. A validated field (see
+        /// <see cref="Validate"/>) has its message under it.</summary>
         private static Row Field(string label, Node control)
+        {
+            if (!s_validated.TryGetValue(control, out var validated))
+                return FieldRow(label, control);
+            var (field, vm, property) = validated;
+            var withError = new FieldWithError(control, field);
+            // While the message shows, the label's side gets a line as
+            // tall, so the row, centred, keeps the label beside the field.
+            var side = new Column();
+            side.Width = LabelWidth;
+            side.Shrink = 0;
+            side.Add(new Text(label));
+            var line = new Text(" ") { Style = TextStyle.Caption, IsVisible = false };
+            side.Add(line);
+            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            row.Add(side);
+            withError.Grow = 1;
+            row.Add(withError);
+            void Show()
+            {
+                var first = vm.GetErrors(property).OfType<ValidationResult>().Select(e => e.ErrorMessage)
+                    .FirstOrDefault(m => !string.IsNullOrEmpty(m));
+                withError.Error = first;
+                line.IsVisible = first != null;
+            }
+            EventHandler<DataErrorsChangedEventArgs> changed = (_, e) =>
+            {
+                if (e.PropertyName == property)
+                    Show();
+            };
+            vm.ErrorsChanged += changed;
+            row.Forgotten += () => vm.ErrorsChanged -= changed;
+            Show();
+            return row;
+        }
+
+        private static Row FieldRow(string label, Node control)
         {
             var row = new Row { Gap = 8, AlignItems = Align.Center };
             var text = new Text(label);
@@ -337,7 +387,39 @@ namespace SourceGit.Views
         {
             var input = new TextInput { Placeholder = placeholder, AccessibleName = property };
             Bind.Value(input, vm, property, get, set);
+            if (vm is INotifyDataErrorInfo errors)
+                Validate(input, errors, property);
             return input;
+        }
+
+        // Each validated field, its view model and property, by the
+        // control a form row gets (the field, or the row it's in with its
+        // button); and the properties whose errors their fields show, by
+        // view model.
+        private static readonly ConditionalWeakTable<Node, Tuple<TextField, INotifyDataErrorInfo, string>> s_validated = new();
+        private static readonly ConditionalWeakTable<object, HashSet<string>> s_shown = new();
+
+        /// <summary>
+        /// Upstream checks a field as it's typed in and marks it. Here the
+        /// form row shows it with mitsuami-extras' field with its error:
+        /// the field marked the platform's way (GNOME's red entry, and what
+        /// assistive technology reads), and the message under it in the
+        /// error colour, as the platforms' apps show theirs.
+        /// </summary>
+        private static void Validate(TextField input, INotifyDataErrorInfo vm, string property)
+        {
+            s_validated.AddOrUpdate(input, Tuple.Create(input, vm, property));
+            s_shown.GetOrCreateValue(vm).Add(property);
+        }
+
+        /// <summary>A field put in a row with its button: the row carries
+        /// its message.</summary>
+        private static void MoveMessage(Node field, Node row)
+        {
+            if (!s_validated.TryGetValue(field, out var validated))
+                return;
+            s_validated.Remove(field);
+            s_validated.AddOrUpdate(row, validated);
         }
 
         /// <summary>A path field with a button that asks the platform's
@@ -368,6 +450,7 @@ namespace SourceGit.Views
             };
             row.Add(input);
             row.Add(browse);
+            MoveMessage(input, row);
             return row;
         }
 

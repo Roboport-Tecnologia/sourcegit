@@ -447,7 +447,7 @@ namespace SourceGit.Views
         /// buttons, a message, a list): its label at the top, as upstream's.</summary>
         private static Row TopField(string label, Node control)
         {
-            var row = Field(label, control);
+            var row = FieldRow(label, control);
             row.AlignItems = Align.Start;
             return row;
         }
@@ -650,6 +650,7 @@ namespace SourceGit.Views
             };
             row.Add(input);
             row.Add(browse);
+            MoveMessage(input, row);
             return row;
         }
     }
