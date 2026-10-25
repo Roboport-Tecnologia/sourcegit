@@ -26,6 +26,20 @@ namespace SourceGit
             // On macOS, it also fixes `PATH`, so git and tools are found.
             Native.OS.SetupApp(new Avalonia.AppBuilder());
 
+            // ssh runs the app to ask for a passphrase (SSH_ASKPASS, which
+            // upstream's commands set with SOURCEGIT_LAUNCH_AS_ASKPASS): its
+            // window alone, and the answer on the output.
+            if (Environment.GetEnvironmentVariable("SOURCEGIT_LAUNCH_AS_ASKPASS") == "TRUE" && args.Length > 0)
+            {
+                var prompt = args[0];
+                Application.Run("com.sourcegit-scm.SourceGit", "SourceGit", () =>
+                {
+                    App.SetLocale(ViewModels.Preferences.Instance.Locale);
+                    Views.Askpass.Show(prompt);
+                });
+                return;
+            }
+
             s_startupRepo = args.Length > 0 ? args[0] : null;
             Application.Run("com.sourcegit-scm.SourceGit", "SourceGit", Start);
         }
