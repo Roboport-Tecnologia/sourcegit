@@ -331,60 +331,53 @@ namespace SourceGit.Views
                     "Repository.BranchSort.ByName", "Repository.BranchSort.ByCommitterDate"),
                     HeaderButton("Remote.Add", "Repository.Remotes.Add", vm.AddRemote)], branches: true);
 
-            // Several at once, as upstream's: deleting them.
-            ListView<Models.Tag> tags = null;
-            var modes = new Dictionary<string, System.ComponentModel.INotifyPropertyChanged>();
-            tags = new ListView<Models.Tag>(tag => tag.Name, tag => TagRow(vm, tag, modes.GetValueOrDefault(tag.Name), () => TagsMenu(vm, tags, tag.Name)),
+            // Several at once, as upstream's: deleting them. Upstream's
+            // visible tags (the filter applied), as a list or a tree whose
+            // folders open and close.
+            ListView<object> tags = null;
+            tags = new ListView<object>(TagKey, item => TagRow(vm, item, () => TagsMenu(vm, tags, item)),
                 SelectionMode.Multiple, itemAnimations: false) { EstimatedRowHeight = 24 };
-            // Upstream's visible tags (the filter applied), with their
-            // filter modes; as a tree too, which isn't ported, so flattened.
-            Bind.OneWay(vm, nameof(vm.VisibleTags), () => vm.VisibleTags, visible =>
+            Bind.OneWay(vm, nameof(vm.VisibleTags), () => vm.VisibleTags, visible => tags.Items = visible switch
             {
-                var items = new List<(Models.Tag Tag, System.ComponentModel.INotifyPropertyChanged Mode)>();
-                void Walk(List<ViewModels.TagTreeNode> nodes)
-                {
-                    foreach (var node in nodes)
-                    {
-                        if (node.Tag != null)
-                            items.Add((node.Tag, node));
-                        Walk(node.Children);
-                    }
-                }
-                switch (visible)
-                {
-                    case ViewModels.TagCollectionAsList list:
-                        items.AddRange(list.TagItems.Select(i => (i.Tag, (System.ComponentModel.INotifyPropertyChanged)i)));
-                        break;
-                    case ViewModels.TagCollectionAsTree tree:
-                        Walk(tree.Tree);
-                        break;
-                    default:
-                        items.AddRange((vm.Tags ?? []).Select(t => (t, (System.ComponentModel.INotifyPropertyChanged)null)));
-                        break;
-                }
-                modes.Clear();
-                foreach (var (tag, mode) in items)
-                    modes[tag.Name] = mode;
-                tags.Items = items.Select(i => i.Tag).ToList();
+                ViewModels.TagCollectionAsList list => list.TagItems.Cast<object>().ToList(),
+                ViewModels.TagCollectionAsTree tree => new Rows<ViewModels.TagTreeNode>(tree.Rows),
+                _ => [],
             }, owner: sidebar);
             tags.SelectionChanged += selected =>
             {
-                if (selected is [var tag])
+                if (selected is [var item] && TagOf(item) is { } tag)
                     vm.NavigateToCommit(tag.SHA);
+            };
+            tags.Activated += item =>
+            {
+                if (item is ViewModels.TagTreeNode { IsFolder: true } folder && vm.VisibleTags is ViewModels.TagCollectionAsTree tree)
+                    tree.ToggleExpand(folder);
             };
             Group(sidebar, vm, "Tags", "Repository.Tags", nameof(vm.Tags), () => $"({vm.Tags?.Count ?? 0})",
                 nameof(vm.IsTagGroupExpanded), () => vm.IsTagGroupExpanded, v => vm.IsTagGroupExpanded = v,
-                tags, [SortButton(vm, nameof(vm.IsSortingTagsByName), () => vm.IsSortingTagsByName,
+                tags, [TreeToggle(vm, nameof(vm.ShowTagsAsTree), () => vm.ShowTagsAsTree, v => vm.ShowTagsAsTree = v, "Repository.ShowTagsAsTree"),
+                    SortButton(vm, nameof(vm.IsSortingTagsByName), () => vm.IsSortingTagsByName,
                     v => vm.IsSortingTagsByName = v, "Repository.Tags.Sort",
                     "Repository.Tags.OrderByName", "Repository.Tags.OrderByCreatorDate"),
                     HeaderButton("Tag.Add", "Repository.Tags.Add", vm.CreateNewTag)]);
 
-            var submodules = new ListView<Models.Submodule>(s => s.Path, s => SubmoduleRow(vm, s), itemAnimations: false) { EstimatedRowHeight = 24 };
-            Bind.OneWay(vm, nameof(vm.Submodules), () => (IReadOnlyList<Models.Submodule>)vm.Submodules ?? [],
-                visible => submodules.Items = visible, owner: sidebar);
+            // Upstream's visible submodules, as a list or a tree.
+            var submodules = new ListView<object>(SubmoduleKey, item => SubmoduleRow(vm, item), itemAnimations: false) { EstimatedRowHeight = 24 };
+            Bind.OneWay(vm, nameof(vm.VisibleSubmodules), () => vm.VisibleSubmodules, visible => submodules.Items = visible switch
+            {
+                ViewModels.SubmoduleCollectionAsList list => list.Submodules.Cast<object>().ToList(),
+                ViewModels.SubmoduleCollectionAsTree tree => new Rows<ViewModels.SubmoduleTreeNode>(tree.Rows),
+                _ => [],
+            }, owner: sidebar);
+            submodules.Activated += item =>
+            {
+                if (item is ViewModels.SubmoduleTreeNode { IsFolder: true } folder && vm.VisibleSubmodules is ViewModels.SubmoduleCollectionAsTree tree)
+                    tree.ToggleExpand(folder);
+            };
             Group(sidebar, vm, "Submodules", "Repository.Submodules", nameof(vm.Submodules), () => $"({vm.Submodules?.Count ?? 0})",
                 nameof(vm.IsSubmoduleGroupExpanded), () => vm.IsSubmoduleGroupExpanded, v => vm.IsSubmoduleGroupExpanded = v,
-                submodules, [HeaderButton("Submodule.Add", "Repository.Submodules.Add", vm.AddSubmodule)],
+                submodules, [TreeToggle(vm, nameof(vm.ShowSubmodulesAsTree), () => vm.ShowSubmodulesAsTree, v => vm.ShowSubmodulesAsTree = v, "Repository.ShowSubmodulesAsTree"),
+                    HeaderButton("Submodule.Add", "Repository.Submodules.Add", vm.AddSubmodule)],
                 [HeaderButton("Loading", "Repository.Submodules.Update", vm.UpdateSubmodules)]);
 
             var worktrees = new ListView<ViewModels.Worktree>(w => w.FullPath, w => WorktreeRow(vm, w), itemAnimations: false) { EstimatedRowHeight = 24 };
@@ -525,48 +518,169 @@ namespace SourceGit.Views
         /// <summary>A refresh brings new tags, submodules and worktrees,
         /// and a row stays while its key does: menus act on what's at its
         /// key now.</summary>
-        private static IReadOnlyList<MenuEntry> TagsMenu(ViewModels.Repository vm, ListView<Models.Tag> list, string name)
+        /// <summary>The tags selected, the row right-clicked among them (or
+        /// alone if it isn't), as upstream's menus take them.</summary>
+        private static IReadOnlyList<MenuEntry> TagsMenu(ViewModels.Repository vm, ListView<object> list, object item)
         {
+            if (TagOf(item) is not { } clicked)
+                return [];
             var all = vm.Tags ?? [];
             var selected = new List<Models.Tag>();
-            foreach (var tag in list.SelectedItems)
+            foreach (var tag in list.SelectedItems.Select(TagOf).Where(t => t != null))
             {
                 if (all.Find(t => t.Name == tag.Name) is { } now)
                     selected.Add(now);
             }
-            if (selected.Find(t => t.Name == name) == null)
-                selected = all.FindAll(t => t.Name == name);
+            if (selected.Find(t => t.Name == clicked.Name) == null)
+                selected = all.FindAll(t => t.Name == clicked.Name);
             return SidebarMenus.Tags(vm, selected);
         }
 
-        private static Node TagRow(ViewModels.Repository vm, Models.Tag tag, System.ComponentModel.INotifyPropertyChanged item, Func<IReadOnlyList<MenuEntry>> menu)
+        private static Models.Tag TagOf(object item) => item switch
+        {
+            ViewModels.TagListItem i => i.Tag,
+            ViewModels.TagTreeNode n => n.Tag,
+            Models.Tag t => t,
+            _ => null,
+        };
+
+        private static string TagKey(object item) => item switch
+        {
+            ViewModels.TagTreeNode { IsFolder: true } n => $"folder {n.FullPath}",
+            _ when TagOf(item) is { } tag => $"tag {tag.Name}",
+            _ => item.GetHashCode().ToString(),
+        };
+
+        private static string SubmoduleKey(object item) => item switch
+        {
+            ViewModels.SubmoduleTreeNode n => $"{(n.IsFolder ? "folder" : "module")} {n.FullPath}",
+            Models.Submodule m => $"module {m.Path}",
+            _ => item.GetHashCode().ToString(),
+        };
+
+        /// <summary>Upstream's toggle in a group's header: its items as a
+        /// tree of their folders, or a list.</summary>
+        private static Node TreeToggle(ViewModels.Repository vm, string property, Func<bool> get, Action<bool> set, string tip)
+        {
+            var toggle = new ToggleButton(App.Text(tip))
+            {
+                Icon = Icons.Get("Tree", 12),
+                IconOnly = true,
+                Style = ButtonStyle.Borderless,
+                ToolTip = App.Text(tip),
+            };
+            toggle.Width = 28;
+            Bind.OneWay(vm, property, get, on => toggle.IsChecked = on, owner: toggle);
+            toggle.Changed += set;
+            return toggle;
+        }
+
+        /// <summary>A tree's rows as a list's items: upstream's rows, which
+        /// grow and shrink as folders open and close.</summary>
+        private sealed class Rows<T>(Avalonia.Collections.AvaloniaList<T> rows) : IReadOnlyList<object>, System.Collections.Specialized.INotifyCollectionChanged
+        {
+            public object this[int index] => rows[index];
+            public int Count => rows.Count;
+            public IEnumerator<object> GetEnumerator() => rows.Cast<object>().GetEnumerator();
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+            public event System.Collections.Specialized.NotifyCollectionChangedEventHandler CollectionChanged
+            {
+                add => rows.CollectionChanged += value;
+                remove => rows.CollectionChanged -= value;
+            }
+        }
+
+        /// <summary>A tag's row, or a folder of tags: indented by its depth
+        /// in the tree, a folder's chevron and its count.</summary>
+        private static Node TagRow(ViewModels.Repository vm, object item, Func<IReadOnlyList<MenuEntry>> menu)
         {
             var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 4, 0, 16) };
             row.Height = 24;
+            row.ContextMenuOnOpen = menu;
+            if (item is ViewModels.TagTreeNode node)
+            {
+                for (var level = 0; level < node.Depth; level++)
+                    row.Add(new Column { Width = Spacing.Indent });
+                if (node.IsFolder)
+                {
+                    Folder(row, node, () => node.IsExpanded, node.FullPath.Split('/')[^1], node.TagsCount,
+                        () => (vm.VisibleTags as ViewModels.TagCollectionAsTree)?.ToggleExpand(node));
+                    return row;
+                }
+                // Under the folders' chevrons, as the branch tree's rows.
+                row.Add(new Column { Width = 16 });
+            }
+            var tag = TagOf(item);
             row.Add(new Icon(Icons.Get("Tag")) { Size = 12 });
-            var name = new Text(tag.Name) { MaxLines = 1 };
+            var name = new Text(item is ViewModels.TagTreeNode n ? n.FullPath.Split('/')[^1] : tag.Name) { MaxLines = 1 };
             name.Grow = 1;
             name.Shrink = 1;
             name.MinWidth = 0;
             row.Add(name);
+            row.ToolTip = tag.Message ?? tag.Name;
             Func<Models.FilterMode> mode = item switch
             {
                 ViewModels.TagListItem i => () => i.FilterMode,
-                ViewModels.TagTreeNode n => () => n.FilterMode,
+                ViewModels.TagTreeNode t => () => t.FilterMode,
                 _ => () => Models.FilterMode.None,
             };
-            row.Add(FilterModeSwitch.Create(row, item, mode, m => vm.SetTagFilterMode(tag, m)));
-            row.ToolTip = tag.Message ?? tag.Name;
-            row.ContextMenuOnOpen = menu;
+            row.Add(FilterModeSwitch.Create(row, item as System.ComponentModel.INotifyPropertyChanged, mode, m => vm.SetTagFilterMode(tag, m)));
             return row;
         }
 
-        private static Node SubmoduleRow(ViewModels.Repository vm, Models.Submodule submodule)
+        /// <summary>A folder of a sidebar tree: its chevron, which opens or
+        /// closes it, its icon, name and count.</summary>
+        private static void Folder(Container row, System.ComponentModel.INotifyPropertyChanged node, Func<bool> open, string name, string count, Action toggle)
+        {
+            var button = new Button(name) { IconOnly = true, Style = ButtonStyle.Borderless };
+            button.Width = 16;
+            button.Click += toggle;
+            row.Add(button);
+            var icon = new Icon(Icons.Get("Folder")) { Size = 12 };
+            row.Add(icon);
+            // The row stays as the folder opens and closes.
+            Bind.OneWay(node, "IsExpanded", open, now =>
+            {
+                button.Icon = now ? Welcome.s_open : Welcome.s_closed;
+                icon.Vector = Icons.Get(now ? "Folder.Open" : "Folder");
+            }, owner: row);
+            var text = new Text(name) { MaxLines = 1 };
+            text.Shrink = 1;
+            text.MinWidth = 0;
+            row.Add(text);
+            if (!string.IsNullOrEmpty(count))
+                row.Add(new Text(count) { Color = Color.SecondaryLabel });
+        }
+
+        /// <summary>A submodule's row, or a folder of them.</summary>
+        private static Node SubmoduleRow(ViewModels.Repository vm, object item)
         {
             var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 0, 0, 16) };
             row.Height = 24;
+            if (item is ViewModels.SubmoduleTreeNode node)
+            {
+                for (var level = 0; level < node.Depth; level++)
+                    row.Add(new Column { Width = Spacing.Indent });
+                if (node.IsFolder)
+                {
+                    Folder(row, node, () => node.IsExpanded, node.FullPath.Split('/')[^1], node.ChildCounter,
+                        () => (vm.VisibleSubmodules as ViewModels.SubmoduleCollectionAsTree)?.ToggleExpand(node));
+                    return row;
+                }
+                row.Add(new Column { Width = 16 });
+            }
+            var submodule = item switch
+            {
+                ViewModels.SubmoduleTreeNode t => t.Module,
+                Models.Submodule m => m,
+                _ => null,
+            };
+            if (submodule == null)
+                return row;
             row.Add(new Icon(Icons.Get("Submodule")) { Size = 12 });
-            row.Add(new Text(submodule.Path));
+            row.Add(new Text(item is ViewModels.SubmoduleTreeNode ? submodule.Path.Split('/')[^1] : submodule.Path) { MaxLines = 1 });
+            row.ToolTip = submodule.Path;
             var path = submodule.Path;
             row.ContextMenuOnOpen = () => vm.Submodules?.Find(s => s.Path == path) is { } now ? SidebarMenus.Submodule(vm, now) : [];
             return row;
