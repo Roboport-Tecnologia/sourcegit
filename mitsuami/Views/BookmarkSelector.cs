@@ -57,7 +57,7 @@ namespace SourceGit.Views
         }
 
         /// <summary>The user chose a bookmark.</summary>
-        public event Action<int>? Changed;
+        public event Action<int> Changed;
 
         private void Choose(int bookmark)
         {
