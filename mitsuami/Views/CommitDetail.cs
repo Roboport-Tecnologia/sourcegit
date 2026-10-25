@@ -12,8 +12,10 @@ namespace SourceGit.Views
     /// bottom area, <c>CommitDetail.axaml</c>, <c>CommitBaseInfo.axaml</c>):
     /// the platform's tabs, Information, Changes and Files. Information
     /// shows what the selection is: a tip with none, the commit with one,
-    /// how many with more. Changes, Files and comparing two commits wait
-    /// for the code view (bemtvi).
+    /// how many with more. Changes lists the commit's changes
+    /// (<see cref="CommitChanges"/>), Files its files
+    /// (<see cref="RevisionFiles"/>); diffs and text wait for the code view
+    /// (bemtvi).
     /// </summary>
     public static class CommitDetail
     {
@@ -35,8 +37,10 @@ namespace SourceGit.Views
             var infoPage = new Column { AlignItems = Align.Stretch };
             infoPage.Add(info);
             tabs.Add(App.Text("CommitDetail.Info"), infoPage);
-            tabs.Add(App.Text("CommitDetail.Changes"), NotPorted());
-            tabs.Add(App.Text("CommitDetail.Files"), NotPorted());
+            var changesPage = Page();
+            tabs.Add(App.Text("CommitDetail.Changes"), changesPage);
+            var filesPage = Page();
+            tabs.Add(App.Text("CommitDetail.Files"), filesPage);
 
             // The commit shown follows its view model's changes; another
             // selection brings another view model.
@@ -57,7 +61,14 @@ namespace SourceGit.Views
             {
                 if (shown != null)
                     shown.PropertyChanged -= Changed;
+                var changed = !ReferenceEquals(shown, context);
                 shown = context as ViewModels.CommitDetail;
+                // A commit's Changes page is built for its view model.
+                if (changed)
+                {
+                    Fill(changesPage, shown == null ? null : CommitChanges.Create(shown));
+                    Fill(filesPage, shown == null ? null : RevisionFiles.Create(shown));
+                }
                 if (shown != null)
                 {
                     shown.PropertyChanged += Changed;
@@ -77,12 +88,22 @@ namespace SourceGit.Views
             return tabs;
         }
 
-        private static Node NotPorted()
+        /// <summary>A tab's page, which a page of the commit fills.</summary>
+        private static Column Page()
         {
-            var page = new Column { Padding = 20 };
-            page.Add(new Text("This page isn't ported to mitsuami yet: it needs the code view.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
+            var page = new Column { AlignItems = Align.Stretch };
+            page.Grow = 1;
             return page;
         }
+
+        private static void Fill(Column page, Node content)
+        {
+            foreach (var child in page.Children.ToArray())
+                child.Destroy();
+            if (content != null)
+                page.Add(content);
+        }
+
 
         /// <summary>Fills the Information page for what's selected.</summary>
         private static void Show(Container page, Func<bool> hasSingleRemote, object context, bool tips)

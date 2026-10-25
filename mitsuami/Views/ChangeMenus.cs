@@ -345,7 +345,7 @@ namespace SourceGit.Views
 
         /// <summary>Upstream's LFS lock and unlock: straight away with one
         /// remote, a submenu of them with several.</summary>
-        private static IEnumerable<MenuEntry> LfsLocks(ViewModels.Repository repo, string path)
+        internal static IEnumerable<MenuEntry> LfsLocks(ViewModels.Repository repo, string path)
         {
             MenuEntry Each(string title, Func<string, System.Threading.Tasks.Task> act)
             {
