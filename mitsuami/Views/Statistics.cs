@@ -7,8 +7,8 @@ using Mitsuamia;
 namespace SourceGit.Views
 {
     /// <summary>
-    /// Upstream's statistics (<c>Views/Statistics.axaml</c>), a sheet on the
-    /// main window where upstream has a window of its own, 1080 × 720 as
+    /// Upstream's statistics (<c>Views/Statistics.axaml</c>), a window of
+    /// its own, as upstream's, so it can be made larger; 1080 × 720 as
     /// upstream's least size: the branch to count, and tabs for the whole
     /// history, this month and this week (upstream's switcher). Each shows
     /// the authors and their commits, upstream's pie of the top authors and
@@ -18,22 +18,23 @@ namespace SourceGit.Views
     /// </summary>
     public static class Statistics
     {
-        /// <summary>The sheet showing, if any: for captures.</summary>
+        /// <summary>The window last opened, while it's open: for captures.</summary>
         public static Window Shown { get; private set; }
 
         public static void Show(ViewModels.Repository repo)
         {
             var vm = new ViewModels.Statistics(repo.FullPath);
             var title = App.Text("Statistics");
-            var sheet = Shown = new Window(App.MainWindow, title, 1080, 720);
-            sheet.Closed += () => Shown = null;
+            var window = Shown = new Window(title, 1080, 720);
+            window.Closed += () =>
+            {
+                if (Shown == window)
+                    Shown = null;
+            };
 
             var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
             column.Grow = 1;
-            var header = new Row { AlignItems = Align.Center, Gap = 12 };
-            var heading = new Text(title) { Style = TextStyle.Headline };
-            heading.Grow = 1;
-            header.Add(heading);
+            var header = new Row { AlignItems = Align.Center, Justify = Justify.End };
             header.Add(BranchSelect(vm));
             column.Add(header);
 
@@ -61,15 +62,9 @@ namespace SourceGit.Views
                 shown = vm.IsLoading || vm.SelectedReport == null ? Loading() : Report(vm, vm.SelectedReport);
                 page.Add(shown);
             }
-            Bind.OneWay(vm, nameof(vm.SelectedReport), () => vm.SelectedReport, _ => Fill(), owner: sheet);
-            Bind.OneWay(vm, nameof(vm.IsLoading), () => vm.IsLoading, _ => Fill(), owner: sheet);
-
-            var buttons = new Row { Justify = Justify.End };
-            var close = new Button(Popups.ButtonText("Close")) { Role = ButtonRole.Default };
-            close.Click += sheet.Destroy;
-            buttons.Add(close);
-            column.Add(buttons);
-            sheet.Content = column;
+            Bind.OneWay(vm, nameof(vm.SelectedReport), () => vm.SelectedReport, _ => Fill(), owner: window);
+            Bind.OneWay(vm, nameof(vm.IsLoading), () => vm.IsLoading, _ => Fill(), owner: window);
+            window.Content = column;
         }
 
         /// <summary>Upstream's <c>BranchSelector</c>: every branch, or all

@@ -7,26 +7,25 @@ using Mitsuamia;
 namespace SourceGit.Views
 {
     /// <summary>
-    /// Upstream's git command logs (<c>Views/ViewLogs.axaml</c>), a sheet on
-    /// the main window where upstream has a window of its own: the commands
+    /// Upstream's git command logs (<c>Views/ViewLogs.axaml</c>), a window
+    /// of its own, as upstream's, so it can be made larger: the commands
     /// run, newest first, each with its start and how long it took (counting
     /// while it runs), beside the selected one's output in a read-only
     /// monospace text area that follows a running command's end; Clear All.
     /// </summary>
     public static class Logs
     {
-        /// <summary>The sheet showing, if any: for captures.</summary>
+        /// <summary>The window last opened, while it's open: for captures.</summary>
         public static Window Shown { get; private set; }
 
         public static void Show(ViewModels.Repository repo)
         {
             var vm = new ViewModels.ViewLogs(repo);
             var title = Popups.ButtonText("ViewLogs");
-            var sheet = Shown = new Window(App.MainWindow, title, 800, 500);
+            var window = Shown = new Window(title, 800, 500);
 
             var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
             column.Grow = 1;
-            column.Add(new Text(title) { Style = TextStyle.Headline });
 
             // Upstream's list beside the output, 300 wide.
             var split = new Split { Position = 300 };
@@ -58,7 +57,7 @@ namespace SourceGit.Views
                 receiver.Follow(log);
                 if (list.SelectedItem != log)
                     list.SelectedItems = log != null ? [log] : [];
-            }, owner: sheet);
+            }, owner: window);
             list.SelectionChanged += selected => vm.SelectedLog = selected.Count > 0 ? selected[0] : null;
             list.ContextMenuOnOpen = () => list.SelectedItem is { } log ? Menu(vm, log) : [];
 
@@ -74,12 +73,6 @@ namespace SourceGit.Views
             var clear = new Button(Popups.ButtonText("ViewLogs.Clear"));
             clear.Click += vm.ClearAll;
             buttons.Add(clear);
-            var gap = new Row();
-            gap.Grow = 1;
-            buttons.Add(gap);
-            var close = new Button(Popups.ButtonText("Close")) { Role = ButtonRole.Default };
-            close.Click += sheet.Destroy;
-            buttons.Add(close);
             column.Add(buttons);
 
             void Count()
@@ -101,14 +94,15 @@ namespace SourceGit.Views
                         duration.Value = Duration(log);
                 }
             }), null, 100, 100);
-            sheet.Closed += () =>
+            window.Closed += () =>
             {
                 timer.Dispose();
                 receiver.Follow(null);
                 vm.Logs.CollectionChanged -= Changed;
-                Shown = null;
+                if (Shown == window)
+                    Shown = null;
             };
-            sheet.Content = column;
+            window.Content = column;
 
             // Upstream opens on the newest.
             if (vm.Logs.Count > 0)
