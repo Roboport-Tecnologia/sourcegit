@@ -345,7 +345,7 @@ namespace SourceGit.Views
                 else if (repo.GetPreferredOpenAIServices().Count == 0)
                     repo.SendNotification("Bad configuration for OpenAI", true);
                 else
-                    CommitMenu.NotPorted("", "The AI assistant").Action();
+                    AIAssistant.Ask(repo, vm.Staged);
             }));
             footer.Add(IconButton("CommitMessageGenerator", "ConventionalCommit",
                 () => ConventionalCommit.Show(repo, text => vm.CommitMessage = text)));

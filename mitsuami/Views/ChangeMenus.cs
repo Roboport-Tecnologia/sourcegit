@@ -12,7 +12,7 @@ namespace SourceGit.Views
     /// (<c>WorkingCopy.axaml.cs</c>'s <c>CreateContextMenuForUnstagedChanges</c>
     /// and <c>CreateContextMenuForStagedChanges</c>), built as one opens for
     /// the changes it's about. Windows not ported yet (blame, the merge
-    /// editor, the AI assistant) say so in an alert.
+    /// editor) say so in an alert.
     /// Upstream's menu icons and the shortcuts it shows aren't ported.
     /// </summary>
     public static class ChangeMenus
@@ -181,7 +181,7 @@ namespace SourceGit.Views
             var changes = selection.Changes;
             var menu = new List<MenuEntry>();
             var ai = repo.GetPreferredOpenAIServices().Count > 0
-                ? CommitMenu.NotPorted(App.Text("ChangeCM.GenerateCommitMessage"), "The AI assistant")
+                ? AIAssistant.MenuEntry(repo, changes)
                 : null;
 
             if (changes.Count == 1)
