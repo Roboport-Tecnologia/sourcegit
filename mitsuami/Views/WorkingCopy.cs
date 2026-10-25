@@ -468,7 +468,9 @@ namespace SourceGit.Views
         /// amend (and resetting the author while amending), a spinner while
         /// committing, then Continue while an operation's in progress, else
         /// Commit, and Commit &amp; Push when there are remotes and it isn't
-        /// an amend.
+        /// an amend. Continue and Commit are upstream's primary buttons:
+        /// prominent, not the window's default (Return in a field mustn't
+        /// commit).
         /// </summary>
         private static Node Options(ViewModels.WorkingCopy vm)
         {
@@ -492,13 +494,14 @@ namespace SourceGit.Views
             var buttons = new Row { AlignItems = Align.Center, Gap = 8 };
             // Upstream's split button: its menu commits the message as the
             // operation stopped to let it edit.
-            var proceed = new SplitButton(Popups.ButtonText("Repository.Continue"));
+            var proceed = new SplitButton(Popups.ButtonText("Repository.Continue")) { Style = ButtonStyle.Prominent };
             proceed.Click += () => _ = vm.ContinueMergeAsync();
             bool? canCommitToEdit = null;
             buttons.Add(proceed);
             var primary = OperatingSystem.IsMacOS() ? "⌘" : "Ctrl+";
             var commit = new Button(Popups.ButtonText("WorkingCopy.Commit"))
             {
+                Style = ButtonStyle.Prominent,
                 ToolTip = $"{primary}↵ {App.Text("WorkingCopy.CommitTip")}\n{primary}⇧↵ {App.Text("WorkingCopy.CommitWithAutoStage")}",
             };
             commit.Click += () => Commit(vm, false, false);
