@@ -263,28 +263,32 @@ namespace SourceGit.Views
 
         /// <summary>Upstream's detail: its welcome (the diff icon, 64 points,
         /// and "Select file to view changes" in bold, both secondary) until a
-        /// file's chosen; then the file's diff, or its conflict, which wait
-        /// for bemtvi and the in-progress banner.</summary>
+        /// file's chosen; then the file's diff, which waits for bemtvi, or
+        /// its conflict.</summary>
         private static Node Detail(ViewModels.WorkingCopy vm)
         {
-            var detail = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 16 };
+            var detail = new Column { AlignItems = Align.Stretch };
             detail.Grow = 1;
             detail.MinHeight = 100;
-            detail.Add(new Icon(Icons.Get("Diff")) { Size = 64, Color = Color.SecondaryLabel });
-            var title = new Text { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel };
-            detail.Add(title);
-            var note = new Text { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
-            detail.Add(note);
+            var welcome = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 16 };
+            welcome.Grow = 1;
+            welcome.Add(new Icon(Icons.Get("Diff")) { Size = 64, Color = Color.SecondaryLabel });
+            welcome.Add(new Text(App.Text("Diff.Welcome")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
+            var note = new Text("Diffs aren't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
+            welcome.Add(note);
+            detail.Add(welcome);
+            Node conflict = null;
             Bind.OneWay(vm, nameof(vm.DetailContext), () => vm.DetailContext, context =>
             {
-                title.Value = context is ViewModels.Conflict conflict ? $"{conflict.Marker} {conflict.Description}" : App.Text("Diff.Welcome");
-                note.Value = context switch
+                conflict?.Destroy();
+                conflict = null;
+                if (context is ViewModels.Conflict c)
                 {
-                    ViewModels.Conflict => "Resolving a conflict here isn't ported to mitsuami yet: use the file's menu.",
-                    ViewModels.DiffContext => "Diffs aren't ported to mitsuami yet.",
-                    _ => "",
-                };
-                note.IsVisible = context != null;
+                    conflict = Conflict.Create(vm.Repository, c);
+                    detail.Add(conflict);
+                }
+                welcome.IsVisible = conflict == null;
+                note.IsVisible = context is ViewModels.DiffContext;
             }, owner: detail);
             return detail;
         }
@@ -486,8 +490,11 @@ namespace SourceGit.Views
             row.Add(spinner);
 
             var buttons = new Row { AlignItems = Align.Center, Gap = 8 };
-            var proceed = new Button(App.Text("Repository.Continue"));
+            // Upstream's split button: its menu commits the message as the
+            // operation stopped to let it edit.
+            var proceed = new SplitButton(Popups.ButtonText("Repository.Continue"));
             proceed.Click += () => _ = vm.ContinueMergeAsync();
+            bool? canCommitToEdit = null;
             buttons.Add(proceed);
             var primary = OperatingSystem.IsMacOS() ? "⌘" : "Ctrl+";
             var commit = new Button(Popups.ButtonText("WorkingCopy.Commit"))
@@ -507,6 +514,11 @@ namespace SourceGit.Views
                 var canCommit = !vm.IsCommitting && !string.IsNullOrWhiteSpace(vm.CommitMessage);
                 proceed.IsVisible = inProgress;
                 proceed.IsEnabled = !vm.IsCommitting && !vm.HasUnsolvedConflicts;
+                if (canCommitToEdit != canCommit)
+                {
+                    canCommitToEdit = canCommit;
+                    proceed.Menu = [new MenuItem(App.Text("WorkingCopy.CommitToEdit"), () => Commit(vm, false, false)) { Enabled = canCommit }];
+                }
                 commit.IsVisible = !inProgress;
                 commit.IsEnabled = canCommit;
                 commitAndPush.IsVisible = vm.HasRemotes && !vm.UseAmend && !inProgress;
