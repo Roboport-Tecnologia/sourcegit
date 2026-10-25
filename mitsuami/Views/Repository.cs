@@ -42,11 +42,20 @@ namespace SourceGit.Views
             search.Grow = 1;
             search.MinHeight = 0;
             left.Add(search);
-            Bind.OneWay(vm.Histories, nameof(vm.Histories.IsSearchingCommits), () => vm.Histories.IsSearchingCommits, on =>
+            // Upstream's sidebar shows beside the history and the local
+            // changes (unless the user collapsed it there), not the
+            // stashes; the split collapses it.
+            void ShowLeft()
             {
-                sidebar.IsVisible = !on;
-                search.IsVisible = on;
-            }, owner: left);
+                var searching = vm.Histories.IsSearchingCommits;
+                var page = vm.SelectedViewIndex;
+                sidebar.IsVisible = !searching;
+                search.IsVisible = searching;
+                left.IsVisible = page == 0 || (page == 1 && !layout.IsSidebarCollapsedInLocalChanges);
+            }
+            Bind.OneWay(vm.Histories, nameof(vm.Histories.IsSearchingCommits), () => 0, _ => ShowLeft(), owner: left);
+            Bind.OneWay(vm, nameof(vm.SelectedViewIndex), () => 0, _ => ShowLeft(), owner: left);
+            Bind.OneWay(layout, nameof(layout.IsSidebarCollapsedInLocalChanges), () => 0, _ => ShowLeft(), owner: left);
             split.Add(left);
             var right = Page(vm);
             right.MinWidth = 100;
@@ -478,8 +487,8 @@ namespace SourceGit.Views
             protected override void Draw(Canvas canvas) => canvas.FillRect(0, 0, canvas.Width, canvas.Height, Color.Rgba(255, 196, 0, 64));
         }
 
-        /// <summary>The page the rail picks: the history or the local
-        /// changes; the stashes aren't ported yet.</summary>
+        /// <summary>The page the rail picks: the history, the local changes
+        /// or the stashes.</summary>
         private static Container Page(ViewModels.Repository vm)
         {
             var page = new Column { AlignItems = Align.Stretch };
@@ -495,19 +504,14 @@ namespace SourceGit.Views
             var changes = WorkingCopy.Create(vm.WorkingCopy);
             page.Add(changes);
 
-            var other = new Column { Padding = 20, Gap = 8 };
-            other.Grow = 1;
-            var title = new Text { Style = TextStyle.Headline };
-            other.Add(title);
-            other.Add(new Text("This page isn't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
-            page.Add(other);
+            var stashes = Stashes.Create(vm);
+            page.Add(stashes);
 
             Bind.OneWay(vm, nameof(vm.SelectedViewIndex), () => vm.SelectedViewIndex, i =>
             {
                 history.IsVisible = i == 0;
                 changes.IsVisible = i == 1;
-                other.IsVisible = i == 2;
-                title.Value = App.Text("Stashes");
+                stashes.IsVisible = i == 2;
             }, owner: page);
             return page;
         }

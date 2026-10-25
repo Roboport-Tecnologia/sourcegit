@@ -6,8 +6,9 @@ using Mitsuamia;
 namespace SourceGit.Views
 {
     /// <summary>
-    /// The popups the local changes open, upstream's views of the same
-    /// names: discarding changes, stashing them, and ignoring a file.
+    /// The popups the local changes and the stashes open, upstream's views
+    /// of the same names: discarding changes, stashing them, ignoring a
+    /// file; applying, dropping or clearing stashes, and a branch from one.
     /// </summary>
     public static partial class Popups
     {
@@ -25,6 +26,23 @@ namespace SourceGit.Views
                 case ViewModels.AddToIgnore vm:
                     title = App.Text("AddToIgnore");
                     return sheet => AddToIgnoreForm(sheet, vm);
+                case ViewModels.ApplyStash vm:
+                    title = App.Text("ApplyStash");
+                    return _ => Rows(
+                        (App.Text("ApplyStash.Stash"), StashLabel(vm.Stash)),
+                        ("", Check(vm, nameof(vm.RestoreIndex), App.Text("ApplyStash.RestoreIndex"), () => vm.RestoreIndex, v => vm.RestoreIndex = v, "--index")),
+                        ("", Check(vm, nameof(vm.DropAfterApply), App.Text("ApplyStash.DropAfterApply"), () => vm.DropAfterApply, v => vm.DropAfterApply = v)));
+                case ViewModels.DropStash vm:
+                    title = App.Text("StashDropConfirm");
+                    return _ => Rows((App.Text("StashDropConfirm.Label"), StashLabel(vm.Stash)));
+                case ViewModels.ClearStashes:
+                    title = App.Text("ClearStashes");
+                    return _ => new Text(App.Text("ClearStashes.Message"));
+                case ViewModels.CheckoutBranchFromStash vm:
+                    title = App.Text("CheckoutBranchFromStash");
+                    return sheet => Rows(
+                        (App.Text("CheckoutBranchFromStash.Stash"), StashLabel(vm.Target)),
+                        (App.Text("CheckoutBranchFromStash.Branch"), TextField(sheet, vm, nameof(vm.BranchName), () => vm.BranchName, v => vm.BranchName = v)));
                 default:
                     title = null;
                     return null;
@@ -102,6 +120,19 @@ namespace SourceGit.Views
                 form.Add(untracked);
             }
             return form;
+        }
+
+        /// <summary>A stash as upstream's popups show it: its icon, its name
+        /// in dark orange, and its subject.</summary>
+        private static Row StashLabel(Models.Stash stash)
+        {
+            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            row.Add(new Icon(Icons.Get("Stashes")) { Size = 12 });
+            row.Add(new Text(stash.Name) { Color = s_sha });
+            var subject = new Text(stash.Subject) { MaxLines = 1 };
+            subject.Shrink = 1;
+            row.Add(subject);
+            return row;
         }
 
         /// <summary>Upstream's pattern and the file it goes in: the

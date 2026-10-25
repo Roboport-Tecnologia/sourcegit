@@ -57,26 +57,24 @@ namespace SourceGit.Views
             var top = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4) };
             top.Height = 36;
             top.Shrink = 0;
+            // Upstream's sidebar toggle: the repository's sidebar hides
+            // while the local changes show.
+            var layout = prefs.Layout;
+            var sidebar = new Button(App.Text("WorkingCopy.CollapseSidebar")) { IconOnly = true, Style = ButtonStyle.Borderless };
+            sidebar.Width = 32;
+            Bind.OneWay(layout, nameof(layout.IsSidebarCollapsedInLocalChanges), () => layout.IsSidebarCollapsedInLocalChanges, collapsed =>
+            {
+                sidebar.Icon = Icons.Get(collapsed ? "Sidebar.Collapsed" : "Sidebar.Expanded", 15);
+                sidebar.ToolTip = App.Text(collapsed ? "WorkingCopy.ExpandSidebar" : "WorkingCopy.CollapseSidebar");
+            }, owner: sidebar);
+            sidebar.Click += () => layout.IsSidebarCollapsedInLocalChanges = !layout.IsSidebarCollapsedInLocalChanges;
+            top.Add(sidebar);
             var filter = new SearchInput { Placeholder = App.Text("WorkingCopy.FilterChanges") };
             filter.Grow = 1;
             Bind.Search(filter, vm, nameof(vm.Filter), () => vm.Filter, v => vm.Filter = v, owner: top);
             top.Add(filter);
             top.Add(IconButton("Undo", "WorkingCopy.DiscardAll", vm.DiscardAllChanges));
-            var mode = new MenuButton(App.Text("ChangeDisplayMode")) { IconOnly = true, Style = ButtonStyle.Borderless, ToolTip = App.Text("ChangeDisplayMode") };
-            Bind.OneWay(prefs, nameof(prefs.ChangeViewMode), () => prefs.ChangeViewMode, m =>
-            {
-                mode.Icon = Icons.Get(m.ToString(), 14);
-                mode.Menu =
-                [
-                    new MenuItem(App.Text("ChangeDisplayMode.List"), () => prefs.ChangeViewMode = Models.ChangeViewMode.List)
-                    { Checked = m == Models.ChangeViewMode.List, Radio = true },
-                    new MenuItem(App.Text("ChangeDisplayMode.Grid"), () => prefs.ChangeViewMode = Models.ChangeViewMode.Grid)
-                    { Checked = m == Models.ChangeViewMode.Grid, Radio = true },
-                    new MenuItem(App.Text("ChangeDisplayMode.Tree"), () => prefs.ChangeViewMode = Models.ChangeViewMode.Tree)
-                    { Checked = m == Models.ChangeViewMode.Tree, Radio = true },
-                ];
-            }, owner: mode);
-            top.Add(mode);
+            top.Add(ChangeCollection.ModeButton());
             column.Add(top);
             column.Add(new Separator());
 

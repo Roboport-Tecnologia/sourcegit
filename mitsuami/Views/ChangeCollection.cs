@@ -152,6 +152,29 @@ namespace SourceGit.Views
             return lastUnselected != -1 ? shown[lastUnselected] : null;
         }
 
+        /// <summary>Upstream's <c>ChangeViewModeSwitcher</c>: a menu button
+        /// with the mode's icon, picking list, grid or tree for every list
+        /// of changes.</summary>
+        public static MenuButton ModeButton()
+        {
+            var prefs = ViewModels.Preferences.Instance;
+            var mode = new MenuButton(App.Text("ChangeDisplayMode")) { IconOnly = true, Style = ButtonStyle.Borderless, ToolTip = App.Text("ChangeDisplayMode") };
+            Bind.OneWay(prefs, nameof(prefs.ChangeViewMode), () => prefs.ChangeViewMode, m =>
+            {
+                mode.Icon = Icons.Get(m.ToString(), 14);
+                mode.Menu =
+                [
+                    new MenuItem(App.Text("ChangeDisplayMode.List"), () => prefs.ChangeViewMode = Models.ChangeViewMode.List)
+                    { Checked = m == Models.ChangeViewMode.List, Radio = true },
+                    new MenuItem(App.Text("ChangeDisplayMode.Grid"), () => prefs.ChangeViewMode = Models.ChangeViewMode.Grid)
+                    { Checked = m == Models.ChangeViewMode.Grid, Radio = true },
+                    new MenuItem(App.Text("ChangeDisplayMode.Tree"), () => prefs.ChangeViewMode = Models.ChangeViewMode.Tree)
+                    { Checked = m == Models.ChangeViewMode.Tree, Radio = true },
+                ];
+            }, owner: mode);
+            return mode;
+        }
+
         private void Refresh()
         {
             var items = new List<Item>();
