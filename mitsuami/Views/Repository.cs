@@ -113,12 +113,11 @@ namespace SourceGit.Views
             Add(tools, "Branch.Add", 14, "CreateBranch", vm.CreateNewBranch);
             if (!vm.IsBare)
             {
-                // Menus, which the C ABI can't show from a button yet.
-                Add(tools, "GitFlow", 14, "GitFlow", null);
-                Add(tools, "LFS", 14, "GitLFS", null);
+                AddMenu(tools, "GitFlow", "GitFlow", () => ToolbarMenus.GitFlow(vm));
+                AddMenu(tools, "LFS", "GitLFS", () => ToolbarMenus.LFS(vm));
                 Add(tools, "Bisect", 14, "Bisect", () => _ = StartBisect(vm));
             }
-            Add(tools, "Action", 14, "Repository.CustomActions", null);
+            AddMenu(tools, "Action", "Repository.CustomActions", () => ToolbarMenus.CustomActions(vm));
             Add(tools, "Clean", 14, "Repository.Clean", () => _ = vm.CleanupAsync());
             middle.Add(tools);
             band.Add(middle);
@@ -158,6 +157,21 @@ namespace SourceGit.Views
                 button.Width = 32;
                 if (command != null)
                     button.Click += command;
+                group.Add(button);
+            }
+
+            // Upstream's menus, built as they open as upstream's are.
+            static void AddMenu(Container group, string icon, string text, Func<IReadOnlyList<MenuEntry>> menu)
+            {
+                var button = new MenuButton(App.Text(text))
+                {
+                    Icon = Icons.Get(icon, 14),
+                    IconOnly = true,
+                    Style = ButtonStyle.Borderless,
+                    ToolTip = App.Text(text),
+                    MenuOnOpen = menu,
+                };
+                button.Width = 32;
                 group.Add(button);
             }
         }
