@@ -24,6 +24,14 @@ namespace SourceGit.Views
         {
             switch (popup)
             {
+                case ViewModels.Checkout vm:
+                    title = App.Text("Checkout");
+                    return _ => CheckoutForm(IconLabel("Branch", vm.BranchName), null, vm.HasLocalChanges,
+                        LocalChanges(vm, nameof(vm.DealWithLocalChanges), () => vm.DealWithLocalChanges, v => vm.DealWithLocalChanges = v));
+                case ViewModels.CheckoutAndFastForward vm:
+                    title = App.Text("Checkout.WithFastForward");
+                    return _ => CheckoutForm(LocalWithTrackStatus(vm.LocalBranch), IconLabel("Branch", vm.RemoteBranch.FriendlyName), vm.HasLocalChanges,
+                        LocalChanges(vm, nameof(vm.DealWithLocalChanges), () => vm.DealWithLocalChanges, v => vm.DealWithLocalChanges = v));
                 case ViewModels.CreateBranch vm:
                     title = App.Text("CreateBranch.Title");
                     return sheet => CreateBranchForm(sheet, vm);
@@ -119,6 +127,29 @@ namespace SourceGit.Views
                 default:
                     return SidebarForm(popup, out title);
             }
+        }
+
+        /// <summary>Upstream's checkout forms: the branch, the upstream it
+        /// fast-forwards to (with fast-forward), and what to do with local
+        /// changes when there are some.</summary>
+        private static Node CheckoutForm(Node target, Node upstream, bool hasLocalChanges, Node localChanges)
+        {
+            var form = Rows((App.Text("Checkout.Target"), target));
+            if (upstream != null)
+                form.Add(Field(App.Text("Checkout.WithFastForward.Upstream"), upstream));
+            if (hasLocalChanges)
+                form.Add(TopField(App.Text("Checkout.LocalChanges"), localChanges));
+            return form;
+        }
+
+        /// <summary>A local branch with how far it's ahead and behind its
+        /// upstream, as upstream's badge shows it.</summary>
+        private static Row LocalWithTrackStatus(Models.Branch branch)
+        {
+            var row = IconLabel("Branch", branch.Name);
+            if (branch.IsTrackStatusVisible)
+                row.Add(new Text(branch.TrackStatusDescription) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
+            return row;
         }
 
         private static Node CreateBranchForm(Window sheet, ViewModels.CreateBranch vm)

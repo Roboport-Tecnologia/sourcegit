@@ -35,10 +35,19 @@ namespace SourceGit.Views
                 if (selected is [{ Backend: Models.Branch branch }])
                     _repo.NavigateToCommit(branch.Head);
             };
-            View.Activated += node =>
+            // Upstream's double-click: a branch is checked out (unless it's
+            // the current one), a folder opens or closes.
+            View.Activated += async node =>
             {
-                if (!node.IsBranch)
+                if (node.Backend is Models.Branch branch)
+                {
+                    if (!branch.IsCurrent && _repo.Settings != null)
+                        await _repo.CheckoutBranchAsync(branch);
+                }
+                else
+                {
                     Toggle(node);
+                }
             };
             // Upstream's keys: Delete (and Backspace, the Mac's) deletes the
             // branches or the remote, F2 renames a local branch.
