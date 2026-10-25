@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Mitsuamia;
 
@@ -332,10 +333,40 @@ namespace SourceGit.Views
 
             // Several at once, as upstream's: deleting them.
             ListView<Models.Tag> tags = null;
-            tags = new ListView<Models.Tag>(tag => tag.Name, tag => TagRow(tag, () => TagsMenu(vm, tags, tag.Name)),
+            var modes = new Dictionary<string, System.ComponentModel.INotifyPropertyChanged>();
+            tags = new ListView<Models.Tag>(tag => tag.Name, tag => TagRow(vm, tag, modes.GetValueOrDefault(tag.Name), () => TagsMenu(vm, tags, tag.Name)),
                 SelectionMode.Multiple, itemAnimations: false) { EstimatedRowHeight = 24 };
-            Bind.OneWay(vm, nameof(vm.VisibleTags), () => vm.VisibleTags as IReadOnlyList<Models.Tag> ?? vm.Tags ?? [],
-                visible => tags.Items = visible, owner: sidebar);
+            // Upstream's visible tags (the filter applied), with their
+            // filter modes; as a tree too, which isn't ported, so flattened.
+            Bind.OneWay(vm, nameof(vm.VisibleTags), () => vm.VisibleTags, visible =>
+            {
+                var items = new List<(Models.Tag Tag, System.ComponentModel.INotifyPropertyChanged Mode)>();
+                void Walk(List<ViewModels.TagTreeNode> nodes)
+                {
+                    foreach (var node in nodes)
+                    {
+                        if (node.Tag != null)
+                            items.Add((node.Tag, node));
+                        Walk(node.Children);
+                    }
+                }
+                switch (visible)
+                {
+                    case ViewModels.TagCollectionAsList list:
+                        items.AddRange(list.TagItems.Select(i => (i.Tag, (System.ComponentModel.INotifyPropertyChanged)i)));
+                        break;
+                    case ViewModels.TagCollectionAsTree tree:
+                        Walk(tree.Tree);
+                        break;
+                    default:
+                        items.AddRange((vm.Tags ?? []).Select(t => (t, (System.ComponentModel.INotifyPropertyChanged)null)));
+                        break;
+                }
+                modes.Clear();
+                foreach (var (tag, mode) in items)
+                    modes[tag.Name] = mode;
+                tags.Items = items.Select(i => i.Tag).ToList();
+            }, owner: sidebar);
             tags.SelectionChanged += selected =>
             {
                 if (selected is [var tag])
@@ -508,12 +539,23 @@ namespace SourceGit.Views
             return SidebarMenus.Tags(vm, selected);
         }
 
-        private static Node TagRow(Models.Tag tag, Func<IReadOnlyList<MenuEntry>> menu)
+        private static Node TagRow(ViewModels.Repository vm, Models.Tag tag, System.ComponentModel.INotifyPropertyChanged item, Func<IReadOnlyList<MenuEntry>> menu)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 0, 0, 16) };
+            var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 4, 0, 16) };
             row.Height = 24;
             row.Add(new Icon(Icons.Get("Tag")) { Size = 12 });
-            row.Add(new Text(tag.Name));
+            var name = new Text(tag.Name) { MaxLines = 1 };
+            name.Grow = 1;
+            name.Shrink = 1;
+            name.MinWidth = 0;
+            row.Add(name);
+            Func<Models.FilterMode> mode = item switch
+            {
+                ViewModels.TagListItem i => () => i.FilterMode,
+                ViewModels.TagTreeNode n => () => n.FilterMode,
+                _ => () => Models.FilterMode.None,
+            };
+            row.Add(FilterModeSwitch.Create(row, item, mode, m => vm.SetTagFilterMode(tag, m)));
             row.ToolTip = tag.Message ?? tag.Name;
             row.ContextMenuOnOpen = menu;
             return row;

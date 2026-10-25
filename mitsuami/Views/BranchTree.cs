@@ -243,6 +243,7 @@ namespace SourceGit.Views
                 status.Add(new Text(track) { Style = TextStyle.Caption, MaxLines = 1 });
                 row.Add(status);
             }
+            row.Add(FilterModeSwitch.Create(row, node, () => node.FilterMode, mode => _repo.SetBranchFilterMode(node, mode, false, true)));
             return row;
 
             static Mitsuamia.Row Slot(float width)
