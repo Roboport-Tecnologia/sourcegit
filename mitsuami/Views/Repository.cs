@@ -296,13 +296,18 @@ namespace SourceGit.Views
             Bind.OneWay(vm, nameof(vm.LocalBranchTrees), () => vm.LocalBranchTrees, trees => local.Nodes = trees, owner: sidebar);
             Group(sidebar, vm, "Local", "Repository.LocalBranches", nameof(vm.LocalBranchesCount), () => $"({vm.LocalBranchesCount})",
                 nameof(vm.IsLocalBranchGroupExpanded), () => vm.IsLocalBranchGroupExpanded, v => vm.IsLocalBranchGroupExpanded = v,
-                local.View, [], branches: true);
+                local.View, [SortButton(vm, nameof(vm.IsSortingLocalBranchByName), () => vm.IsSortingLocalBranchByName,
+                    v => vm.IsSortingLocalBranchByName = v, "Repository.BranchSort",
+                    "Repository.BranchSort.ByName", "Repository.BranchSort.ByCommitterDate")], branches: true);
 
             var remotes = new BranchTree(vm);
             Bind.OneWay(vm, nameof(vm.RemoteBranchTrees), () => vm.RemoteBranchTrees, trees => remotes.Nodes = trees, owner: sidebar);
             Group(sidebar, vm, "Remotes", "Repository.Remotes", nameof(vm.Remotes), () => $"({vm.Remotes?.Count ?? 0})",
                 nameof(vm.IsRemoteGroupExpanded), () => vm.IsRemoteGroupExpanded, v => vm.IsRemoteGroupExpanded = v,
-                remotes.View, [("Remote.Add", "Repository.Remotes.Add", vm.AddRemote)], branches: true);
+                remotes.View, [SortButton(vm, nameof(vm.IsSortingRemoteBranchByName), () => vm.IsSortingRemoteBranchByName,
+                    v => vm.IsSortingRemoteBranchByName = v, "Repository.BranchSort",
+                    "Repository.BranchSort.ByName", "Repository.BranchSort.ByCommitterDate"),
+                    HeaderButton("Remote.Add", "Repository.Remotes.Add", vm.AddRemote)], branches: true);
 
             // Several at once, as upstream's: deleting them.
             ListView<Models.Tag> tags = null;
@@ -317,21 +322,26 @@ namespace SourceGit.Views
             };
             Group(sidebar, vm, "Tags", "Repository.Tags", nameof(vm.Tags), () => $"({vm.Tags?.Count ?? 0})",
                 nameof(vm.IsTagGroupExpanded), () => vm.IsTagGroupExpanded, v => vm.IsTagGroupExpanded = v,
-                tags, [("Tag.Add", "Repository.Tags.Add", vm.CreateNewTag)]);
+                tags, [SortButton(vm, nameof(vm.IsSortingTagsByName), () => vm.IsSortingTagsByName,
+                    v => vm.IsSortingTagsByName = v, "Repository.Tags.Sort",
+                    "Repository.Tags.OrderByName", "Repository.Tags.OrderByCreatorDate"),
+                    HeaderButton("Tag.Add", "Repository.Tags.Add", vm.CreateNewTag)]);
 
             var submodules = new ListView<Models.Submodule>(s => s.Path, s => SubmoduleRow(vm, s), itemAnimations: false) { EstimatedRowHeight = 24 };
             Bind.OneWay(vm, nameof(vm.Submodules), () => (IReadOnlyList<Models.Submodule>)vm.Submodules ?? [],
                 visible => submodules.Items = visible, owner: sidebar);
             Group(sidebar, vm, "Submodules", "Repository.Submodules", nameof(vm.Submodules), () => $"({vm.Submodules?.Count ?? 0})",
                 nameof(vm.IsSubmoduleGroupExpanded), () => vm.IsSubmoduleGroupExpanded, v => vm.IsSubmoduleGroupExpanded = v,
-                submodules, []);
+                submodules, [HeaderButton("Submodule.Add", "Repository.Submodules.Add", vm.AddSubmodule)],
+                [HeaderButton("Loading", "Repository.Submodules.Update", vm.UpdateSubmodules)]);
 
             var worktrees = new ListView<ViewModels.Worktree>(w => w.FullPath, w => WorktreeRow(vm, w), itemAnimations: false) { EstimatedRowHeight = 24 };
             Bind.OneWay(vm, nameof(vm.Worktrees), () => (IReadOnlyList<ViewModels.Worktree>)vm.Worktrees ?? [],
                 visible => worktrees.Items = visible, owner: sidebar);
             Group(sidebar, vm, "Worktree", "Repository.Worktrees", nameof(vm.Worktrees), () => $"({vm.Worktrees?.Count ?? 0})",
                 nameof(vm.IsWorktreeGroupExpanded), () => vm.IsWorktreeGroupExpanded, v => vm.IsWorktreeGroupExpanded = v,
-                worktrees, []);
+                worktrees, [HeaderButton("Worktree.Add", "Repository.Worktrees.Add", vm.AddWorktree)],
+                [HeaderButton("Loading", "Repository.Worktrees.Prune", () => _ = vm.PruneWorktreesAsync())]);
 
             // One selection in the sidebar: picking in a list unselects the
             // others, as upstream's lists do.
@@ -364,11 +374,13 @@ namespace SourceGit.Views
         /// points high, opening and closing at a click anywhere on it but its
         /// buttons: an expander, the group's icon (11 points, in the
         /// secondary colour), its name and count in bold, also secondary,
-        /// and its buttons at the end; then its list, while it's open.
+        /// and its buttons at the end (<paramref name="withRows"/>' only
+        /// while it has rows, before the others); then its list, while it's
+        /// open.
         /// </summary>
         private static void Group(Container sidebar, ViewModels.Repository vm, string icon, string title,
             string countProperty, Func<string> count, string expandedProperty, Func<bool> expanded, Action<bool> setExpanded,
-            ListView list, (string Icon, string Text, Action Command)[] buttons, bool branches = false)
+            ListView list, Node[] buttons, Node[] withRows = null, bool branches = false)
         {
             var header = new Row { AlignItems = Align.Center, Gap = 4 };
             header.Height = 28;
@@ -388,21 +400,11 @@ namespace SourceGit.Views
             var space = new Column();
             space.Grow = 1;
             header.Add(space);
-            foreach (var (buttonIcon, text, command) in buttons)
-            {
-                // As the toolbar's: upstream's 12-point icons in 14-point
-                // buttons came out too small beside the platform's text.
-                var button = new Button(App.Text(text))
-                {
-                    Icon = Icons.Get(buttonIcon, 14),
-                    IconOnly = true,
-                    Style = ButtonStyle.Borderless,
-                    ToolTip = App.Text(text),
-                };
-                button.Width = 28;
-                button.Click += command;
+            withRows ??= [];
+            foreach (var button in withRows)
                 header.Add(button);
-            }
+            foreach (var button in buttons)
+                header.Add(button);
             sidebar.Add(header);
 
             // As tall as its rows, as upstream's. When the open groups
@@ -417,6 +419,8 @@ namespace SourceGit.Views
                 list.MinHeight = branches ? 0 : Math.Min(120, rows);
                 list.Shrink = branches ? 1 : 1000;
                 list.IsVisible = expanded() && list.ItemCount > 0;
+                foreach (var button in withRows)
+                    button.IsVisible = list.ItemCount > 0;
             }
             Fit();
             list.ItemsChanged += Fit;
@@ -426,6 +430,44 @@ namespace SourceGit.Views
                 Fit();
             }, owner: header);
             sidebar.Add(list);
+        }
+
+        /// <summary>A group header's button. As the toolbar's: upstream's
+        /// 12-point icons in 14-point buttons came out too small beside the
+        /// platform's text.</summary>
+        private static Button HeaderButton(string icon, string text, Action command)
+        {
+            var button = new Button(App.Text(text))
+            {
+                Icon = Icons.Get(icon, 14),
+                IconOnly = true,
+                Style = ButtonStyle.Borderless,
+                ToolTip = App.Text(text),
+            };
+            button.Width = 28;
+            button.Click += command;
+            return button;
+        }
+
+        /// <summary>Upstream's sort button: by name or by date, its icon
+        /// the order chosen, a menu of the two with the chosen one checked.</summary>
+        private static MenuButton SortButton(ViewModels.Repository vm, string property, Func<bool> byName, Action<bool> setByName,
+            string text, string nameText, string dateText)
+        {
+            var button = new MenuButton(App.Text(text))
+            {
+                IconOnly = true,
+                Style = ButtonStyle.Borderless,
+                ToolTip = App.Text(text),
+                MenuOnOpen = () =>
+                [
+                    new MenuItem(App.Text(nameText), () => setByName(true)) { Checked = byName(), Radio = true },
+                    new MenuItem(App.Text(dateText), () => setByName(false)) { Checked = !byName(), Radio = true },
+                ],
+            };
+            button.Width = 28;
+            Bind.OneWay(vm, property, byName, name => button.Icon = Icons.Get(name ? "OrderByName" : "OrderByTime", 14), owner: button);
+            return button;
         }
 
         /// <summary>A refresh brings new tags, submodules and worktrees,
