@@ -318,7 +318,7 @@ namespace SourceGit.Views
         /// into a green check for a second once it has copied. The check is
         /// a second button in its place, so the copy icon keeps the
         /// platform's colour.</summary>
-        private static Node CopyButton(string text)
+        internal static Node CopyButton(string text)
         {
             var holder = new Row();
             var label = App.Text("Copy");

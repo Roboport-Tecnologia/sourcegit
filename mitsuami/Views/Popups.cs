@@ -132,11 +132,14 @@ namespace SourceGit.Views
         }
 
         /// <summary>Upstream's buttons are in capitals, its theme's style;
-        /// native buttons are in the platform's case.</summary>
+        /// native buttons are in the platform's case. "OK" is a word in
+        /// capitals, as the platforms write it.</summary>
         public static string ButtonText(string key)
         {
             var text = App.Text(key);
-            return text == text.ToUpperInvariant() ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLowerInvariant()) : text;
+            if (text != text.ToUpperInvariant() || text == "OK")
+                return text;
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLowerInvariant());
         }
 
         /// <summary>Each popup's form, as upstream's view for it. Those not

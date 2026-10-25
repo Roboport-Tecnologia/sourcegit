@@ -172,7 +172,7 @@ namespace SourceGit
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
             }
-            var ok = await (Views.Popups.Shown ?? Views.InteractiveRebase.Editing ?? Views.InteractiveRebase.Shown ?? s_mainWindow).CapturePng(path);
+            var ok = await (Views.Notifications.Shown ?? Views.Popups.Shown ?? Views.InteractiveRebase.Editing ?? Views.InteractiveRebase.Shown ?? s_mainWindow).CapturePng(path);
             Console.WriteLine(ok ? $"Captured to {path}" : "Capture failed");
         }
 
