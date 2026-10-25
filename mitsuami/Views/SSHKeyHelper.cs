@@ -122,7 +122,7 @@ namespace SourceGit.Views
                 return;
             var message = $"• {key.PrivateKeyPath}\n• {key.PublicKeyPath}";
             var buttons = new[] { Popups.ButtonText("Yes"), Popups.ButtonText("No") };
-            if (await Dialogs.Alert(Shown, App.Text("SSHKeyHelper.ConfirmDeletion"), message, buttons, AlertStyle.Warning) == 0)
+            if (await Dialogs.Alert(Shown, App.Text("SSHKeyHelper.ConfirmDeletion"), message, buttons, AlertStyle.Warning, destructive: 0) == 0)
                 vm.DeleteSelected();
         }
 

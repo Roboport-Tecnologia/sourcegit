@@ -68,12 +68,16 @@ namespace SourceGit
         }
 
         /// <summary>Upstream's confirmation, as the platform's alert on the
-        /// main window.</summary>
+        /// main window. Going on is destructive (red on macOS) when it loses
+        /// something: commits no branch or tag holds, or the commit message
+        /// history. Upstream's view models only pass the message, so it's
+        /// told by that.</summary>
         public static async Task<bool> AskConfirmAsync(string message, Models.ConfirmButtonType buttonType = Models.ConfirmButtonType.OkCancel)
         {
             var (yes, no) = buttonType == Models.ConfirmButtonType.YesNo ? ("Yes", "No") : ("Sure", "Cancel");
             var buttons = new[] { Views.Popups.ButtonText(yes), Views.Popups.ButtonText(no) };
-            return await Mitsuamia.Dialogs.Alert(s_mainWindow, message, "", buttons, Mitsuamia.AlertStyle.Warning) == 0;
+            var destructive = message == Text("Checkout.WarnLostCommits") || message == Text("WorkingCopy.ClearCommitHistories.Confirm");
+            return await Mitsuamia.Dialogs.Alert(s_mainWindow, message, "", buttons, Mitsuamia.AlertStyle.Warning, destructive ? 0 : -1) == 0;
         }
 
         /// <summary>Upstream's <c>ConfirmEmptyCommit</c> window as an alert:
