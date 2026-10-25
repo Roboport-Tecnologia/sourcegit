@@ -97,13 +97,15 @@ namespace SourceGit.Views
             };
             mode.Changed += i => vm.ChangesAfterStashing = i;
 
-            var message = new TextArea { Placeholder = App.Text("Stash.Message.Placeholder"), AccessibleName = App.Text("Stash.Message") };
-            message.Height = 100;
+            var editor = new TextAreaWithPlaceholder(App.Text("Stash.Message.Placeholder"));
+            editor.Height = 100;
+            var message = editor.Area;
+            message.AccessibleName = App.Text("Stash.Message");
             message.Value = vm.Message ?? "";
             message.Changed += v => vm.Message = v;
 
             var form = Rows((App.Text("Stash.Mode"), mode));
-            form.Add(TopField(App.Text("Stash.Message"), message));
+            form.Add(TopField(App.Text("Stash.Message"), editor));
             if (vm.HasSelectedFiles)
             {
                 var tip = new Text(App.Text("Stash.TipForSelectedFiles")) { Style = TextStyle.Caption, Color = Color.SecondaryLabel };

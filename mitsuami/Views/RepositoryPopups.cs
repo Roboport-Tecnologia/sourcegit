@@ -194,10 +194,12 @@ namespace SourceGit.Views
             form.Add(TopField(App.Text("CreateTag.Type"), type));
 
             // The message and signing are an annotated tag's.
-            var message = new TextArea { Placeholder = App.Text("CreateTag.Message.Placeholder"), AccessibleName = App.Text("CreateTag.Message") };
-            message.Height = 64;
+            var editor = new TextAreaWithPlaceholder(App.Text("CreateTag.Message.Placeholder"));
+            editor.Height = 64;
+            var message = editor.Area;
+            message.AccessibleName = App.Text("CreateTag.Message");
             Bind.Value(message, vm, nameof(vm.Message), () => vm.Message, v => vm.Message = v);
-            var messageRow = TopField(App.Text("CreateTag.Message"), message);
+            var messageRow = TopField(App.Text("CreateTag.Message"), editor);
             var sign = Field("", Check(vm, nameof(vm.SignTag), App.Text("CreateTag.GPGSign"), () => vm.SignTag, v => vm.SignTag = v));
             Bind.OneWay(vm, nameof(vm.Annotated), () => vm.Annotated, a =>
             {

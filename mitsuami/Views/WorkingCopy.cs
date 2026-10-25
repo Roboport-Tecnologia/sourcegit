@@ -305,11 +305,14 @@ namespace SourceGit.Views
             box.Height = 128;
             box.Shrink = 0;
 
-            var message = new TextArea { Placeholder = App.Text("CommitMessageTextBox.Placeholder"), AccessibleName = App.Text("WorkingCopy.CommitMessageHelper") };
-            message.Grow = 1;
-            message.MinHeight = 0;
+            // Upstream's placeholder, on every platform: mitsuami-extras'.
+            var editor = new TextAreaWithPlaceholder(App.Text("CommitMessageTextBox.Placeholder"));
+            editor.Grow = 1;
+            editor.MinHeight = 0;
+            var message = editor.Area;
+            message.AccessibleName = App.Text("WorkingCopy.CommitMessageHelper");
             Bind.Value(message, vm, nameof(vm.CommitMessage), () => vm.CommitMessage, v => vm.CommitMessage = v);
-            box.Add(message);
+            box.Add(editor);
 
             var footer = new Row { AlignItems = Align.Center, Gap = 4 };
             footer.Height = 24;

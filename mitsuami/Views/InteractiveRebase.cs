@@ -318,14 +318,12 @@ namespace SourceGit.Views
             Editing = sheet;
             sheet.Closed += () => Editing = null;
             var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
-            var message = new TextArea
-            {
-                Value = item.FullMessage,
-                Placeholder = App.Text("CommitMessageTextBox.Placeholder"),
-                AccessibleName = App.Text("CodeEditor"),
-            };
-            message.Height = 280;
-            column.Add(message);
+            var editor = new TextAreaWithPlaceholder(App.Text("CommitMessageTextBox.Placeholder"));
+            editor.Height = 280;
+            var message = editor.Area;
+            message.Value = item.FullMessage;
+            message.AccessibleName = App.Text("CodeEditor");
+            column.Add(editor);
 
             var buttons = new Row { Gap = 8, Justify = Justify.End };
             var cancel = new Button(Popups.ButtonText("Cancel")) { Role = ButtonRole.Cancel };
