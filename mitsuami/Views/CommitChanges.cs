@@ -116,7 +116,7 @@ namespace SourceGit.Views
                 var full = Native.OS.GetAbsPath(repo.FullPath, folder);
                 menu.Add(new MenuItem(App.Text("RevealFile"), () => Native.OS.OpenInFileManager(full)) { Enabled = Directory.Exists(full) });
                 menu.Add(MenuSeparator.Instance);
-                menu.Add(CommitMenu.NotPorted(App.Text("DirHistories"), "A folder's history"));
+                menu.Add(new MenuItem(App.Text("DirHistories"), () => HistoryWindows.ShowFolder(repo, folder, commit.SHA)));
                 menu.Add(SaveAsPatch(vm, changes));
                 menu.Add(MenuSeparator.Instance);
                 menu.Add(new MenuItem(App.Text("CopyPath"), () => Clipboard.SetText(folder)));
@@ -152,7 +152,7 @@ namespace SourceGit.Views
             menu.Add(new MenuItem(App.Text("OpenInExternalMergeTool"), () => vm.OpenChangeInMergeTool(change)));
             menu.Add(new MenuItem(App.Text("RevealFile"), () => Native.OS.OpenInFileManager(path)) { Enabled = File.Exists(path) });
             menu.Add(MenuSeparator.Instance);
-            menu.Add(CommitMenu.NotPorted(App.Text("FileHistory"), "A file's history"));
+            menu.Add(new MenuItem(App.Text("FileHistory"), () => HistoryWindows.ShowFile(repo, change.Path, commit.SHA)));
             menu.Add(CommitMenu.NotPorted(App.Text("Blame"), "Blame"));
             menu.Add(SaveAsPatch(vm, [change]));
             menu.Add(MenuSeparator.Instance);

@@ -239,7 +239,7 @@ namespace SourceGit.Views
                 return
                 [
                     new MenuItem(App.Text("RevealFile"), () => Native.OS.OpenInFileManager(full)) { Enabled = Directory.Exists(full) },
-                    CommitMenu.NotPorted(App.Text("DirHistories"), "A folder's history"),
+                    new MenuItem(App.Text("DirHistories"), () => HistoryWindows.ShowFolder(repo, obj.Path, commit.SHA)),
                     MenuSeparator.Instance,
                     new MenuItem(App.Text("CopyPath"), () => Clipboard.SetText(obj.Path)),
                     new MenuItem(App.Text("CopyFullPath"), () => Clipboard.SetText(full)),
@@ -270,7 +270,7 @@ namespace SourceGit.Views
             }) { Enabled = blob });
             menu.Add(new MenuItem(App.Text("RevealFile"), () => Native.OS.OpenInFileManager(full)) { Enabled = File.Exists(full) || Directory.Exists(full) });
             menu.Add(MenuSeparator.Instance);
-            menu.Add(CommitMenu.NotPorted(App.Text("FileHistory"), "A file's history"));
+            menu.Add(new MenuItem(App.Text("FileHistory"), () => HistoryWindows.ShowFile(repo, obj.Path, commit.SHA)));
             menu.Add(CommitMenu.NotPorted(App.Text("Blame"), "Blame"));
             menu.Add(MenuSeparator.Instance);
             if (!repo.IsBare)
@@ -348,7 +348,7 @@ namespace SourceGit.Views
             return column;
         }
 
-        private static Node Shown(object content)
+        internal static Node Shown(object content)
         {
             var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 8 };
             column.Grow = 1;

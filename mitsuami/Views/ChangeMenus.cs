@@ -114,12 +114,12 @@ namespace SourceGit.Views
 
                 if (selection.IsSingleFolder)
                 {
-                    menu.Add(CommitMenu.NotPorted(App.Text("DirHistories"), "A folder's history"));
+                    menu.Add(new MenuItem(App.Text("DirHistories"), () => HistoryWindows.ShowFolder(repo, selection.SingleFolderPath)));
                     menu.Add(MenuSeparator.Instance);
                 }
                 else if (change.WorkTree is not (Models.ChangeState.Untracked or Models.ChangeState.Added))
                 {
-                    menu.Add(CommitMenu.NotPorted(App.Text("FileHistory"), "A file's history"));
+                    menu.Add(new MenuItem(App.Text("FileHistory"), () => HistoryWindows.ShowFile(repo, change.Path)));
                     menu.Add(CommitMenu.NotPorted(App.Text("Blame") + " (HEAD-only)", "Blame"));
                     menu.Add(MenuSeparator.Instance);
                 }
@@ -168,7 +168,7 @@ namespace SourceGit.Views
                     Ignore(repo, App.Text("WorkingCopy.AddToGitIgnore.InFolder"), $"{selection.SingleFolderPath}/"),
                 ]));
                 menu.Add(MenuSeparator.Instance);
-                menu.Add(CommitMenu.NotPorted(App.Text("DirHistories"), "A folder's history"));
+                menu.Add(new MenuItem(App.Text("DirHistories"), () => HistoryWindows.ShowFolder(repo, selection.SingleFolderPath)));
                 menu.Add(MenuSeparator.Instance);
                 menu.AddRange(CopyFolder(repo, selection.SingleFolderPath));
             }
@@ -217,12 +217,12 @@ namespace SourceGit.Views
 
                 if (selection.IsSingleFolder)
                 {
-                    menu.Add(CommitMenu.NotPorted(App.Text("DirHistories"), "A folder's history"));
+                    menu.Add(new MenuItem(App.Text("DirHistories"), () => HistoryWindows.ShowFolder(repo, selection.SingleFolderPath)));
                     menu.Add(MenuSeparator.Instance);
                 }
                 else if (change.Index is not (Models.ChangeState.Added or Models.ChangeState.Renamed))
                 {
-                    menu.Add(CommitMenu.NotPorted(App.Text("FileHistory"), "A file's history"));
+                    menu.Add(new MenuItem(App.Text("FileHistory"), () => HistoryWindows.ShowFile(repo, change.Path)));
                     menu.Add(CommitMenu.NotPorted(App.Text("Blame") + " (HEAD-only)", "Blame"));
                     menu.Add(MenuSeparator.Instance);
                 }
@@ -250,7 +250,7 @@ namespace SourceGit.Views
             if (selection.IsSingleFolder)
             {
                 menu.Add(MenuSeparator.Instance);
-                menu.Add(CommitMenu.NotPorted(App.Text("DirHistories"), "A folder's history"));
+                menu.Add(new MenuItem(App.Text("DirHistories"), () => HistoryWindows.ShowFolder(repo, selection.SingleFolderPath)));
                 menu.Add(MenuSeparator.Instance);
                 menu.AddRange(CopyFolder(repo, selection.SingleFolderPath));
             }

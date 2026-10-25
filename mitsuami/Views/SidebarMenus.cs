@@ -299,7 +299,7 @@ namespace SourceGit.Views
                 Popup(repo, App.Text("Submodule.Deinit"), () => new ViewModels.DeinitSubmodule(repo, submodule.Path), inited),
                 Popup(repo, App.Text("Submodule.Remove"), () => new ViewModels.DeleteSubmodule(repo, submodule.Path)),
                 MenuSeparator.Instance,
-                NotPorted(App.Text("Submodule.Histories"), "A file's history"),
+                new MenuItem(App.Text("Submodule.Histories"), () => HistoryWindows.ShowFile(repo, submodule.Path)),
                 MenuSeparator.Instance,
                 new Submenu(App.Text("Copy"),
                 [
