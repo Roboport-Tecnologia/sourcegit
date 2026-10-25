@@ -11,6 +11,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>disable</Nullable>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- Upstream's, which the about window shows. -->
+    <Product>SourceGit</Product>
+    <Description>OpenSource GIT client</Description>
+    <Company>sourcegit-scm</Company>
+    <Copyright>Copyright © $([System.DateTime]::Now.Year) sourcegit-scm.</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +34,7 @@
          where Avalonia embeds them (App.Text, AssetLoader). -->
     <None Include="../src/Resources/Locales/*.axaml" Link="Locales/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../src/Resources/Icons.axaml" Link="Icons.axaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../src/App.ico" Link="App.ico" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../src/Resources/Images/**/*" Link="Resources/Images/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
