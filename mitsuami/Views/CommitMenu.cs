@@ -348,7 +348,7 @@ namespace SourceGit.Views
             menu.Add(MenuSeparator.Instance);
             if (!repo.IsBare)
                 GitFlowFinish(menu, repo, branch);
-            menu.Add(NotPorted(App.Text("BranchCM.CompareWithSpecial", current.Name), "Comparing branches"));
+            menu.Add(new MenuItem(App.Text("BranchCM.CompareWithSpecial", current.Name), () => Compare.Show(repo, current, branch)));
             menu.Add(MenuSeparator.Instance);
             menu.Add(new MenuItem(App.Text("BranchCM.CopyName"), () => Clipboard.SetText(branch.Name)));
             return new Submenu(branch.Name, menu);
@@ -366,7 +366,7 @@ namespace SourceGit.Views
                 Popup(repo, App.Text("BranchCM.Merge", name, current.Name), () => new ViewModels.Merge(repo, branch, current.Name, false), !merged),
                 Popup(repo, App.Text("BranchCM.Delete", name), () => new ViewModels.DeleteBranch(repo, branch)),
                 MenuSeparator.Instance,
-                NotPorted(App.Text("BranchCM.CompareWithSpecial", current.Name), "Comparing branches"),
+                new MenuItem(App.Text("BranchCM.CompareWithSpecial", current.Name), () => Compare.Show(repo, current, branch)),
                 MenuSeparator.Instance,
                 new MenuItem(App.Text("BranchCM.CopyName"), () => Clipboard.SetText(name)),
             ]);
@@ -380,7 +380,7 @@ namespace SourceGit.Views
                 Popup(repo, App.Text("TagCM.Push", tag.Name), () => new ViewModels.PushTag(repo, tag), repo.Remotes.Count > 0),
                 Popup(repo, App.Text("TagCM.Delete", tag.Name), () => new ViewModels.DeleteTag(repo, tag)),
                 MenuSeparator.Instance,
-                NotPorted(App.Text("BranchCM.CompareWithSpecial", current.Name), "Comparing branches"),
+                new MenuItem(App.Text("BranchCM.CompareWithSpecial", current.Name), () => Compare.Show(repo, current, tag)),
                 MenuSeparator.Instance,
                 new MenuItem(App.Text("TagCM.CopyName"), () => Clipboard.SetText(tag.Name)),
             ]);
