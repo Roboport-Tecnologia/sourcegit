@@ -10,7 +10,7 @@ namespace SourceGit.Views
     /// Upstream's local changes page (<c>Views/WorkingCopy.axaml</c>): on the
     /// left, a field filtering the changes over the unstaged and the staged
     /// ones, each list under its toolbar; on the right, the selected file's
-    /// diff (not ported: it needs bemtvi) over the commit message and the
+    /// diff (<see cref="DiffView"/>) over the commit message and the
     /// commit's options and buttons.
     /// </summary>
     public static class WorkingCopy
@@ -348,7 +348,7 @@ namespace SourceGit.Views
                     CommitMenu.NotPorted("", "The AI assistant").Action();
             }));
             footer.Add(IconButton("CommitMessageGenerator", "ConventionalCommit",
-                () => CommitMenu.NotPorted("", "The conventional commit message builder").Action()));
+                () => ConventionalCommit.Show(repo, text => vm.CommitMessage = text)));
 
             var space = new Column();
             space.Grow = 1;

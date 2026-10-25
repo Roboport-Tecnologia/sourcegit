@@ -12,7 +12,7 @@ namespace SourceGit.Views
     /// Upstream's stashes page (<c>Views/StashesPage.axaml</c>): on the left,
     /// the stashes under their toolbar and a field filtering them, and the
     /// selected stash's changes under theirs; on the right, the selected
-    /// file's diff (not ported: it needs bemtvi).
+    /// file's diff (<see cref="DiffView"/>).
     /// </summary>
     public static class Stashes
     {

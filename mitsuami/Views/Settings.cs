@@ -28,15 +28,16 @@ namespace SourceGit.Views
         }
 
         /// <summary>A label, right-aligned in the labels' column, beside its
-        /// control; an empty label lines the control up under the others.</summary>
-        public static Row Field(string label, Node control)
+        /// control; an empty label lines the control up under the others. By
+        /// a tall control (<paramref name="top"/>), at its top.</summary>
+        public static Row Field(string label, Node control, bool top = false)
         {
-            var row = new Row { Gap = 12, AlignItems = Align.Center };
+            var row = new Row { Gap = 12, AlignItems = top ? Align.Start : Align.Center };
             var side = new Row { Justify = Justify.End };
             side.Width = LabelWidth;
             side.Shrink = 0;
             if (!string.IsNullOrEmpty(label))
-                side.Add(new Text(label.Trim()) { MaxLines = 1 });
+                side.Add(new Text(label.Trim()) { MaxLines = 1, Margin = new Thickness(top ? 4 : 0, 0, 0, 0) });
             row.Add(side);
             control.Grow = 1;
             control.MinWidth = 0;

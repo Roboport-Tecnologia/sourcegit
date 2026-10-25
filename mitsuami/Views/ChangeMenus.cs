@@ -11,8 +11,8 @@ namespace SourceGit.Views
     /// Upstream's context menus of the local changes
     /// (<c>WorkingCopy.axaml.cs</c>'s <c>CreateContextMenuForUnstagedChanges</c>
     /// and <c>CreateContextMenuForStagedChanges</c>), built as one opens for
-    /// the changes it's about. Windows not ported yet (a file's history,
-    /// blame, the merge editor, the AI assistant) say so in an alert.
+    /// the changes it's about. Windows not ported yet (blame, the merge
+    /// editor, the AI assistant) say so in an alert.
     /// Upstream's menu icons and the shortcuts it shows aren't ported.
     /// </summary>
     public static class ChangeMenus
