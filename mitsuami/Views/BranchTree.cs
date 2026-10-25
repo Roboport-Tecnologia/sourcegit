@@ -156,7 +156,8 @@ namespace SourceGit.Views
         /// a 16-point slot; the node's icon in an 18-point one (a remote, a
         /// branch, the current branch's check in green, a worktree's branch
         /// in cyan, a folder open or closed); the name, bold for the current
-        /// branch, and a folder's count in the secondary colour.</summary>
+        /// branch, and a folder's count in the secondary colour; then a branch's
+        /// gone upstream and tracking status at the end.</summary>
         private Node Row(ViewModels.BranchTreeNode node)
         {
             var row = new Row { AlignItems = Align.Center };
@@ -207,7 +208,9 @@ namespace SourceGit.Views
             }
             row.Add(mark);
 
-            var name = new Text(node.Name);
+            var name = new Text(node.Name) { MaxLines = 1 };
+            name.Shrink = 1;
+            name.MinWidth = 0;
             if (node.IsCurrent)
                 name.Weight = FontWeight.Bold;
             row.Add(name);
@@ -215,7 +218,30 @@ namespace SourceGit.Views
             {
                 var count = new Text(node.BranchesCount) { Color = Color.SecondaryLabel };
                 count.Margin = new Thickness(0, 0, 0, 4);
+                count.Shrink = 0;
                 row.Add(count);
+            }
+            var gap = new Row();
+            gap.Grow = 1;
+            row.Add(gap);
+
+            // Upstream's mark for a branch whose upstream is gone, and how
+            // far ahead and behind it the branch is, on a pill.
+            if (node.ShowUpstreamGoneTip)
+            {
+                var gone = new Icon(Icons.Get("Error")) { Size = 12, Color = Color.Warning };
+                gone.Margin = new Thickness(0, 8);
+                row.Add(gone);
+            }
+            if (node.Backend is Models.Branch { TrackStatusDescription: { Length: > 0 } track })
+            {
+                var status = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 9) };
+                status.Height = 18;
+                status.Shrink = 0;
+                status.Margin = new Thickness(0, 4, 0, 8);
+                status.Add(new TrackPill { Inset = new Thickness(0) });
+                status.Add(new Text(track) { Style = TextStyle.Caption, MaxLines = 1 });
+                row.Add(status);
             }
             return row;
 
@@ -225,6 +251,14 @@ namespace SourceGit.Views
                 slot.Width = width;
                 return slot;
             }
+        }
+
+        /// <summary>Behind the tracking status: a pill in a grey that
+        /// reads in either appearance, as the stashes' branch chips.</summary>
+        private sealed class TrackPill() : DrawnWidget("TrackPill", 0, 0)
+        {
+            protected override void Draw(Canvas canvas) =>
+                canvas.FillRect(0, 0, canvas.Width, canvas.Height, Color.Rgba(128, 128, 128, 56), canvas.Height / 2);
         }
     }
 }
