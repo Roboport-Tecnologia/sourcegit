@@ -69,8 +69,11 @@ namespace SourceGit.Views
                     column.Add(row);
                 }
             }
+            // Held to the window's height (a flex item is at least as tall
+            // as its content otherwise), so the list scrolls.
             var page = new Column { AlignItems = Align.Stretch };
             page.Grow = 1;
+            page.MinHeight = 0;
             page.Add(scroll);
             window.Content = page;
         }
