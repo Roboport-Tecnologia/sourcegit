@@ -87,7 +87,7 @@ namespace SourceGit.Views
             // selection and staging everything.
             var unstagedBar = Bar(vm, "WorkingCopy.Unstaged", nameof(vm.UnstagedCountInfo), () => vm.UnstagedCountInfo,
                 nameof(vm.IsStaging), () => vm.IsStaging);
-            unstagedBar.Add(IconButton("File.Ignore", "WorkingCopy.Unstaged.ViewAssumeUnchanged", null));
+            unstagedBar.Add(IconButton("File.Ignore", "WorkingCopy.Unstaged.ViewAssumeUnchanged", () => AssumeUnchanged.Show(vm.Repository)));
             var untracked = new ToggleButton(App.Text("WorkingCopy.IncludeUntracked"))
             {
                 IconOnly = true,
