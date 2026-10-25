@@ -12,7 +12,7 @@ namespace SourceGit.Views
     /// a window of its own: the app menus' shortcuts, each menu a section,
     /// then the local changes' own keys, written as the platform writes them
     /// (⌘⇧↑ on macOS, Ctrl+Shift+Up elsewhere). Only keys that work are
-    /// listed: upstream's zoom and command palettes aren't ported.
+    /// listed: upstream's zoom isn't ported.
     /// </summary>
     public static class Hotkeys
     {

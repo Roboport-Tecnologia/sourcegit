@@ -164,6 +164,10 @@ namespace SourceGit.Views
                     Description = App.Text("Hotkeys.Repo.ToggleSearchCommits"),
                 },
                 null,
+                new("Go to Tab…", Primary('p'), () => s_launcher.CommandPalette = new ViewModels.LauncherPagesCommandPalette(s_launcher))
+                {
+                    Description = App.Text("Hotkeys.Global.SwitchTab"),
+                },
                 // Upstream's: ⌘⌥← and ⌘⌥→ on macOS, Ctrl+Shift+Tab and
                 // Ctrl+Tab elsewhere.
                 new("Show Previous Tab", Mac ? Primary(Key.Left).WithAlt() : Primary(Key.Tab).WithShift(), () => s_launcher.GotoPrevTab())
@@ -186,6 +190,11 @@ namespace SourceGit.Views
 
             var repository = new List<Command>
             {
+                new("Commands…", Primary('p').WithShift(), () => s_launcher.CommandPalette = new ViewModels.RepositoryCommandPalette(Repo()), Repository)
+                {
+                    Description = App.Text("Hotkeys.Repo.OpenCommandPalette"),
+                },
+                null,
                 new(App.Text("Fetch"), Primary(Key.Down), () => _ = Repo().FetchAsync(true), Repository) { Description = App.Text("Hotkeys.Repo.Fetch") },
                 new(App.Text("Pull"), Primary(Key.Down).WithShift(), () => _ = Repo().PullAsync(true), Worktree) { Description = App.Text("Hotkeys.Repo.Pull") },
                 new(App.Text("Push"), Primary(Key.Up).WithShift(), () => _ = Repo().PushAsync(true), Repository) { Description = App.Text("Hotkeys.Repo.Push") },

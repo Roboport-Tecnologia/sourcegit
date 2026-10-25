@@ -13,8 +13,7 @@ namespace SourceGit.Views
     /// submodules (<c>SubmodulesView.axaml.cs</c>) and worktrees
     /// (<c>Repository.axaml.cs</c>), built as one opens, for the row
     /// right-clicked, or for the selection when that row is in it, as the
-    /// history's are. Comparing with one picked from a list (upstream's palette)
-    /// isn't ported: it says so.
+    /// history's are.
     /// </summary>
     public static class SidebarMenus
     {
@@ -89,7 +88,7 @@ namespace SourceGit.Views
 
                 if (upstream != null)
                     menu.Add(new MenuItem(App.Text("BranchCM.CompareWithSpecial", upstream.FriendlyName), () => Compare.Show(repo, upstream, branch)));
-                menu.Add(NotPorted(App.Text("BranchCM.CompareWith"), "Comparing with a branch picked from a list"));
+                menu.Add(new MenuItem(App.Text("BranchCM.CompareWith"), () => new ViewModels.CompareCommandPalette(repo, branch).Open()));
             }
             else
             {
@@ -137,7 +136,7 @@ namespace SourceGit.Views
                 menu.Add(new MenuItem(App.Text("BranchCM.CompareWithHead"), () => Compare.Show(repo, branch, current)));
                 if (upstream != null)
                     menu.Add(new MenuItem(App.Text("BranchCM.CompareWithSpecial", upstream.FriendlyName), () => Compare.Show(repo, upstream, branch)));
-                menu.Add(NotPorted(App.Text("BranchCM.CompareWith"), "Comparing with a branch picked from a list"));
+                menu.Add(new MenuItem(App.Text("BranchCM.CompareWith"), () => new ViewModels.CompareCommandPalette(repo, branch).Open()));
             }
 
             if (!branch.IsDetachedHead)
@@ -189,7 +188,7 @@ namespace SourceGit.Views
                 menu.Add(Rebase(repo, current, branch, name));
                 menu.Add(MenuSeparator.Instance);
                 menu.Add(new MenuItem(App.Text("BranchCM.CompareWithHead"), () => Compare.Show(repo, branch, current)));
-                menu.Add(NotPorted(App.Text("BranchCM.CompareWith"), "Comparing with a branch picked from a list"));
+                menu.Add(new MenuItem(App.Text("BranchCM.CompareWith"), () => new ViewModels.CompareCommandPalette(repo, branch).Open()));
             }
 
             menu.Add(MenuSeparator.Instance);
@@ -268,7 +267,7 @@ namespace SourceGit.Views
             menu.Add(Popup(repo, App.Text("TagCM.Delete", tag.Name), () => new ViewModels.DeleteTag(repo, tag)));
             menu.Add(MenuSeparator.Instance);
             menu.Add(new MenuItem(App.Text("TagCM.CompareWithHead"), () => Compare.Show(repo, tag, repo.CurrentBranch)) { Enabled = repo.CurrentBranch != null });
-            menu.Add(NotPorted(App.Text("TagCM.CompareWith"), "Comparing with a branch or tag picked from a list"));
+            menu.Add(new MenuItem(App.Text("TagCM.CompareWith"), () => new ViewModels.CompareCommandPalette(repo, tag).Open()));
             menu.Add(MenuSeparator.Instance);
             menu.Add(Popup(repo, App.Text("Archive"), () => new ViewModels.Archive(repo, tag)));
             menu.Add(MenuSeparator.Instance);

@@ -48,9 +48,12 @@ namespace SourceGit.Views
             column.Add(split);
         }
 
-        public static void ShowFile(ViewModels.Repository repo, string file, string commit = null)
+        public static void ShowFile(ViewModels.Repository repo, string file, string commit = null) =>
+            ShowFile(new ViewModels.FileHistories(repo.FullPath, file, commit));
+
+        /// <summary>A file's history already asked for: a palette's pick.</summary>
+        public static void ShowFile(ViewModels.FileHistories vm)
         {
-            var vm = new ViewModels.FileHistories(repo.FullPath, file, commit);
             var window = Open(App.Text("FileHistory"));
             var column = Page(window, "File", vm, nameof(vm.Title), () => vm.Title);
 

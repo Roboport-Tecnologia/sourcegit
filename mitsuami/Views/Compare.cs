@@ -21,9 +21,12 @@ namespace SourceGit.Views
         /// <summary>The window last opened, while it's open: for captures.</summary>
         public static Window Shown { get; private set; }
 
-        public static void Show(ViewModels.Repository repo, object based, object to)
+        public static void Show(ViewModels.Repository repo, object based, object to) =>
+            Show(repo, new ViewModels.Compare(repo, based, to));
+
+        /// <summary>A comparison already made: a palette's pick.</summary>
+        public static void Show(ViewModels.Repository repo, ViewModels.Compare vm)
         {
-            var vm = new ViewModels.Compare(repo, based, to);
             var window = Shown = new Window(App.Text("Compare"), 1280, 720);
             window.Closed += () =>
             {
