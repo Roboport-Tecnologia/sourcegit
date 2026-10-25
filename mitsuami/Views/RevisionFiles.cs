@@ -62,7 +62,8 @@ namespace SourceGit.Views
             split.MinHeight = 0;
             split.Changed += width => layout.CommitDetailFilesLeftWidth = new(width);
 
-            var left = new Column { AlignItems = Align.Stretch, Gap = 4, Padding = new Thickness(4, 0, 4, 4) };
+            // Room on both sides of the divider, so neither pane runs into it.
+            var left = new Column { AlignItems = Align.Stretch, Gap = 4, Padding = new Thickness(4, 6, 4, 4) };
             left.MinWidth = 200;
             left.Add(files.SearchField());
             files._list.Grow = 1;
@@ -300,7 +301,7 @@ namespace SourceGit.Views
         /// button over what it is.</summary>
         private static Node Content(ViewModels.CommitDetail vm)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 4 };
+            var column = new Column { AlignItems = Align.Stretch, Gap = 4, Padding = new Thickness(0, 0, 0, 6) };
             column.MinWidth = 100;
             var header = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4) };
             var path = new Text { Style = TextStyle.Caption, MaxLines = 1 };

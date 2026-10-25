@@ -86,7 +86,9 @@ namespace SourceGit.Views
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
 
-            var start = new Row { AlignItems = Align.Center };
+            // The pull-down's icon and arrow fill its slot, so it gets
+            // room from the window's edge.
+            var start = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 0, 0, 6) };
             start.Grow = 1;
             AddMenu(start, "OpenWith", "Repository.OpenWithExternalTools", () => ToolbarMenus.OpenWith(vm));
             Add(start, "Logs", 14, "Repository.ViewLogs", () => Logs.Show(vm));
