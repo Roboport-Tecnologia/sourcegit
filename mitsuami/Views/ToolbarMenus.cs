@@ -1,17 +1,76 @@
 using System.Collections.Generic;
+using System.IO;
 
 using Mitsuamia;
 
 namespace SourceGit.Views
 {
     /// <summary>
-    /// Upstream's toolbar menus (<c>RepositoryToolbar.axaml.cs</c>): Git-Flow,
-    /// Git LFS and the repository's custom actions, built as they open, as
-    /// upstream's are: what they offer depends on the branches, the remotes
-    /// and git's hooks then.
+    /// Upstream's toolbar menus (<c>RepositoryToolbar.axaml.cs</c>): opening
+    /// the repository elsewhere, Git-Flow, Git LFS and the repository's
+    /// custom actions, built as they open, as upstream's are: what they
+    /// offer depends on the tools, branches, remotes and git's hooks then.
     /// </summary>
     public static class ToolbarMenus
     {
+        /// <summary>Upstream's <c>OpenWithExternalTools</c>: the file
+        /// manager and the terminal, the external tools found (a submenu of
+        /// a tool's own choices, e.g. a workspace, when it has several), and
+        /// each remote's web page.</summary>
+        public static IReadOnlyList<MenuEntry> OpenWith(ViewModels.Repository repo)
+        {
+            var path = repo.FullPath;
+            if (!Directory.Exists(path))
+                return [];
+            var menu = new List<MenuEntry>
+            {
+                new MenuItem(App.Text("Repository.Explore"), () => Native.OS.OpenInFileManager(path)),
+                new MenuItem(App.Text("Repository.Terminal"), () => Native.OS.OpenTerminal(path)),
+            };
+
+            var tools = Native.OS.ExternalTools;
+            if (tools.Count > 0)
+            {
+                menu.Add(MenuSeparator.Instance);
+                foreach (var tool in tools)
+                {
+                    var options = tool.MakeLaunchOptions(path);
+                    var count = (tool.SupportOpenFolder ? 1 : 0) + (options?.Count ?? 0);
+                    var title = App.Text("Repository.OpenIn", tool.Name);
+                    if (count == 0)
+                        continue;
+                    if (count == 1)
+                    {
+                        var args = options is { Count: 1 } ? options[0].Args : path.Quoted();
+                        menu.Add(new MenuItem(title, () => tool.Launch(args)));
+                        continue;
+                    }
+                    var each = new List<MenuEntry>();
+                    foreach (var option in options)
+                        each.Add(new MenuItem(option.Title, () => tool.Launch(option.Args)));
+                    if (tool.SupportOpenFolder)
+                    {
+                        each.Add(MenuSeparator.Instance);
+                        each.Add(new MenuItem(App.Text("Repository.OpenAsFolder"), () => tool.Launch(path.Quoted())));
+                    }
+                    menu.Add(new Submenu(title, each));
+                }
+            }
+
+            var visits = new List<MenuEntry>();
+            foreach (var remote in repo.Remotes)
+            {
+                if (remote.TryGetVisitURL(out var url))
+                    visits.Add(new MenuItem(App.Text("Repository.Visit", remote.Name), () => Native.OS.OpenBrowser(url)));
+            }
+            if (visits.Count > 0)
+            {
+                menu.Add(MenuSeparator.Instance);
+                menu.AddRange(visits);
+            }
+            return menu;
+        }
+
         /// <summary>Upstream's <c>OpenGitFlowMenu</c>: starting a feature,
         /// release or hotfix, and finishing the current branch if it's one;
         /// else initializing Git-Flow.</summary>

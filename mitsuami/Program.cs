@@ -113,6 +113,8 @@ namespace SourceGit
             // Upstream's theme sets the graph's colours; the platform's
             // appearance is the theme here, so they're upstream's defaults.
             Models.CommitGraph.SetDefaultPens();
+            // The editors and IDEs installed, for the "Open" menus.
+            Native.OS.SetupExternalTools();
             // Fetched avatars come to the UI thread.
             Models.AvatarManager.Instance.Start();
 
