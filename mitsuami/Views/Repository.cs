@@ -89,7 +89,7 @@ namespace SourceGit.Views
             start.Grow = 1;
             AddMenu(start, "OpenWith", "Repository.OpenWithExternalTools", () => ToolbarMenus.OpenWith(vm));
             Add(start, "Logs", 14, "Repository.ViewLogs", () => Logs.Show(vm));
-            Add(start, "Statistics", 13, "Repository.Statistics", null);
+            Add(start, "Statistics", 13, "Repository.Statistics", () => Statistics.Show(vm));
             band.Add(start);
 
             var middle = new Row { AlignItems = Align.Center };
