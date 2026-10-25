@@ -60,7 +60,12 @@ namespace SourceGit.Views
             var right = Page(vm);
             right.MinWidth = 100;
             split.Add(right);
-            body.Add(split);
+            // Upstream's in-progress bar spans the sidebar and the page.
+            var main = new Column { AlignItems = Align.Stretch };
+            main.Grow = 1;
+            main.Add(InProgressBar(vm));
+            main.Add(split);
+            body.Add(main);
             page.Add(body);
             return page;
         }
@@ -481,7 +486,91 @@ namespace SourceGit.Views
             return bar;
         }
 
-        /// <summary>Behind the bisect bar: amber at a quarter.</summary>
+        /// <summary>
+        /// Upstream's bar while a cherry-pick, rebase, revert or merge is in
+        /// progress, over the sidebar and the page: what's going on and the
+        /// commit it's at (its short SHA in upstream's orange, the commit as
+        /// its tooltip), a spinner while skipping or aborting, then Skip
+        /// (for a cherry-pick, a revert, or a rebase stopped at a commit),
+        /// Resolve (which shows the local changes, unless they show) and
+        /// Abort. The bisect bar's colour, as upstream's.
+        /// </summary>
+        private static Node InProgressBar(ViewModels.Repository vm)
+        {
+            var bar = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 8) };
+            bar.Height = 28;
+            bar.Shrink = 0;
+            bar.Add(new Tint { Inset = new Thickness(0) });
+            var what = new Row { AlignItems = Align.Center, Gap = 4 };
+            what.Grow = 1;
+            what.Width = 0;
+            var text = new Text { Weight = FontWeight.Bold, MaxLines = 1 };
+            text.Shrink = 1;
+            text.MinWidth = 0;
+            what.Add(text);
+            var head = new Text { Weight = FontWeight.Bold, MaxLines = 1, Color = Color.Rgba(255, 140, 0) };
+            head.Shrink = 0;
+            what.Add(head);
+            // A merge's: the source, an arrow, the current branch.
+            var arrow = new Text("→") { Weight = FontWeight.Bold };
+            what.Add(arrow);
+            var current = new Text { Weight = FontWeight.Bold, MaxLines = 1, Color = Color.Rgba(255, 140, 0) };
+            what.Add(current);
+            bar.Add(what);
+            var spinner = new Spinner();
+            bar.Add(spinner);
+            var skip = new Button(Popups.ButtonText("Repository.Skip"));
+            skip.Click += () => _ = vm.SkipMergeAsync();
+            bar.Add(skip);
+            var resolve = new Button(Popups.ButtonText("Repository.Resolve"));
+            resolve.Click += () => vm.SelectedViewIndex = 1;
+            bar.Add(resolve);
+            var abort = new Button(Popups.ButtonText("Repository.Abort"));
+            abort.Click += () => _ = vm.AbortMergeAsync();
+            bar.Add(abort);
+
+            static string Tip(Models.Commit commit) =>
+                string.IsNullOrEmpty(commit.Subject) ? commit.SHA : $"{commit.Author.Name}  ·  {Models.DateTimeFormat.Format(commit.CommitterTime)}\n\n{commit.Subject}";
+            void Show()
+            {
+                var context = vm.InProgressContext;
+                bar.IsVisible = context != null;
+                var (message, commit, name) = context switch
+                {
+                    ViewModels.CherryPickInProgress c => ($"{App.Text("InProgress.CherryPick")} {App.Text("InProgress.CherryPick.Head")}", c.Head, null),
+                    ViewModels.RebaseInProgress r when r.StoppedAt != null => ($"{App.Text("InProgress.Rebase")} {App.Text("InProgress.Rebase.StoppedAt")}", r.StoppedAt, null),
+                    ViewModels.RebaseInProgress => (App.Text("InProgress.Rebase"), null, null),
+                    ViewModels.RevertInProgress r => ($"{App.Text("InProgress.Revert")} {App.Text("InProgress.Revert.Head")}", r.Head, null),
+                    ViewModels.MergeInProgress m => ($"{App.Text("InProgress.Merge")} {App.Text("InProgress.Merge.Operating")}", m.Source, m.SourceName),
+                    _ => ("", (Models.Commit)null, (string)null),
+                };
+                text.Value = message;
+                head.IsVisible = commit != null;
+                if (commit != null)
+                {
+                    head.Value = name ?? (commit.SHA.Length > 10 ? commit.SHA[..10] : commit.SHA);
+                    head.Style = name == null ? TextStyle.Monospace : TextStyle.Body;
+                    head.ToolTip = Tip(commit);
+                }
+                arrow.IsVisible = current.IsVisible = context is ViewModels.MergeInProgress;
+                if (context is ViewModels.MergeInProgress merge)
+                    current.Value = merge.Current;
+                skip.IsVisible = context is ViewModels.CherryPickInProgress or ViewModels.RevertInProgress
+                    || context is ViewModels.RebaseInProgress { StoppedAt: not null };
+                resolve.IsVisible = !vm.IsWorkingCopyVisible;
+                var busy = vm.IsSkippingOrAbortingMerge;
+                spinner.IsVisible = busy;
+                skip.IsEnabled = !busy;
+                abort.IsEnabled = !busy;
+            }
+            foreach (var property in new[] { nameof(vm.InProgressContext), nameof(vm.IsWorkingCopyVisible), nameof(vm.IsSkippingOrAbortingMerge) })
+                Bind.OneWay(vm, property, () => 0, _ => Show(), owner: bar);
+            return bar;
+        }
+
+        /// <summary>Behind the bisect and in-progress bars, upstream's
+        /// conflict colour (a pale yellow in its light theme, a dark amber
+        /// in its dark one): amber at a quarter over the window.</summary>
         private sealed class Tint() : DrawnWidget("BisectBar", 0, 0)
         {
             protected override void Draw(Canvas canvas) => canvas.FillRect(0, 0, canvas.Width, canvas.Height, Color.Rgba(255, 196, 0, 64));
