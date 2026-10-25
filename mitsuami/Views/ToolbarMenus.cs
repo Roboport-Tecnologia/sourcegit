@@ -149,13 +149,16 @@ namespace SourceGit.Views
             var locks = App.Text("GitLFS.Locks");
             if (repo.Remotes.Count == 1)
             {
-                menu.Add(CommitMenu.NotPorted(locks, "The LFS locks window"));
+                menu.Add(new MenuItem(locks, () => LfsLocks.Show(repo, repo.Remotes[0].Name)));
             }
             else if (remotes)
             {
                 var each = new List<MenuEntry>();
                 foreach (var remote in repo.Remotes)
-                    each.Add(CommitMenu.NotPorted(remote.Name, "The LFS locks window"));
+                {
+                    var name = remote.Name;
+                    each.Add(new MenuItem(name, () => LfsLocks.Show(repo, name)));
+                }
                 menu.Add(new Submenu(locks, each));
             }
             else
