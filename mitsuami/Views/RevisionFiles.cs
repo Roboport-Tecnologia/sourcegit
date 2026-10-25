@@ -357,16 +357,7 @@ namespace SourceGit.Views
             switch (content)
             {
                 case Models.RevisionImageFile { Image: { } bitmap } image:
-                    // As large as its pixels, shrunk to fit the pane.
-                    var (w, h) = (bitmap.PixelSize.Width, bitmap.PixelSize.Height);
-                    var view = new Image { Label = image.ImageType };
-                    view.SetPixels(w, h, Rgba(bitmap), 2);
-                    view.MaxWidth = w / 2f;
-                    view.MaxHeight = h / 2f;
-                    view.Grow = 1;
-                    view.MinHeight = 0;
-                    view.MinWidth = 0;
-                    column.Add(view);
+                    column.Add(Picture(bitmap));
                     var info = new Row { Gap = 8, AlignItems = Align.Center };
                     info.Add(new Text(image.ImageType) { Style = TextStyle.Caption, Weight = FontWeight.Bold });
                     info.Add(new Text(image.ImageSize) { Style = TextStyle.Caption });
@@ -404,6 +395,21 @@ namespace SourceGit.Views
                     break;
             }
             return column;
+        }
+
+        /// <summary>A picture as large as its pixels on a Retina screen,
+        /// shrunk to fit where it is.</summary>
+        internal static Image Picture(Avalonia.Media.Imaging.Bitmap bitmap)
+        {
+            var (w, h) = (bitmap.PixelSize.Width, bitmap.PixelSize.Height);
+            var view = new Image();
+            view.SetPixels(w, h, Rgba(bitmap), 2);
+            view.MaxWidth = w / 2f;
+            view.MaxHeight = h / 2f;
+            view.Grow = 1;
+            view.MinHeight = 0;
+            view.MinWidth = 0;
+            return view;
         }
 
         /// <summary>The bitmap's pixels as straight RGBA, as decoded files

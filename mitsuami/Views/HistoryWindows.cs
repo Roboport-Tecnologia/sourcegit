@@ -198,7 +198,7 @@ namespace SourceGit.Views
                 shown = value switch
                 {
                     ViewModels.FileHistoriesRevisionFile file => File(vm, file),
-                    ViewModels.DiffContext => DiffNote(),
+                    ViewModels.DiffContext => DiffView.Create(vm, nameof(vm.ViewContent), () => vm.ViewContent),
                     _ => Empty(),
                 };
                 (vm.IsDiffMode ? change : content).Add(shown);
@@ -278,7 +278,7 @@ namespace SourceGit.Views
             };
             header.Add(patch);
             column.Add(header);
-            column.Add(DiffNote());
+            column.Add(DiffView.Create(vm, nameof(vm.ViewContent), () => vm.ViewContent));
             return column;
         }
 
@@ -302,15 +302,6 @@ namespace SourceGit.Views
                 holder.Add(new Text(version.Subject) { MaxLines = 1 });
             }, owner: holder);
             return holder;
-        }
-
-        private static Node DiffNote()
-        {
-            var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 16 };
-            column.Grow = 1;
-            column.Add(new Icon(Icons.Get("Diff")) { Size = 64, Color = Color.SecondaryLabel });
-            column.Add(new Text("Diffs aren't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
-            return column;
         }
 
         /// <summary>Upstream's empty side: its history icon.</summary>

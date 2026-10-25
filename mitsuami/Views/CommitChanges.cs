@@ -29,7 +29,7 @@ namespace SourceGit.Views
         /// compared and two branches compared share: the search over their
         /// paths with the view mode, the changes as a list, grid or tree
         /// (with a spinner while they load), their count, and upstream's
-        /// welcome where the diff goes, which waits for bemtvi.
+        /// diff (<see cref="DiffView"/>).
         /// </summary>
         public static Node Pane(System.ComponentModel.INotifyPropertyChanged vm, Func<string, string> absPath,
             string filterProperty, Func<string> filter, Action<string> setFilter,
@@ -91,14 +91,7 @@ namespace SourceGit.Views
             left.Add(counted);
             split.Add(left);
 
-            var detail = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 16 };
-            detail.MinWidth = 100;
-            detail.Add(new Icon(Icons.Get("Diff")) { Size = 64, Color = Color.SecondaryLabel });
-            detail.Add(new Text(App.Text("Diff.Welcome")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
-            var note = new Text("Diffs aren't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
-            Bind.OneWay(vm, diffProperty, diff, d => note.IsVisible = d != null, owner: note);
-            detail.Add(note);
-            split.Add(detail);
+            split.Add(DiffView.Create(vm, diffProperty, diff));
             return split;
         }
 

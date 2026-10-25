@@ -270,20 +270,10 @@ namespace SourceGit.Views
             return menu;
         }
 
-        /// <summary>Upstream's right side: its welcome (the diff icon, 64
-        /// points, and "Select file to view changes" in bold, both
-        /// secondary) until a file's chosen; then its diff, which waits for
-        /// bemtvi.</summary>
-        private static Node Detail(ViewModels.StashesPage vm)
-        {
-            var detail = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 16 };
-            detail.Add(new Icon(Icons.Get("Diff")) { Size = 64, Color = Color.SecondaryLabel });
-            detail.Add(new Text(App.Text("Diff.Welcome")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
-            var note = new Text("Diffs aren't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
-            Bind.OneWay(vm, nameof(vm.DiffContext), () => vm.DiffContext, d => note.IsVisible = d != null, owner: note);
-            detail.Add(note);
-            return detail;
-        }
+        /// <summary>Upstream's right side: the picked change's diff
+        /// (<see cref="DiffView"/>).</summary>
+        private static Node Detail(ViewModels.StashesPage vm) =>
+            DiffView.Create(vm, nameof(vm.DiffContext), () => vm.DiffContext);
 
         private static readonly Color s_name = Color.Rgba(255, 140, 0);
         private static readonly Regex s_on = new(@"^On ([^\s]+)\: ");

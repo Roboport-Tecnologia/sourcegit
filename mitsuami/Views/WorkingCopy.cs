@@ -261,22 +261,15 @@ namespace SourceGit.Views
             return column;
         }
 
-        /// <summary>Upstream's detail: its welcome (the diff icon, 64 points,
-        /// and "Select file to view changes" in bold, both secondary) until a
-        /// file's chosen; then the file's diff, which waits for bemtvi, or
-        /// its conflict.</summary>
+        /// <summary>Upstream's detail: the picked file's diff
+        /// (<see cref="DiffView"/>), or its conflict.</summary>
         private static Node Detail(ViewModels.WorkingCopy vm)
         {
             var detail = new Column { AlignItems = Align.Stretch };
             detail.Grow = 1;
             detail.MinHeight = 100;
-            var welcome = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 16 };
-            welcome.Grow = 1;
-            welcome.Add(new Icon(Icons.Get("Diff")) { Size = 64, Color = Color.SecondaryLabel });
-            welcome.Add(new Text(App.Text("Diff.Welcome")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
-            var note = new Text("Diffs aren't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
-            welcome.Add(note);
-            detail.Add(welcome);
+            var diff = DiffView.Create(vm, nameof(vm.DetailContext), () => vm.DetailContext as ViewModels.DiffContext);
+            detail.Add(diff);
             Node conflict = null;
             Bind.OneWay(vm, nameof(vm.DetailContext), () => vm.DetailContext, context =>
             {
@@ -287,8 +280,7 @@ namespace SourceGit.Views
                     conflict = Conflict.Create(vm.Repository, c);
                     detail.Add(conflict);
                 }
-                welcome.IsVisible = conflict == null;
-                note.IsVisible = context is ViewModels.DiffContext;
+                diff.IsVisible = conflict == null;
             }, owner: detail);
             return detail;
         }
