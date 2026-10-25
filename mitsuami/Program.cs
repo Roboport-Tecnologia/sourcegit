@@ -118,6 +118,20 @@ namespace SourceGit
             // Fetched avatars come to the UI thread.
             Models.AvatarManager.Instance.Start();
 
+            // Upstream's app menu: about and settings, which macOS puts in
+            // its app menu by their roles; the rest isn't ported.
+            MenuBar.Set(
+            [
+                new Submenu("SourceGit",
+                [
+                    Views.CommitMenu.NotPorted(App.Text("About.Menu"), "The about window") with { Role = MenuRole.About },
+                    new MenuItem(App.Text("Preferences"), Views.Preferences.Show)
+                    {
+                        Role = MenuRole.Settings,
+                        Shortcut = Shortcut.Of(',').WithPrimary(),
+                    },
+                ]),
+            ]);
             App.CreateLauncher(s_startupRepo);
             _ = ViewModels.Welcome.Instance.UpdateStatusAsync(false, null);
         }

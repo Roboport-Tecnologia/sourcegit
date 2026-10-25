@@ -151,8 +151,17 @@ namespace SourceGit.Views
             var text = App.Text(key);
             if (text != text.ToUpperInvariant() || text == "OK")
                 return text;
-            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLowerInvariant());
+            var words = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLowerInvariant()).Split(' ');
+            // Acronyms stay in capitals: "GPG Signing", "AI".
+            for (var i = 0; i < words.Length; i++)
+            {
+                if (s_acronyms.Contains(words[i].ToUpperInvariant()))
+                    words[i] = words[i].ToUpperInvariant();
+            }
+            return string.Join(' ', words);
         }
+
+        private static readonly HashSet<string> s_acronyms = ["AI", "GPG", "LFS", "SSH", "URL", "HTTP", "OK"];
 
         /// <summary>Each popup's form, as upstream's view for it. Those not
         /// ported yet say so, and can only be cancelled.</summary>

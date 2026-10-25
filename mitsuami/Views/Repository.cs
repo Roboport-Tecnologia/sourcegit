@@ -279,6 +279,22 @@ namespace SourceGit.Views
                 for (var i = 0; i < buttons.Count; i++)
                     buttons[i].IsChecked = i == chosen;
             }, owner: rail);
+            // Upstream's settings button at the rail's foot.
+            var gap = new Column();
+            gap.Grow = 1;
+            rail.Add(gap);
+            var settings = new Button(App.Text("Repository.Configure"))
+            {
+                Icon = Icons.Get("Settings", 16),
+                IconOnly = true,
+                Style = ButtonStyle.Borderless,
+                ToolTip = App.Text("Repository.Configure"),
+                Margin = new Thickness(0, 0, 4, 0),
+            };
+            settings.Width = 40;
+            settings.Height = 40;
+            settings.Click += () => RepositorySettings.Show(vm);
+            rail.Add(settings);
             return rail;
         }
 
