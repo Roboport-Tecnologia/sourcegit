@@ -171,7 +171,7 @@ namespace SourceGit.Views
             page.Add(people);
             page.Add(new Separator { Margin = new Thickness(8, 0, 8, 8) });
 
-            page.Add(Field(App.Text("CommitDetail.Info.SHA"), ShaRow(detail, commit)));
+            page.Add(Field(App.Text("CommitDetail.Info.SHA"), ShaRow(detail, commit), center: true));
 
             if (commit.Parents.Count > 0)
             {
@@ -230,7 +230,7 @@ namespace SourceGit.Views
         {
             var row = new Row { AlignItems = Align.Center };
             row.Height = 24;
-            row.Add(new Text(commit.SHA) { Style = TextStyle.Monospace, Margin = new Thickness(0, 4, 0, 0) });
+            row.Add(new Text(commit.SHA) { Style = TextStyle.Monospace });
             row.Add(CopyButton(commit.SHA));
             row.Add(ContainsIn(detail));
 
@@ -422,10 +422,12 @@ namespace SourceGit.Views
         }
 
         /// <summary>A labelled value: the label right-aligned in 96 points,
-        /// bold and secondary, the value 12 after it.</summary>
-        private static Node Field(string label, Node value)
+        /// bold and secondary, the value 12 after it. <paramref name="center"/>
+        /// centres the label on a one-line value taller than its text (the
+        /// SHA's row, as high as its buttons).</summary>
+        private static Node Field(string label, Node value, bool center = false)
         {
-            var row = new Row { AlignItems = Align.Start, Gap = 12, Padding = new Thickness(4, 0) };
+            var row = new Row { AlignItems = center ? Align.Center : Align.Start, Gap = 12, Padding = new Thickness(4, 0) };
             var name = new Column { AlignItems = Align.End };
             name.Width = 96;
             name.Add(new Text(label) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
