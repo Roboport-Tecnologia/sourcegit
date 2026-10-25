@@ -15,7 +15,30 @@ namespace SourceGit.Views
     /// </summary>
     public static class CommitChanges
     {
-        public static Node Create(ViewModels.CommitDetail vm)
+        public static Node Create(ViewModels.CommitDetail vm) =>
+            Pane(vm, vm.GetAbsPath,
+                nameof(vm.SearchChangeFilter), () => vm.SearchChangeFilter, v => vm.SearchChangeFilter = v,
+                nameof(vm.VisibleChanges), () => vm.VisibleChanges,
+                nameof(vm.ChangeSelection), () => vm.ChangeSelection, s => vm.ChangeSelection = s,
+                nameof(vm.Changes), () => vm.Changes?.Count ?? 0,
+                nameof(vm.DiffContext), () => vm.DiffContext,
+                s => Menu(vm, s));
+
+        /// <summary>
+        /// Upstream's changes beside their diff, which a commit, two commits
+        /// compared and two branches compared share: the search over their
+        /// paths with the view mode, the changes as a list, grid or tree
+        /// (with a spinner while they load), their count, and upstream's
+        /// welcome where the diff goes, which waits for bemtvi.
+        /// </summary>
+        public static Node Pane(System.ComponentModel.INotifyPropertyChanged vm, Func<string, string> absPath,
+            string filterProperty, Func<string> filter, Action<string> setFilter,
+            string changesProperty, Func<List<Models.Change>> changes,
+            string selectionProperty, Func<ViewModels.ChangeSelection> selection, Action<ViewModels.ChangeSelection> setSelection,
+            string countProperty, Func<int> count,
+            string diffProperty, Func<object> diff,
+            Func<ViewModels.ChangeSelection, IReadOnlyList<MenuEntry>> menu,
+            string loadingProperty = null, Func<bool> loading = null)
         {
             var layout = ViewModels.Preferences.Instance.Layout;
             var split = new Split { Position = layout.CommitDetailChangesLeftWidth.IsAbsolute ? layout.CommitDetailChangesLeftWidth.Value : 256 };
@@ -28,55 +51,55 @@ namespace SourceGit.Views
             var top = new Row { AlignItems = Align.Center, Gap = 4 };
             var search = new SearchInput { Placeholder = App.Text("CommitDetail.Changes.Search") };
             search.Grow = 1;
-            Bind.Search(search, vm, nameof(vm.SearchChangeFilter), () => vm.SearchChangeFilter, v => vm.SearchChangeFilter = v, owner: top);
+            Bind.Search(search, vm, filterProperty, filter, setFilter, owner: top);
             top.Add(search);
             top.Add(ChangeCollection.ModeButton());
             left.Add(top);
 
-            var list = List(vm);
-            list.Grow = 1;
-            list.MinHeight = 0;
-            left.Add(list);
-            var count = new Text { Color = Color.SecondaryLabel };
-            Bind.OneWay(vm, nameof(vm.Changes), () => vm.Changes?.Count ?? 0,
-                c => count.Value = $"{c} {App.Text("CommitDetail.Changes.Count")}", owner: count);
-            left.Add(count);
-            split.Add(left);
-            split.Add(Detail(vm));
-            return split;
-        }
-
-        private static ListView List(ViewModels.CommitDetail vm)
-        {
             var prefs = ViewModels.Preferences.Instance;
-            var repo = vm.Repository;
             var list = new ChangeCollection(false);
-            var owner = list.View;
-            owner.Style = ListStyle.Framed;
-            Bind.OneWay(prefs, nameof(prefs.ChangeViewMode), () => prefs.ChangeViewMode, m => list.Mode = m, owner: owner);
+            var view = list.View;
+            view.Style = ListStyle.Framed;
+            view.Grow = 1;
+            view.MinHeight = 0;
+            Bind.OneWay(prefs, nameof(prefs.ChangeViewMode), () => prefs.ChangeViewMode, m => list.Mode = m, owner: view);
             Bind.OneWay(prefs, nameof(prefs.EnableCompactFoldersInChangesTree), () => prefs.EnableCompactFoldersInChangesTree,
-                v => list.CompactFolders = v, owner: owner);
-            Bind.OneWay(vm, nameof(vm.VisibleChanges), () => vm.VisibleChanges, c => list.Changes = c, owner: owner);
-            Bind.OneWay(vm, nameof(vm.ChangeSelection), () => vm.ChangeSelection, s => list.Selection = s, owner: owner);
-            list.SelectionChanged += s => vm.ChangeSelection = s;
-            list.Menu = s => Menu(vm, s);
-            owner.OnKey(Shortcut.Of('c').WithPrimary(), () => ChangeMenus.CopyPaths(repo, vm.ChangeSelection, false));
-            owner.OnKey(Shortcut.Of('c').WithPrimary().WithShift(), () => ChangeMenus.CopyPaths(repo, vm.ChangeSelection, true));
-            return owner;
-        }
+                v => list.CompactFolders = v, owner: view);
+            Bind.OneWay(vm, changesProperty, changes, c => list.Changes = c, owner: view);
+            Bind.OneWay(vm, selectionProperty, selection, s => list.Selection = s, owner: view);
+            list.SelectionChanged += setSelection;
+            list.Menu = menu;
+            view.OnKey(Shortcut.Of('c').WithPrimary(), () => ChangeMenus.CopyPaths(absPath, selection(), false));
+            view.OnKey(Shortcut.Of('c').WithPrimary().WithShift(), () => ChangeMenus.CopyPaths(absPath, selection(), true));
+            var area = new Column { AlignItems = Align.Stretch, Justify = Justify.Center };
+            area.Grow = 1;
+            area.MinHeight = 0;
+            area.Add(view);
+            if (loadingProperty != null)
+            {
+                var spinner = new Spinner { AlignSelf = Align.Center };
+                area.Add(spinner);
+                Bind.OneWay(vm, loadingProperty, loading, busy =>
+                {
+                    spinner.IsVisible = busy;
+                    view.IsVisible = !busy;
+                }, owner: spinner);
+            }
+            left.Add(area);
+            var counted = new Text { Color = Color.SecondaryLabel };
+            Bind.OneWay(vm, countProperty, count, c => counted.Value = $"{c} {App.Text("CommitDetail.Changes.Count")}", owner: counted);
+            left.Add(counted);
+            split.Add(left);
 
-        /// <summary>Upstream's welcome until a change is picked; its diff
-        /// waits for bemtvi.</summary>
-        private static Node Detail(ViewModels.CommitDetail vm)
-        {
             var detail = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 16 };
             detail.MinWidth = 100;
             detail.Add(new Icon(Icons.Get("Diff")) { Size = 64, Color = Color.SecondaryLabel });
             detail.Add(new Text(App.Text("Diff.Welcome")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
             var note = new Text("Diffs aren't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
-            Bind.OneWay(vm, nameof(vm.DiffContext), () => vm.DiffContext, d => note.IsVisible = d != null, owner: note);
+            Bind.OneWay(vm, diffProperty, diff, d => note.IsVisible = d != null, owner: note);
             detail.Add(note);
-            return detail;
+            split.Add(detail);
+            return split;
         }
 
         /// <summary>Upstream's menus: for a folder, a change, several

@@ -259,9 +259,15 @@ namespace SourceGit.Views
 
         /// <summary>Upstream's ⌘C and ⌘⇧C on a list: the selected paths,
         /// one a line, or a folder's.</summary>
-        public static void CopyPaths(ViewModels.Repository repo, ViewModels.ChangeSelection selection, bool full)
+        public static void CopyPaths(ViewModels.Repository repo, ViewModels.ChangeSelection selection, bool full) =>
+            CopyPaths(path => Native.OS.GetAbsPath(repo.FullPath, path), selection, full);
+
+        /// <summary>The paths selected, or their full paths by
+        /// <paramref name="absPath"/>, on the clipboard: one, or a line
+        /// each.</summary>
+        public static void CopyPaths(Func<string, string> absPath, ViewModels.ChangeSelection selection, bool full)
         {
-            string Shown(string path) => full ? Native.OS.GetAbsPath(repo.FullPath, path) : path;
+            string Shown(string path) => full ? absPath(path) : path;
             var changes = selection.Changes;
             var builder = new StringBuilder();
             if (selection.IsSingleFolder)

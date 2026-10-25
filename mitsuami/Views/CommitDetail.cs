@@ -85,7 +85,25 @@ namespace SourceGit.Views
                 if (shown != null)
                     shown.PropertyChanged -= Changed;
             };
-            return tabs;
+
+            // Two commits compared show in place of the tabs, as upstream's.
+            var details = new Column { AlignItems = Align.Stretch };
+            tabs.Grow = 1;
+            tabs.MinHeight = 0;
+            details.Add(tabs);
+            var compare = Page();
+            details.Add(compare);
+            ViewModels.RevisionCompare compared = null;
+            Bind.OneWay(source, property, context, context =>
+            {
+                var now = context as ViewModels.RevisionCompare;
+                tabs.IsVisible = now == null;
+                compare.IsVisible = now != null;
+                if (!ReferenceEquals(now, compared))
+                    Fill(compare, now == null ? null : RevisionCompare.Create(now));
+                compared = now;
+            }, owner: details);
+            return details;
         }
 
         /// <summary>A tab's page, which a page of the commit fills.</summary>
@@ -119,9 +137,6 @@ namespace SourceGit.Views
                     break;
                 case Models.Count count:
                     page.Add(Placeholder(App.Text("Histories.Selected", count.Value)));
-                    break;
-                case ViewModels.RevisionCompare:
-                    page.Add(Placeholder("Comparing two commits isn't ported to mitsuami yet."));
                     break;
                 default:
                     var hint = OperatingSystem.IsMacOS() ? "Histories.Tips.MacOS" : "Histories.Tips";
