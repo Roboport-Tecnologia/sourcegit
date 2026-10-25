@@ -176,6 +176,32 @@ namespace SourceGit.Views
                 await vm.ExecBisectCommandAsync("start");
         }
 
+        /// <summary>Upstream's badge: a count (999+ at most) on an accent
+        /// pill, white, 10 points; drawn, with the platform's text on it,
+        /// as the ref labels are. A click on it picks its page, as one
+        /// beside it does.</summary>
+        private static Node Badge(ViewModels.Repository vm, string property, Func<int> count, Action pick)
+        {
+            var badge = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 5), Inset = new Thickness(4, 4, Length.Auto, Length.Auto) };
+            badge.Height = 14;
+            badge.Add(new Pill { Inset = new Thickness(0) });
+            var text = new Text("") { Style = TextStyle.Caption, Color = Color.Rgba(255, 255, 255) };
+            badge.Add(text);
+            badge.Clicked += pick;
+            Bind.OneWay(vm, property, count, n =>
+            {
+                badge.IsVisible = n > 0;
+                text.Value = n > 999 ? "999+" : n.ToString();
+            }, owner: badge);
+            return badge;
+        }
+
+        private sealed class Pill() : DrawnWidget("RailBadge", 0, 0)
+        {
+            protected override void Draw(Canvas canvas) =>
+                canvas.FillRect(0, 0, canvas.Width, canvas.Height, Color.Accent, canvas.Height / 2);
+        }
+
         /// <summary>
         /// Upstream's rail, 49 points wide: the history (its dashboard),
         /// the local changes and the stashes, one of them chosen. Here
@@ -212,7 +238,22 @@ namespace SourceGit.Views
                 // Pressing the chosen one again keeps it chosen.
                 button.Changed += _ => vm.SelectedViewIndex = index;
                 buttons.Add(button);
-                rail.Add(button);
+                var item = new Container();
+                item.Add(button);
+                // Upstream's counts in the corner: the local changes (and
+                // the orange mark while something's in progress), the stashes.
+                if (index == 1)
+                {
+                    item.Add(Badge(vm, nameof(vm.LocalChangesCount), () => vm.LocalChangesCount, () => vm.SelectedViewIndex = index));
+                    var busy = new Icon(Icons.Get("Info")) { Size = 12, Color = Color.Warning, Inset = new Thickness(Length.Auto, 4, 4, Length.Auto) };
+                    Bind.OneWay(vm, nameof(vm.InProgressContext), () => vm.InProgressContext, c => busy.IsVisible = c != null, owner: busy);
+                    item.Add(busy);
+                }
+                else if (index == 2)
+                {
+                    item.Add(Badge(vm, nameof(vm.StashesCount), () => vm.StashesCount, () => vm.SelectedViewIndex = index));
+                }
+                rail.Add(item);
             }
             Bind.OneWay(vm, nameof(vm.SelectedViewIndex), () => vm.SelectedViewIndex, chosen =>
             {
