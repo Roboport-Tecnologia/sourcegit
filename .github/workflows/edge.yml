@@ -78,6 +78,7 @@ jobs:
     name: Build for macOS (${{ matrix.arch }})
     needs: refs
     strategy:
+      fail-fast: false
       matrix:
         include:
           - { arch: arm64, rust: aarch64-apple-darwin, runtime: osx-arm64 }
@@ -229,6 +230,7 @@ jobs:
     name: Build for Linux (${{ matrix.toolkit }})
     needs: refs
     strategy:
+      fail-fast: false
       matrix:
         include:
           - toolkit: gtk
@@ -274,7 +276,9 @@ jobs:
         run: |
           dotnet publish "$PROJECT" -c Release -r linux-x64 --self-contained -o publish
           cp mitsuami-extras/target/release/libmitsuami_extras_ffi.so publish/libmitsuami_ffi.so
-          rm -f publish/*.pdb
+          # .NET's LTTng tracing, which it loads only where LTTng is
+          # installed: linuxdeploy can't find what it links.
+          rm -f publish/*.pdb publish/libcoreclrtraceptprovider.so
 
       - name: Package
         run: |
