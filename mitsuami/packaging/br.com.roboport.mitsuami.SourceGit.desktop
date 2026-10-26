@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=SourceGit (mitsuami)
+Comment=SourceGit on each platform's native controls
+Exec=SourceGit %u
+Icon=br.com.roboport.mitsuami.SourceGit
+Terminal=false
+Categories=Development;
+MimeType=inode/directory;
+StartupWMClass=com.sourcegit-scm.SourceGit

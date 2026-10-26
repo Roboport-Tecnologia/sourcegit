@@ -1,0 +1,326 @@
+# The port on mitsuami (`mitsuami/`) for every platform, as the `edge`
+# pre-release, which each run replaces: a demo, run by hand
+# (`gh workflow run edge.yml --ref mitsuami`). Upstream's workflows build
+# its Avalonia app and stay as they are.
+#
+# The port builds against the heads of three sibling repositories, checked
+# out beside this one as on the maintainer's machine: mitsuamia (the C#
+# layer), mitsuami-extras (whose C ABI library has mitsuami's in it) and
+# mitsuami (`../mitsuami` to extras), whose packaging scripts sign,
+# notarize and make the AppImages.
+name: Edge
+
+on:
+  workflow_dispatch:
+    inputs:
+      mitsuami:
+        description: mitsuami's branch, tag or commit
+        default: main
+      mitsuamia:
+        description: mitsuamia's branch, tag or commit
+        default: main
+      extras:
+        description: mitsuami-extras' branch, tag or commit
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edge
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: 10.0.402
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  PROJECT: sourcegit/mitsuami/SourceGit.Mitsuami.csproj
+  APP_ID: br.com.roboport.mitsuami.SourceGit
+
+jobs:
+  # Every job builds the same commits, even if a branch moves meanwhile.
+  refs:
+    name: Pin the sibling repositories
+    runs-on: ubuntu-24.04
+    outputs:
+      mitsuami: ${{ steps.pin.outputs.mitsuami }}
+      mitsuamia: ${{ steps.pin.outputs.mitsuamia }}
+      extras: ${{ steps.pin.outputs.extras }}
+      version: ${{ steps.pin.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          sparse-checkout: VERSION
+          sparse-checkout-cone-mode: false
+      - id: pin
+        env:
+          MITSUAMI: ${{ inputs.mitsuami }}
+          MITSUAMIA: ${{ inputs.mitsuamia }}
+          EXTRAS: ${{ inputs.extras }}
+        run: |
+          # A branch's or tag's commit (an annotated tag's comes last), or
+          # the commit itself.
+          pin() {
+            local sha
+            sha=$(git ls-remote "https://github.com/Roboport-Tecnologia/$1.git" \
+              "refs/heads/$2" "refs/tags/$2" "refs/tags/$2^{}" | tail -1 | cut -f1)
+            echo "${sha:-$2}"
+          }
+          echo "mitsuami=$(pin mitsuami "$MITSUAMI")" >> "$GITHUB_OUTPUT"
+          echo "mitsuamia=$(pin mitsuamia "$MITSUAMIA")" >> "$GITHUB_OUTPUT"
+          echo "extras=$(pin mitsuami-extras "$EXTRAS")" >> "$GITHUB_OUTPUT"
+          # Upstream's version and the run: a bundle's version is numbers
+          # and dots only.
+          echo "version=$(tr -d '[:space:]' < VERSION).$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+
+  # One app per architecture, as upstream's: .NET's runtime is
+  # per architecture.
+  macos:
+    name: Build for macOS (${{ matrix.arch }})
+    needs: refs
+    strategy:
+      matrix:
+        include:
+          - { arch: arm64, rust: aarch64-apple-darwin, runtime: osx-arm64 }
+          - { arch: x86_64, rust: x86_64-apple-darwin, runtime: osx-x64 }
+    # The current SDK: AppKit gives an app its current controls only when
+    # it's linked against it (mitsuamia's Mitsuamia.targets).
+    runs-on: macos-26
+    env:
+      # Mitsuamia's floor for the app host (MitsuamiaMinimumMacOS).
+      MACOSX_DEPLOYMENT_TARGET: "12.0"
+    steps:
+      - &checkout-port
+        uses: actions/checkout@v7.0.1
+        with:
+          path: sourcegit
+      - &checkout-mitsuamia
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: Roboport-Tecnologia/mitsuamia
+          ref: ${{ needs.refs.outputs.mitsuamia }}
+          path: mitsuamia
+      - &checkout-extras
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: Roboport-Tecnologia/mitsuami-extras
+          ref: ${{ needs.refs.outputs.extras }}
+          path: mitsuami-extras
+      - &checkout-mitsuami
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: Roboport-Tecnologia/mitsuami
+          ref: ${{ needs.refs.outputs.mitsuami }}
+          path: mitsuami
+      - &setup-dotnet
+        uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Build mitsuami-extras' library
+        working-directory: mitsuami-extras
+        run: |
+          rustup toolchain install
+          rustup target add ${{ matrix.rust }}
+          cargo build --release -p mitsuami-extras-ffi --target ${{ matrix.rust }}
+
+      # The library goes beside the app under mitsuami's name, where .NET
+      # finds it without MITSUAMI_FFI. `setsid` is upstream's
+      # (package.osx-app.sh), for the terminals it opens.
+      - name: Publish
+        run: |
+          dotnet publish "$PROJECT" -c Release -r ${{ matrix.runtime }} --self-contained -o publish
+          cp mitsuami-extras/target/${{ matrix.rust }}/release/libmitsuami_extras_ffi.dylib publish/libmitsuami_ffi.dylib
+          clang -arch ${{ matrix.arch }} sourcegit/tools/setsid-macos/setsid.c -o publish/setsid \
+            -mmacosx-version-min="$MACOSX_DEPLOYMENT_TARGET"
+          rm -f publish/*.pdb
+
+      # As mitsuami's release, when the secrets are there; without them,
+      # the app is signed ad hoc, as upstream's is.
+      - name: Set up signing and notarization
+        env:
+          CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          NOTARY_KEY: ${{ secrets.MACOS_NOTARY_KEY }}
+        run: |
+          if [ -z "$CERTIFICATE" ] || [ -z "$NOTARY_KEY" ]; then
+            echo "::warning::No MACOS_CERTIFICATE and MACOS_NOTARY_KEY secrets: the app is signed ad hoc"
+            exit 0
+          fi
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password=$(openssl rand -hex 16)
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          echo "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" -P "$CERTIFICATE_PASSWORD" -f pkcs12 \
+            -T /usr/bin/codesign
+          rm "$RUNNER_TEMP/certificate.p12"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          identity=$(security find-identity -v -p codesigning "$keychain" \
+            | sed -n 's/.*\([0-9A-F]\{40\}\) "Developer ID Application.*/\1/p' | head -1)
+          if [ -z "$identity" ]; then
+            echo "::error::MACOS_CERTIFICATE has no Developer ID Application identity"
+            exit 1
+          fi
+          echo "$NOTARY_KEY" | base64 --decode > "$RUNNER_TEMP/notary.p8"
+          echo "MACOS_SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+          echo "MACOS_NOTARY_KEY=$RUNNER_TEMP/notary.p8" >> "$GITHUB_ENV"
+
+      # Upstream's icon, with the port's name and id: it opens beside the
+      # real SourceGit without taking its place.
+      - name: Package
+        env:
+          MACOS_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+          MACOS_NOTARY_ISSUER: ${{ secrets.MACOS_NOTARY_ISSUER }}
+        run: |
+          mkdir apps
+          cp sourcegit/mitsuami/packaging/* apps/
+          cp sourcegit/build/resources/app/App.icns "apps/$APP_ID.icns"
+          APPS_DIR=$PWD/apps mitsuami/.github/scripts/macos-app.sh publish "$APP_ID" \
+            "${{ needs.refs.outputs.version }}" "SourceGit-mitsuami-macos-${{ matrix.arch }}.dmg"
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: macos-${{ matrix.arch }}
+          path: "*.dmg"
+
+  # WinUI loads the Windows App Runtime 2.x installed on the machine
+  # (mitsuami's ARCHITECTURE.md §15, WinUI), so the zip has only the app.
+  windows:
+    name: Build for Windows (x86_64)
+    needs: refs
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - *checkout-port
+      - *checkout-mitsuamia
+      - *checkout-extras
+      - *checkout-mitsuami
+      - *setup-dotnet
+
+      - name: Build mitsuami-extras' library
+        working-directory: mitsuami-extras
+        run: |
+          rustup toolchain install
+          cargo build --release -p mitsuami-extras-ffi
+
+      - name: Publish and package
+        run: |
+          out=SourceGit-mitsuami-windows-x86_64
+          dotnet publish "$PROJECT" -c Release -r win-x64 --self-contained -o "$out"
+          cp mitsuami-extras/target/release/mitsuami_extras_ffi.dll "$out/mitsuami_ffi.dll"
+          rm -f "$out"/*.pdb
+          7z a "$out.zip" "$out"
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: windows-x86_64
+          path: "*.zip"
+
+  # On GTK and on Qt Quick and Kirigami, each built where mitsuami's
+  # release builds it (its release.yml says why those distributions). The
+  # Kirigami library has GTK in it too: mitsuami-ffi asks for mitsuami's
+  # default features, which extras can't turn off. .NET finds the system's
+  # ICU, as upstream's AppImage does.
+  linux:
+    name: Build for Linux (${{ matrix.toolkit }})
+    needs: refs
+    strategy:
+      matrix:
+        include:
+          - toolkit: gtk
+            image: ubuntu:noble-20260911
+            features: ""
+            install: >-
+              apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends
+              curl ca-certificates git build-essential pkg-config file patchelf libicu74 libgtk-4-dev libadwaita-1-dev
+          - toolkit: kde
+            image: fedora:42
+            features: --features kde
+            qmake: /usr/lib64/qt6/bin/qmake
+            install: >-
+              dnf install -y gcc gcc-c++ pkgconf curl git tar gzip file findutils patchelf libicu gtk4-devel libadwaita-devel
+              qt6-qtbase-devel qt6-qtbase-private-devel qt6-qtdeclarative-devel qt6-qtwayland qt6-qtsvg
+              kf6-kirigami-devel kf6-qqc2-desktop-style plasma-breeze plasma-integration
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      QMAKE: ${{ matrix.qmake }}
+    steps:
+      - name: Install the toolkit
+        run: ${{ matrix.install }}
+
+      - *checkout-port
+      - *checkout-mitsuamia
+      - *checkout-extras
+      - *checkout-mitsuami
+      - *setup-dotnet
+
+      - name: Build mitsuami-extras' library
+        working-directory: mitsuami-extras
+        run: |
+          curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          "$HOME/.cargo/bin/rustup" toolchain install
+          "$HOME/.cargo/bin/cargo" build --release -p mitsuami-extras-ffi ${{ matrix.features }}
+
+      - name: Publish
+        run: |
+          dotnet publish "$PROJECT" -c Release -r linux-x64 --self-contained -o publish
+          cp mitsuami-extras/target/release/libmitsuami_extras_ffi.so publish/libmitsuami_ffi.so
+          rm -f publish/*.pdb
+
+      - name: Package
+        run: |
+          mkdir apps
+          cp sourcegit/mitsuami/packaging/*.desktop apps/
+          cp sourcegit/build/resources/_common/icons/sourcegit.png "apps/$APP_ID.png"
+          APPS_DIR=$PWD/apps mitsuami/.github/scripts/appimage.sh ${{ matrix.toolkit }} publish "$APP_ID" \
+            "SourceGit-mitsuami-linux-x86_64-${{ matrix.toolkit }}.AppImage"
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: linux-${{ matrix.toolkit }}
+          path: "*.AppImage"
+
+  release:
+    name: Replace the edge release
+    needs: [refs, macos, windows, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          path: dist
+          merge-multiple: true
+
+      # A new tag on this commit each time. `edge` doesn't start with `v`,
+      # so upstream's release.yml leaves it alone.
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.refs.outputs.version }}
+          MITSUAMI: ${{ needs.refs.outputs.mitsuami }}
+          MITSUAMIA: ${{ needs.refs.outputs.mitsuamia }}
+          EXTRAS: ${{ needs.refs.outputs.extras }}
+        run: |
+          gh release delete edge --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          cat > notes.md <<EOF
+          SourceGit $VERSION on [mitsuami](https://github.com/Roboport-Tecnologia/mitsuami)'s native controls: a demo, built from
+
+          - this repository's \`${GITHUB_SHA::10}\` (branch \`$GITHUB_REF_NAME\`)
+          - mitsuami [\`${MITSUAMI::10}\`](https://github.com/Roboport-Tecnologia/mitsuami/commit/$MITSUAMI)
+          - mitsuamia [\`${MITSUAMIA::10}\`](https://github.com/Roboport-Tecnologia/mitsuamia/commit/$MITSUAMIA)
+          - mitsuami-extras [\`${EXTRAS::10}\`](https://github.com/Roboport-Tecnologia/mitsuami-extras/commit/$EXTRAS)
+
+          On Windows, it needs the [Windows App Runtime](https://learn.microsoft.com/windows/apps/windows-app-sdk/downloads) 2.4 or later.
+          EOF
+          gh release create edge dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title "Edge ($VERSION)" --notes-file notes.md
