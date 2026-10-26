@@ -73,10 +73,14 @@ jobs:
           echo "version=$(tr -d '[:space:]' < VERSION).$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
 
   # One app per architecture, as upstream's: .NET's runtime is
-  # per architecture.
+  # per architecture. They're added to the release once it's out, so it
+  # doesn't wait for GitHub's macOS runners, which can be scarce; rerunning
+  # these jobs alone adds them later.
   macos:
     name: Build for macOS (${{ matrix.arch }})
-    needs: refs
+    needs: [refs, release]
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -181,10 +185,17 @@ jobs:
           APPS_DIR=$PWD/apps mitsuami/.github/scripts/macos-app.sh publish "$APP_ID" \
             "${{ needs.refs.outputs.version }}" "SourceGit-mitsuami-macos-${{ matrix.arch }}.dmg"
 
-      - uses: actions/upload-artifact@v7.0.2
-        with:
-          name: macos-${{ matrix.arch }}
-          path: "*.dmg"
+      # Only to the release made from this commit: a later run's replaces it.
+      - name: Add to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          target=$(gh release view edge --repo "$GITHUB_REPOSITORY" --json targetCommitish -q .targetCommitish)
+          if [ "$target" != "$GITHUB_SHA" ]; then
+            echo "::warning::The edge release is now ${target::10}'s, not ${GITHUB_SHA::10}'s: not adding this build"
+            exit 0
+          fi
+          gh release upload edge ./*.dmg --repo "$GITHUB_REPOSITORY" --clobber
 
   # WinUI loads the Windows App Runtime 2.x installed on the machine
   # (mitsuami's ARCHITECTURE.md §15, WinUI), so the zip has only the app.
@@ -295,7 +306,7 @@ jobs:
 
   release:
     name: Replace the edge release
-    needs: [refs, macos, windows, linux]
+    needs: [refs, windows, linux]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -323,6 +334,8 @@ jobs:
           - mitsuami [\`${MITSUAMI::10}\`](https://github.com/Roboport-Tecnologia/mitsuami/commit/$MITSUAMI)
           - mitsuamia [\`${MITSUAMIA::10}\`](https://github.com/Roboport-Tecnologia/mitsuamia/commit/$MITSUAMIA)
           - mitsuami-extras [\`${EXTRAS::10}\`](https://github.com/Roboport-Tecnologia/mitsuami-extras/commit/$EXTRAS)
+
+          The macOS apps are added once they're built.
 
           On Windows, it needs the [Windows App Runtime](https://learn.microsoft.com/windows/apps/windows-app-sdk/downloads) 2.4 or later.
           EOF
