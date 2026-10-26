@@ -26,6 +26,9 @@ namespace SourceGit
                 Environment.Exit(exitMessage);
             // On macOS, it also fixes `PATH`, so git and tools are found.
             Native.OS.SetupApp(new Avalonia.AppBuilder());
+            // On Windows, upstream's menu is a button before the tabs
+            // (Launcher.axaml), not a bar.
+            Application.MenuBarPlace = MenuBarPlace.ButtonInTitleBar;
 
             // ssh runs the app to ask for a passphrase (SSH_ASKPASS, which
             // upstream's commands set with SOURCEGIT_LAUNCH_AS_ASKPASS): its

@@ -91,8 +91,17 @@ namespace SourceGit.Views
                 Set();
         }
 
-        private static void Set() =>
-            MenuBar.Set(Sections().Select(s => new Submenu(s.Title, s.Commands.Select(Entry).ToList())).ToList());
+        /// <summary>The app's menus on macOS, as upstream's (its
+        /// <c>NativeMenu</c>); elsewhere the launcher's own, behind its
+        /// menu button, which no other window has, as upstream's.</summary>
+        private static void Set()
+        {
+            var menus = Sections().Select(s => new Submenu(s.Title, s.Commands.Select(Entry).ToList())).ToList();
+            if (Mac)
+                MenuBar.Set(menus);
+            else
+                MenuBar.Set(App.MainWindow, menus);
+        }
 
         private static MenuEntry Entry(Command command) =>
             command == null
