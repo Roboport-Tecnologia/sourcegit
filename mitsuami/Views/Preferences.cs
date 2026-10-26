@@ -117,6 +117,7 @@ namespace SourceGit.Views
             }
             pref.UpdateAvailableAIModels();
             pref.Save();
+            PortSettings.Instance.Save();
         }
 
         // Upstream's.
@@ -195,48 +196,29 @@ namespace SourceGit.Views
             return row;
         }
 
+        /// <summary>Upstream's appearance, less what the platform decides
+        /// here (the theme, the UI's font and size, scroll bars, tab widths):
+        /// what the code views (bemtvi) take, and their colorscheme.</summary>
         private static Node Appearance(ViewModels.Preferences pref)
         {
             var page = Page();
-            string[] themes = ["Default", "Dark", "Light"];
-            page.Add(Field(App.Text("Preferences.Appearance.Theme"),
-                Choice(App.Text("Preferences.Appearance.Theme"), themes, Array.IndexOf(themes, pref.Theme), i => pref.Theme = themes[i])));
-            page.Add(Field(App.Text("Preferences.Appearance.DefaultFont"), TextValue(pref.DefaultFontFamily, v => pref.DefaultFontFamily = v)));
             page.Add(Field(App.Text("Preferences.Appearance.MonospaceFont"), TextValue(pref.MonospaceFontFamily, v => pref.MonospaceFontFamily = v)));
             // Upstream's sizes go in halves, which a platform's number field
             // doesn't: a drop-down of them, as font size pickers have.
             var sizes = Enumerable.Range(0, 17).Select(i => 10 + i * 0.5).ToList();
-            var fontSizes = new Row { Gap = 8, AlignItems = Align.Center };
-            foreach (var (key, size, set) in new (string, double, Action<double>)[]
-            {
-                ("Preferences.Appearance.FontSize.Default", pref.DefaultFontSize, v => pref.DefaultFontSize = v),
-                ("Preferences.Appearance.FontSize.Editor", pref.EditorFontSize, v => pref.EditorFontSize = v),
-            })
-            {
-                fontSizes.Add(new Text(App.Text(key)) { Color = Color.SecondaryLabel });
-                var select = Choice(App.Text(key), sizes.Select(s => s.ToString()), sizes.IndexOf(size), i => set(sizes[i]));
-                select.Grow = 1;
-                fontSizes.Add(select);
-            }
-            page.Add(Field(App.Text("Preferences.Appearance.FontSize"), fontSizes));
+            var size = Choice("Editor Font Size", sizes.Select(s => s.ToString()), sizes.IndexOf(pref.EditorFontSize), i => pref.EditorFontSize = sizes[i]);
+            page.Add(Field("Editor Font Size", Leading(size)));
             var tabWidth = new NumberInput(App.Text("Preferences.Appearance.EditorTabWidth"));
             tabWidth.SetRange(1, 16);
             tabWidth.Value = pref.EditorTabWidth;
             tabWidth.Changed += v => pref.EditorTabWidth = v;
             page.Add(Field(App.Text("Preferences.Appearance.EditorTabWidth"), Leading(tabWidth)));
-            var overrides = Path(Over, pref.ThemeOverrides, v => pref.ThemeOverrides = v, title: "Theme Overrides File");
-            var themesSite = new Button(App.Text("Preferences.Appearance.ThemeOverrides"))
-            {
-                Icon = Icons.Get("Remotes", 14),
-                IconOnly = true,
-                Style = ButtonStyle.Borderless,
-                ToolTip = "https://github.com/sourcegit-scm/sourcegit-theme",
-            };
-            themesSite.Click += () => Native.OS.OpenBrowser("https://github.com/sourcegit-scm/sourcegit-theme");
-            overrides.Add(themesSite);
-            page.Add(Field(App.Text("Preferences.Appearance.ThemeOverrides"), overrides));
-            page.Add(Field("", Check(App.Text("Preferences.Appearance.UseFixedTabWidth"), pref.UseFixedTabWidth, v => pref.UseFixedTabWidth = v)));
-            page.Add(Field("", Check(App.Text("Preferences.Appearance.UseAutoHideScrollBars"), pref.UseAutoHideScrollBars, v => pref.UseAutoHideScrollBars = v)));
+            var port = PortSettings.Instance;
+            var schemes = PortSettings.Colorschemes.ToList();
+            if (!schemes.Contains(port.EditorColorscheme))
+                schemes.Add(port.EditorColorscheme);
+            page.Add(Field("Editor Colorscheme", Leading(Choice("Editor Colorscheme", schemes, schemes.IndexOf(port.EditorColorscheme),
+                i => port.EditorColorscheme = schemes[i]))));
             if (OperatingSystem.IsLinux())
                 page.Add(Field("", Check(App.Text("Preferences.Appearance.UseNativeWindowFrame"), pref.UseSystemWindowFrame, v => pref.UseSystemWindowFrame = v)));
             return page;

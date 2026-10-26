@@ -137,7 +137,10 @@ namespace SourceGit
             // Upstream's: changes save from here on. Not in captures, which
             // open repositories for the run only.
             if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE") is not { Length: > 0 })
+            {
                 pref.SetCanModify();
+                PortSettings.CanSave = true;
+            }
             App.SetLocale(pref.Locale);
             // Upstream's theme sets the graph's colours; the platform's
             // appearance is the theme here, so they're upstream's defaults.
