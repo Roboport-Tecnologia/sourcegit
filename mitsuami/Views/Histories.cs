@@ -10,7 +10,9 @@ namespace SourceGit.Views
     /// Upstream's <c>Views/Histories.axaml</c>, first stage: the commits as
     /// the platform's table, the graph and subject, then the author, the
     /// SHA and the times, as the repository's settings show them. Rows are
-    /// 26 points high, upstream's.
+    /// at least 26 points high, upstream's, and the platform's where its
+    /// rows are higher; the graph's column fills its rows, so the graph
+    /// joins from row to row.
     /// </summary>
     public static class Histories
     {
@@ -32,7 +34,8 @@ namespace SourceGit.Views
             {
                 var columns = new List<TableColumn<Models.Commit>>
                 {
-                    new(App.Text("Histories.Header.GraphAndSubject"), c => SubjectCell(vm, c, () => rows, index, live), Expand: true),
+                    new(App.Text("Histories.Header.GraphAndSubject"), c => SubjectCell(vm, c, () => rows, index, live), Expand: true,
+                        FillsRow: true),
                 };
                 if (vm.IsAuthorColumnVisible)
                     columns.Add(new(App.Text("Histories.Header.Author"), c => AuthorCell(c, live), Width: (float)Math.Max(80, vm.AuthorColumnWidth)));
@@ -165,7 +168,7 @@ namespace SourceGit.Views
         private static Node SubjectCell(ViewModels.Histories vm, Models.Commit commit, Func<CommitGraphRows> rows, Dictionary<string, int> index, LiveCells live)
         {
             var cell = new Row { AlignItems = Align.Center };
-            var graph = new CommitGraphCell(rows);
+            var graph = new CommitGraphCell(rows) { AlignSelf = Align.Stretch };
             cell.Add(graph);
             // Upstream's ahead/behind dot and bisect mark, 2 in.
             var status = new CommitStatusDot { Margin = new Thickness(0, 0, 0, 2) };

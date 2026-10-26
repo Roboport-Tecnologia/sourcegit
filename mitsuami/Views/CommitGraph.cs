@@ -106,7 +106,9 @@ namespace SourceGit.Views
         }
 
         /// <summary>Draws row <paramref name="row"/>'s part of the graph,
-        /// its top at the canvas's.</summary>
+        /// its top at the canvas's, stretched to the canvas's height: the
+        /// platform's rows are higher than upstream's on GTK and WinUI.
+        /// The dots keep their size.</summary>
         public void Draw(Canvas canvas, int row)
         {
             var pens = Models.CommitGraph.Pens;
@@ -114,6 +116,7 @@ namespace SourceGit.Views
                 return;
 
             var thickness = (float)pens[0].Thickness;
+            var scale = canvas.Height > 0 ? canvas.Height / (double)RowHeight : 1;
             var top = row * (double)RowHeight;
             var bottom = top + RowHeight;
             var grayedLine = Color.Rgba(128, 128, 128, 102);
@@ -129,16 +132,16 @@ namespace SourceGit.Views
                     var key = (piece.IsHighlighted ? piece.Color : -1, piece.IsHighlighted);
                     if (!paths.TryGetValue(key, out var data))
                         paths[key] = data = new StringBuilder();
-                    Append(data, "M", part.P0, top);
+                    Append(data, "M", part.P0, top, scale);
                     if (piece.IsLine)
                     {
-                        Append(data, "L", part.P3, top);
+                        Append(data, "L", part.P3, top, scale);
                     }
                     else
                     {
-                        Append(data, "C", part.C1, top);
-                        Append(data, "", part.C2, top);
-                        Append(data, "", part.P3, top);
+                        Append(data, "C", part.C1, top, scale);
+                        Append(data, "", part.C2, top, scale);
+                        Append(data, "", part.P3, top, scale);
                     }
                 }
                 foreach (var ((color, highlighted), data) in paths)
@@ -153,7 +156,7 @@ namespace SourceGit.Views
                 foreach (var dot in dots)
                 {
                     var x = (float)dot.Center.X;
-                    var y = (float)(dot.Center.Y * RowHeight - top);
+                    var y = (float)((dot.Center.Y * RowHeight - top) * scale);
                     var pen = dot.IsHighlighted ? PenColor(dot.Color) : grayed;
                     switch (dot.Type)
                     {
@@ -182,9 +185,9 @@ namespace SourceGit.Views
             return Color.Rgba(c.R, c.G, c.B, c.A);
         }
 
-        private static void Append(StringBuilder data, string command, Point p, double top) =>
+        private static void Append(StringBuilder data, string command, Point p, double top, double scale) =>
             data.Append(command).Append(p.X.ToString("0.##", CultureInfo.InvariantCulture)).Append(' ')
-                .Append((p.Y - top).ToString("0.##", CultureInfo.InvariantCulture)).Append(' ');
+                .Append(((p.Y - top) * scale).ToString("0.##", CultureInfo.InvariantCulture)).Append(' ');
 
         /// <summary>The part of a piece between two heights, or null if it
         /// has none. Every piece goes down as it goes on, so its height at
@@ -244,7 +247,9 @@ namespace SourceGit.Views
     }
 
     /// <summary>A row's part of the commit graph, as wide as its lanes
-    /// (upstream's <c>LeftMargin</c>) and as high as the row.</summary>
+    /// (upstream's <c>LeftMargin</c>) and as high as the row: at least
+    /// upstream's, stretched to the platform's (its column fills its
+    /// rows).</summary>
     public sealed class CommitGraphCell : DrawnWidget
     {
         private readonly Func<CommitGraphRows> _graph;
