@@ -37,8 +37,13 @@ namespace SourceGit.Views
             var window = new Window(vm.Title, 1100, 720) { Content = root };
             Bind.OneWay(vm, nameof(vm.Title), () => vm.Title, title => window.Title = title);
             // Upstream closes the repositories when the window goes, which
-            // saves each one's UI state.
-            window.Closed += vm.CloseAll;
+            // saves each one's UI state, then saves the preferences (the
+            // tabs open, the workspaces).
+            window.Closed += () =>
+            {
+                vm.CloseAll();
+                ViewModels.Preferences.Instance.Save();
+            };
 
             // The titles follow the pages and their names.
             void ShowTitles()

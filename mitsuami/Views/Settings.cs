@@ -10,15 +10,19 @@ namespace SourceGit.Views
     /// What upstream's settings windows share (<c>Views/Preferences.axaml</c>,
     /// <c>Views/RepositoryConfigure.axaml</c>): forms of labelled fields,
     /// right-aligned as upstream's and the platforms' settings are, and lists
-    /// beside the picked item's fields. Read-only for now: the fields show
-    /// the settings, text can be selected, and nothing changes them;
-    /// <see cref="Editable"/> turns them on once saving is ported.
+    /// beside the picked item's fields. Each field sets its setting as it
+    /// changes, as upstream's bindings do; the windows save on closing.
     /// </summary>
     public static class Settings
     {
-        public const bool Editable = false;
-
         public const float LabelWidth = 200;
+
+        /// <summary>Takes a container's children away, to fill it again.</summary>
+        public static void Empty(Container container)
+        {
+            foreach (var child in container.Children.ToList())
+                child.Destroy();
+        }
 
         public static Column Page()
         {
@@ -45,48 +49,68 @@ namespace SourceGit.Views
             return row;
         }
 
-        public static TextInput TextValue(string value, string placeholder = "")
+        public static TextInput TextValue(string value, Action<string> set, string placeholder = "")
         {
-            var input = new TextInput { Value = value ?? "", Placeholder = placeholder ?? "", ReadOnly = !Editable };
+            var input = new TextInput { Value = value ?? "", Placeholder = placeholder ?? "" };
+            input.Changed += set;
             return input;
         }
 
-        public static TextArea TextBlock(string value, int lines)
+        public static TextArea TextBlock(string value, int lines, Action<string> set)
         {
-            var area = new TextArea { Value = value ?? "", ReadOnly = !Editable };
+            var area = new TextArea { Value = value ?? "" };
             area.Height = lines * 17 + 10;
+            area.Changed += set;
             return area;
         }
 
-        public static Checkbox Check(string label, bool value, string tip = null)
+        public static Checkbox Check(string label, bool value, Action<bool> set, string tip = null)
         {
-            var check = new Checkbox(label) { IsChecked = value, IsEnabled = Editable };
+            var check = new Checkbox(label) { IsChecked = value };
             if (tip != null)
                 check.ToolTip = tip;
+            check.Changed += set;
             return check;
         }
 
         /// <summary>A drop-down of these options, the one at
         /// <paramref name="index"/> chosen (the first if none is).</summary>
-        public static Select Choice(string label, IEnumerable<string> options, int index)
+        public static Select Choice(string label, IEnumerable<string> options, int index, Action<int> set)
         {
             var list = options.ToList();
-            var select = new Select(label) { Options = list, MinWidth = 0, IsEnabled = Editable };
+            var select = new Select(label) { Options = list, MinWidth = 0 };
             if (list.Count > 0)
                 select.SelectedIndex = Math.Clamp(index, 0, list.Count - 1);
+            select.Changed += set;
             return select;
         }
 
+        /// <summary>What a path field's button asks for.</summary>
+        public enum Pick { File, Folder }
+
         /// <summary>Upstream's path fields: the path, and a button that asks
-        /// the platform's file or folder dialog.</summary>
-        public static Row Path(string value, string placeholder = "")
+        /// the platform's file or folder dialog, over
+        /// <paramref name="window"/>.</summary>
+        public static Row Path(Func<Window> window, string value, Action<string> set, string placeholder = "",
+            Pick pick = Pick.File, string title = "")
         {
             var row = new Row { Gap = 4, AlignItems = Align.Center };
-            var input = TextValue(value, placeholder);
+            var input = TextValue(value, set, placeholder);
             input.Grow = 1;
             input.MinWidth = 0;
             row.Add(input);
-            row.Add(new Button("…") { IsEnabled = Editable });
+            var browse = new Button("…") { ToolTip = title };
+            browse.Click += async () =>
+            {
+                var path = pick == Pick.Folder
+                    ? await Dialogs.OpenFolder(window(), title)
+                    : (await Dialogs.OpenFiles(window(), title)).FirstOrDefault();
+                if (string.IsNullOrEmpty(path))
+                    return;
+                input.Value = path;
+                set(path);
+            };
+            row.Add(browse);
             return row;
         }
 
@@ -124,13 +148,32 @@ namespace SourceGit.Views
             return column;
         }
 
+        /// <summary>What a list beside its items' fields does to them.</summary>
+        public sealed class ListActions<T>
+        {
+            /// <summary>Adds an item and returns it, to pick it; or null, with
+            /// <see cref="AddButton"/> making the add button.</summary>
+            public Func<T> Add { get; init; }
+
+            /// <summary>Makes the add button (a menu of samples), given what
+            /// picks the item it added.</summary>
+            public Func<Action<T>, Node> AddButton { get; init; }
+
+            public Action<T> Remove { get; init; }
+
+            /// <summary>Moves the item at one index to another; null: the
+            /// list has no move buttons.</summary>
+            public Action<int, int> Move { get; init; }
+        }
+
         /// <summary>
         /// Upstream's list of items beside the picked one's fields: a framed
         /// list 200 wide with its add, remove and move buttons under it, and
-        /// upstream's empty icon while none is picked.
+        /// upstream's empty icon while none is picked. A row's name follows
+        /// the item's <paramref name="nameProperty"/>.
         /// </summary>
-        public static Node ListDetail<T>(IReadOnlyList<T> items, Func<T, string> name, string icon, Func<T, Node> detail,
-            bool moves = false, Node add = null) where T : class
+        public static Node ListDetail<T>(IReadOnlyList<T> items, Func<T, string> name, string nameProperty, string icon,
+            Func<T, Node> detail, ListActions<T> actions) where T : class, System.ComponentModel.INotifyPropertyChanged
         {
             var row = new Row { Gap = 16, AlignItems = Align.Stretch, Padding = 16 };
             row.Grow = 1;
@@ -150,6 +193,7 @@ namespace SourceGit.Views
                 text.Shrink = 1;
                 text.MinWidth = 0;
                 line.Add(text);
+                Bind.OneWay(item, nameProperty, () => name(item), v => text.Value = v ?? "", owner: line);
                 return line;
             }, itemAnimations: false)
             {
@@ -160,28 +204,28 @@ namespace SourceGit.Views
             list.Grow = 1;
             list.MinHeight = 0;
             left.Add(list);
-            var buttons = new Row { AlignItems = Align.Center };
-            // Upstream's have only icons, and no names to read out.
-            buttons.Add(add ?? Small("Plus", "Add"));
-            buttons.Add(Small("Minus", "Remove"));
-            var gap = new Row();
-            gap.Grow = 1;
-            buttons.Add(gap);
-            if (moves)
-            {
-                buttons.Add(Small("Up", "Move Up"));
-                buttons.Add(Small("Down", "Move Down"));
-            }
-            left.Add(buttons);
-            row.Add(left);
 
             var right = new Column { AlignItems = Align.Stretch, Justify = Justify.Center };
             right.Grow = 1;
             right.MinWidth = 0;
-            row.Add(right);
             Node shown = null;
+            T picked = null;
+            var remove = Small("Minus", "Remove", () =>
+            {
+                if (picked != null)
+                    actions.Remove(picked);
+            });
+            Button up = null, down = null;
             void Show(T item)
             {
+                picked = item;
+                remove.IsEnabled = item != null;
+                if (up != null)
+                {
+                    var index = item == null ? -1 : items.ToList().IndexOf(item);
+                    up.IsEnabled = index > 0;
+                    down.IsEnabled = index >= 0 && index < items.Count - 1;
+                }
                 shown?.Destroy();
                 if (item == null)
                 {
@@ -196,7 +240,43 @@ namespace SourceGit.Views
                 }
                 right.Add(shown);
             }
+            void Pick(T item)
+            {
+                list.SelectedItem = item;
+                if (item != null)
+                    list.ScrollTo(item);
+                Show(item);
+            }
             list.SelectionChanged += selected => Show(selected.Count > 0 ? selected[0] : null);
+            // An item gone (removed) takes its fields with it; a move keeps
+            // the pick but changes which way it can go.
+            list.ItemsChanged += () => Show(picked != null && items.Contains(picked) ? picked : null);
+
+            var buttons = new Row { AlignItems = Align.Center };
+            // Upstream's have only icons, and no names to read out.
+            buttons.Add(actions.AddButton?.Invoke(Pick) ?? Small("Plus", "Add", () => Pick(actions.Add())));
+            buttons.Add(remove);
+            var gap = new Row();
+            gap.Grow = 1;
+            buttons.Add(gap);
+            if (actions.Move != null)
+            {
+                void Move(int by)
+                {
+                    var index = items.ToList().IndexOf(picked);
+                    if (index < 0 || index + by < 0 || index + by >= items.Count)
+                        return;
+                    actions.Move(index, index + by);
+                    Pick(picked);
+                }
+                up = Small("Up", "Move Up", () => Move(-1));
+                down = Small("Down", "Move Down", () => Move(1));
+                buttons.Add(up);
+                buttons.Add(down);
+            }
+            left.Add(buttons);
+            row.Add(left);
+            row.Add(right);
             Show(null);
             return row;
         }
@@ -209,31 +289,48 @@ namespace SourceGit.Views
                 IconOnly = true,
                 Style = ButtonStyle.Borderless,
                 ToolTip = name,
-                IsEnabled = Editable,
             };
 
-        /// <summary>Upstream's custom action form, the same in both windows.</summary>
-        public static Node CustomAction(Models.CustomAction action)
+        public static Button Small(string icon, string name, Action click)
+        {
+            var button = new Button(name)
+            {
+                Icon = Icons.Get(icon, 14),
+                IconOnly = true,
+                Style = ButtonStyle.Borderless,
+                ToolTip = name,
+            };
+            button.Click += click;
+            return button;
+        }
+
+        /// <summary>Upstream's custom action form, the same in both windows,
+        /// over <paramref name="window"/>.</summary>
+        public static Node CustomAction(Func<Window> window, Models.CustomAction action)
         {
             var column = new Column { Gap = 12, AlignItems = Align.Stretch };
-            column.Add(Stacked(App.Text("Configure.CustomAction.Name"), TextValue(action.Name)));
+            column.Add(Stacked(App.Text("Configure.CustomAction.Name"), TextValue(action.Name, v => action.Name = v)));
             column.Add(Stacked(App.Text("Configure.CustomAction.Scope"), Choice(App.Text("Configure.CustomAction.Scope"),
                 new[] { "Repository", "Commit", "Branch", "Tag", "Remote", "File" }.Select(s => App.Text($"Configure.CustomAction.Scope.{s}")),
-                (int)action.Scope)));
-            var controls = new Button($"{App.Text("Configure.CustomAction.InputControls.Edit")} ({action.Controls.Count})")
-            {
-                Icon = Icons.Get("Edit", 14),
-                IsEnabled = Editable,
-            };
+                (int)action.Scope, i => action.Scope = (Models.CustomActionScope)i)));
+            var controls = new Button(ControlsTitle(action)) { Icon = Icons.Get("Edit", 14) };
+            controls.Click += () => CustomActionControls.Show(window(), action.Controls);
+            void Count(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => controls.Label = ControlsTitle(action);
+            action.Controls.CollectionChanged += Count;
+            controls.Forgotten += () => action.Controls.CollectionChanged -= Count;
             var controlsRow = new Row();
             controlsRow.Add(controls);
             column.Add(Stacked(App.Text("Configure.CustomAction.InputControls"), controlsRow));
-            column.Add(Stacked(App.Text("Configure.CustomAction.Executable"), Path(action.Executable)));
+            column.Add(Stacked(App.Text("Configure.CustomAction.Executable"),
+                Path(window, action.Executable, v => action.Executable = v, title: "Executable file(script)")));
             column.Add(Stacked(App.Text("Configure.CustomAction.Arguments"),
-                WithTip(TextValue(action.Arguments), App.Text("Configure.CustomAction.Arguments.Tip"))));
-            column.Add(Check(App.Text("Configure.CustomAction.WaitForExit"), action.WaitForExit));
+                WithTip(TextValue(action.Arguments, v => action.Arguments = v), App.Text("Configure.CustomAction.Arguments.Tip"))));
+            column.Add(Check(App.Text("Configure.CustomAction.WaitForExit"), action.WaitForExit, v => action.WaitForExit = v));
             return column;
         }
+
+        private static string ControlsTitle(Models.CustomAction action) =>
+            $"{App.Text("Configure.CustomAction.InputControls.Edit")} ({action.Controls.Count})";
 
         /// <summary>A window's tabs, each a page; titled as upstream's tab
         /// headers, in the platform's case.</summary>

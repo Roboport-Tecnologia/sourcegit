@@ -13,8 +13,8 @@ namespace SourceGit.Views
     /// Upstream's is a button before the tabs whose ⌘⌥P opens a menu; here
     /// the menu is the File menu's Workspaces submenu, and ⌘⌥P opens a
     /// palette of them, as ⌘P does the tabs (the user's choice). Configure
-    /// Workspaces is a sheet, upstream's dialog: it changes the preferences
-    /// in memory, which the port never saves.
+    /// Workspaces is a sheet, upstream's dialog, which saves the preferences
+    /// as it closes.
     /// </summary>
     public static class Workspaces
     {
@@ -140,9 +140,8 @@ namespace SourceGit.Views
             }, owner: sheet);
             Bind.OneWay(vm, nameof(vm.CanDeleteSelected), () => vm.CanDeleteSelected, can => remove.IsEnabled = can, owner: sheet);
 
-            // Upstream saves the preferences as its window closes; the
-            // port's never write. `Closed` is the user's closing (Escape),
-            // not the Close button's.
+            // Upstream saves the preferences as its window closes. `Closed`
+            // is the user's closing (Escape), not the Close button's.
             void Done()
             {
                 vm.Workspaces.CollectionChanged -= Changed;

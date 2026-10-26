@@ -132,7 +132,7 @@ namespace SourceGit
                 s_launcher.ActivePage = s_launcher.Pages[index];
             // SOURCEGIT_CAPTURE_REPO opens a repository by its path, as a
             // double-click on the welcome page does; one the page doesn't
-            // have is added for this run only (nothing is saved).
+            // have is added for this run only (captures save nothing).
             if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_REPO") is { Length: > 0 } repo)
                 ViewModels.Preferences.Instance.FindOrAddNodeByRepositoryPath(repo, null, false, false).Open();
             switch (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE_POPUP"))

@@ -13,6 +13,7 @@ namespace SourceGit
         {
             // Upstream's startup, before its Avalonia app (App.axaml.cs).
             Native.OS.SetupBasicDirectories();
+            UseOwnConfigDir();
             AppDomain.CurrentDomain.UnhandledException += (_, e) => Native.OS.LogException(e.ExceptionObject as Exception);
             TaskScheduler.UnobservedTaskException += (_, e) => e.SetObserved();
 
@@ -106,9 +107,37 @@ namespace SourceGit
             return true;
         }
 
+        /// <summary>
+        /// The port keeps its preferences apart from the installed SourceGit's
+        /// (the user's choice): in a directory of its own beside upstream's,
+        /// which starts as a copy of upstream's on the first run. The cache
+        /// (avatars, crash logs) stays shared.
+        /// </summary>
+        private static void UseOwnConfigDir()
+        {
+            var dirs = Native.OS.BasicDirectories;
+            var upstream = dirs.ConfigDir;
+            var own = Path.Combine(Path.GetDirectoryName(upstream.TrimEnd(Path.DirectorySeparatorChar))!, "SourceGit.Mitsuami");
+            if (!Directory.Exists(own))
+            {
+                Directory.CreateDirectory(own);
+                foreach (var file in new[] { "preference.json", "external_editors.json" })
+                {
+                    var from = Path.Combine(upstream, file);
+                    if (File.Exists(from))
+                        File.Copy(from, Path.Combine(own, file));
+                }
+            }
+            dirs.ConfigDir = own;
+        }
+
         private static void Start()
         {
             var pref = ViewModels.Preferences.Instance;
+            // Upstream's: changes save from here on. Not in captures, which
+            // open repositories for the run only.
+            if (Environment.GetEnvironmentVariable("SOURCEGIT_CAPTURE") is not { Length: > 0 })
+                pref.SetCanModify();
             App.SetLocale(pref.Locale);
             // Upstream's theme sets the graph's colours; the platform's
             // appearance is the theme here, so they're upstream's defaults.
