@@ -188,9 +188,10 @@ namespace SourceGit.Views
         /// <summary>
         /// Upstream's <c>PieChart</c>: the authors with at least 1% of the
         /// commits as slices (the rest as one grey "Others"), each named
-        /// with its share beside the pie, a line leading to it. The names
-        /// are the platform's text, placed once the pie's size is known; a
-        /// name's tooltip says its count, which upstream shows on hover.
+        /// with its share and a dot of its colour beside the pie, a line
+        /// leading to it. The names are the platform's text, placed once the
+        /// pie's size is known; a name's tooltip says its count, which
+        /// upstream shows on hover.
         /// </summary>
         private sealed class Pie : DrawnWidget
         {
@@ -218,9 +219,6 @@ namespace SourceGit.Views
 
             private sealed record Slice(double Start, double Sweep, string Title, int Count, double Share, Color Color, Models.StatisticsAuthor Author)
             {
-                /// <summary>Where its name is, down the side.</summary>
-                public float NameY { get; set; }
-
                 public double Mid => Start + Sweep / 2;
                 public bool Left => Mid > Math.PI * 0.5;
             }
@@ -231,7 +229,6 @@ namespace SourceGit.Views
                 var (cx, cy, r) = Geometry(w, h);
                 var authors = _report.Authors;
                 _slices = Slices();
-                Spread(_slices, cx, cy, r);
                 if (authors.Count == 0)
                 {
                     canvas.StrokeEllipse(cx - r, cy - r, r * 2, r * 2, s_colors[0]);
@@ -252,7 +249,7 @@ namespace SourceGit.Views
                         var (ex, ey) = At(cx, cy, r, slice.Mid);
                         var (ox, oy) = At(cx, cy, r + 32, slice.Mid);
                         var end = slice.Left ? cx - r - 32 : cx + r + 32;
-                        canvas.StrokePath(FormattableString.Invariant($"M{ex},{ey} L{ox},{oy} L{end},{slice.NameY}"), slice.Color);
+                        canvas.StrokePath(FormattableString.Invariant($"M{ex},{ey} L{ox},{oy} L{end},{oy}"), slice.Color);
                     }
                 }
                 // Names go where the pie now is, once it's drawn.
@@ -307,21 +304,6 @@ namespace SourceGit.Views
                 return slices;
             }
 
-            /// <summary>Names by their slices, but at least a line apart down
-            /// each side: upstream's overlap for small slices.</summary>
-            private static void Spread(List<Slice> slices, float cx, float cy, float r)
-            {
-                foreach (var left in new[] { true, false })
-                {
-                    var side = slices.Where(s => s.Left == left).ToList();
-                    foreach (var slice in side)
-                        slice.NameY = At(cx, cy, r + 32, slice.Mid).Item2;
-                    side.Sort((a, b) => a.NameY.CompareTo(b.NameY));
-                    for (var i = 1; i < side.Count; i++)
-                        side[i].NameY = Math.Max(side[i].NameY, side[i - 1].NameY + 20);
-                }
-            }
-
             /// <summary>Upstream's names: by the line's end, left of it on
             /// the left side; in the middle for one author, or none.</summary>
             private void Place(float w, float h)
@@ -337,19 +319,82 @@ namespace SourceGit.Views
                     Add(text, top: cy - 10, start: null, end: null, centred: true, w);
                     return;
                 }
-                foreach (var slice in _slices)
+                // Top to bottom down each side: the left's slices go up.
+                var left = _slices.Where(s => s.Left).Reverse();
+                var right = _slices.Where(s => !s.Left);
+                foreach (var (side, isLeft) in new[] { (left, true), (right, false) })
                 {
-                    var oy = slice.NameY;
-                    var label = new Row { AlignItems = Align.Center, Gap = 4 };
-                    label.Height = 20;
-                    label.Add(new Text(slice.Title) { MaxLines = 1 });
-                    label.Add(new Text(slice.Share.ToString("P1")) { Color = Color.SecondaryLabel });
-                    label.ToolTip = $"{App.Text("Statistics.TopAuthors.Count")}: {slice.Count}";
-                    if (slice.Left)
-                        Add(label, oy - 10, start: null, end: w - (cx - r - 32 - 8), centred: false, w);
-                    else
-                        Add(label, oy - 10, start: cx + r + 32 + 8, end: null, centred: false, w);
+                    var alignX = isLeft ? cx - r - 32 - 8 : cx + r + 32 + 8;
+                    foreach (var batch in Batches(side, cx, cy, r))
+                    {
+                        // Two names a line, the lines centred on the batch's
+                        // middle but never above its first name.
+                        var firstY = LineY(batch[0], cx, cy, r);
+                        var midY = (firstY + LineY(batch[^1], cx, cy, r)) / 2;
+                        var height = (float)Math.Ceiling(batch.Count / 2.0) * NameHeight;
+                        var top = Math.Max(midY - height / 2, firstY - NameHeight / 2);
+                        for (var i = 0; i < batch.Count; i += 2)
+                        {
+                            var line = new Row { AlignItems = Align.Center, Gap = 8 };
+                            line.Height = NameHeight;
+                            foreach (var slice in batch.Skip(i).Take(2))
+                                line.Add(Name(slice));
+                            var y = top + i / 2 * NameHeight;
+                            if (isLeft)
+                                Add(line, y, start: null, end: w - alignX, centred: false, w);
+                            else
+                                Add(line, y, start: alignX, end: null, centred: false, w);
+                        }
+                    }
                 }
+            }
+
+            private const float NameHeight = 20;
+
+            private static float LineY(Slice slice, float cx, float cy, float r) => At(cx, cy, r + 32, slice.Mid).Item2;
+
+            /// <summary>Upstream's batches: a name that would reach into the
+            /// one above joins its batch, which then grows by half a line.</summary>
+            private static List<List<Slice>> Batches(IEnumerable<Slice> side, float cx, float cy, float r)
+            {
+                var batches = new List<List<Slice>>();
+                var bottom = 0f;
+                foreach (var slice in side)
+                {
+                    var y = LineY(slice, cx, cy, r);
+                    if (batches.Count > 0 && y - NameHeight / 2 <= bottom)
+                    {
+                        var batch = batches[^1];
+                        batch.Add(slice);
+                        var firstY = LineY(batch[0], cx, cy, r);
+                        var height = (float)Math.Ceiling(batch.Count / 2.0) * NameHeight;
+                        bottom = Math.Max((firstY + y) / 2 + height / 2, firstY + height - NameHeight / 2);
+                    }
+                    else
+                    {
+                        batches.Add([slice]);
+                        bottom = y + NameHeight / 2;
+                    }
+                }
+                return batches;
+            }
+
+            private static Row Name(Slice slice)
+            {
+                var name = new Row { AlignItems = Align.Center, Gap = 4 };
+                name.Add(new Text(slice.Title) { MaxLines = 1 });
+                name.Add(new Text(slice.Share.ToString("P1")) { Color = Color.SecondaryLabel });
+                var dot = new Dot(slice.Color);
+                dot.Width = 8;
+                dot.Height = 8;
+                name.Add(dot);
+                name.ToolTip = $"{App.Text("Statistics.TopAuthors.Count")}: {slice.Count}";
+                return name;
+            }
+
+            private sealed class Dot(Color color) : DrawnWidget("StatisticsPieDot", 0, 0)
+            {
+                protected override void Draw(Canvas canvas) => canvas.FillEllipse(0, 0, canvas.Width, canvas.Height, color);
             }
 
             private void Add(Node label, float top, float? start, float? end, bool centred, float w)
