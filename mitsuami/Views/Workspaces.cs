@@ -113,7 +113,6 @@ namespace SourceGit.Views
 
             var footer = new Row { Justify = Justify.End };
             var close = new Button(Popups.ButtonText("Close")) { Role = ButtonRole.Default };
-            close.Click += sheet.Destroy;
             footer.Add(close);
             column.Add(footer);
             sheet.Content = column;
@@ -142,13 +141,20 @@ namespace SourceGit.Views
             Bind.OneWay(vm, nameof(vm.CanDeleteSelected), () => vm.CanDeleteSelected, can => remove.IsEnabled = can, owner: sheet);
 
             // Upstream saves the preferences as its window closes; the
-            // port's never write.
-            sheet.Closed += () =>
+            // port's never write. `Closed` is the user's closing (Escape),
+            // not the Close button's.
+            void Done()
             {
                 vm.Workspaces.CollectionChanged -= Changed;
                 ViewModels.Preferences.Instance.Save();
                 AppMenu.Refresh();
                 Shown = null;
+            }
+            sheet.Closed += Done;
+            close.Click += () =>
+            {
+                sheet.Destroy();
+                Done();
             };
         }
 

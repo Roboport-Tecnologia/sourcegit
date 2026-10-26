@@ -87,7 +87,12 @@ namespace SourceGit.Views
 
             var footer = new Row { Justify = Justify.End };
             var close = new Button(Popups.ButtonText("Close")) { Role = ButtonRole.Default };
-            close.Click += sheet.Destroy;
+            // `Closed` is the user's closing only, not this.
+            close.Click += () =>
+            {
+                sheet.Destroy();
+                Shown = null;
+            };
             footer.Add(close);
             column.Add(footer);
             sheet.Content = column;
