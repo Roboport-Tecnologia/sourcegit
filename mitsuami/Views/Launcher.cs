@@ -34,8 +34,7 @@ namespace SourceGit.Views
             root.Add(tabs);
             root.Add(content);
 
-            var window = new Window(vm.Title, 1100, 720) { Content = root };
-            Bind.OneWay(vm, nameof(vm.Title), () => vm.Title, title => window.Title = title);
+            var window = new Window(WindowTitle(), 1100, 720) { Content = root };
             // Upstream closes the repositories when the window goes, which
             // saves each one's UI state, then saves the preferences (the
             // tabs open, the workspaces).
@@ -50,7 +49,35 @@ namespace SourceGit.Views
             {
                 tabs.Titles = vm.Pages.Select(Title).ToArray();
                 tabs.SelectedIndex = vm.Pages.IndexOf(vm.ActivePage);
+                window.Title = WindowTitle();
             }
+            // Upstream's StringConverters.ToWindowTitle: the page and the
+            // workspace it's in.
+            string WindowTitle()
+            {
+                var page = vm.ActivePage?.Node.Name;
+                var workspace = vm.ActiveWorkspace?.Name;
+                return $"{(string.IsNullOrEmpty(page) ? "Repositories" : page)} - {(string.IsNullOrEmpty(workspace) ? "Unnamed" : workspace)}";
+            }
+            void WorkspaceRenamed(object sender, PropertyChangedEventArgs e)
+            {
+                if (e.PropertyName == nameof(ViewModels.Workspace.Name))
+                    window.Title = WindowTitle();
+            }
+            var workspace = vm.ActiveWorkspace;
+            if (workspace != null)
+                workspace.PropertyChanged += WorkspaceRenamed;
+            vm.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName != nameof(vm.ActiveWorkspace))
+                    return;
+                if (workspace != null)
+                    workspace.PropertyChanged -= WorkspaceRenamed;
+                workspace = vm.ActiveWorkspace;
+                if (workspace != null)
+                    workspace.PropertyChanged += WorkspaceRenamed;
+                window.Title = WindowTitle();
+            };
             foreach (var page in vm.Pages)
                 Watch(page);
             vm.Pages.CollectionChanged += (_, e) =>
@@ -82,6 +109,7 @@ namespace SourceGit.Views
             Bind.OneWay(vm, nameof(vm.ActivePage), () => vm.ActivePage, page =>
             {
                 tabs.SelectedIndex = vm.Pages.IndexOf(page);
+                window.Title = WindowTitle();
                 ShowPage(content, page);
                 if (page != null)
                     Notifications.Show(window, vm, page);

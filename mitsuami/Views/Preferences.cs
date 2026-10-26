@@ -323,7 +323,7 @@ namespace SourceGit.Views
                     return;
                 shellFields.Add(Field(App.Text("Preferences.Shell.Path"), Path(Over, pref.ShellOrTerminalPath, v => pref.ShellOrTerminalPath = v)));
                 shellFields.Add(Field(App.Text("Preferences.Shell.Args"),
-                    WithTip(TextValue(pref.ShellOrTerminalArgs, v => pref.ShellOrTerminalArgs = v), App.Text("Preferences.Shell.Args.Tip"))));
+                    WithTip(TextValue(pref.ShellOrTerminalArgs, v => pref.ShellOrTerminalArgs = v), App.Text("Preferences.Shell.Args.ToolTip"))));
             }
             // Choosing one fills in its path and arguments, as upstream's does.
             page.Add(Field(App.Text("Preferences.Shell.Type"), Choice(App.Text("Preferences.Shell.Type"), shells.Select(s => s.Name),
