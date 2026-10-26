@@ -179,6 +179,28 @@ namespace SourceGit.Views
                             _ => new Text(item.ToString()),
                         },
                         pages.OpenOrSwitchTo);
+                case WorkspaceCommandPalette workspaces:
+                    return new(App.Text("Launcher.Workspaces"), null,
+                        nameof(workspaces.Filter), () => workspaces.Filter, v => workspaces.Filter = v,
+                        [nameof(workspaces.Visible)], () => workspaces.Visible.Cast<object>().ToList(),
+                        () => workspaces.Selected, item => workspaces.Selected = (ViewModels.Workspace)item,
+                        item => item.GetHashCode().ToString(),
+                        item =>
+                        {
+                            var workspace = (ViewModels.Workspace)item;
+                            var row = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 6) };
+                            row.Height = 28;
+                            row.Add(Workspaces.IconOf(workspace));
+                            var name = new Text(workspace.Name ?? "") { MaxLines = 1 };
+                            name.Grow = 1;
+                            name.Shrink = 1;
+                            name.MinWidth = 0;
+                            row.Add(name);
+                            if (workspace.IsActive)
+                                row.Add(new Icon(Icons.Get("Check")) { Size = 12 });
+                            return row;
+                        },
+                        workspaces.Switch);
                 case ViewModels.RepositoryCommandPalette commands:
                     return new(App.Text("Hotkeys.Repo.OpenCommandPalette"), null,
                         nameof(commands.Filter), () => commands.Filter, v => commands.Filter = v,

@@ -33,6 +33,10 @@ namespace SourceGit.Views
             /// <summary>An item every app has, which macOS puts in its own
             /// place.</summary>
             public MenuRole Role { get; init; }
+
+            /// <summary>Makes it a submenu of these entries, built with the
+            /// menus.</summary>
+            public Func<List<MenuEntry>> Submenu { get; init; }
         }
 
         /// <summary>A menu's commands; null is a separator.</summary>
@@ -48,8 +52,17 @@ namespace SourceGit.Views
             {
                 if (e.PropertyName == nameof(launcher.ActivePage))
                     Watch();
+                else if (e.PropertyName == nameof(launcher.ActiveWorkspace))
+                    Set();
             };
             Watch();
+        }
+
+        /// <summary>Builds the menus again: the workspaces changed.</summary>
+        public static void Refresh()
+        {
+            if (s_launcher != null)
+                Set();
         }
 
         /// <summary>Rebuilds the menus, and follows what they read: the page
@@ -84,6 +97,8 @@ namespace SourceGit.Views
         private static MenuEntry Entry(Command command) =>
             command == null
                 ? MenuSeparator.Instance
+                : command.Submenu != null
+                ? new Submenu(command.Title, command.Submenu())
                 : new MenuItem(command.Title, command.Run)
                 {
                     Shortcut = command.Key,
@@ -137,6 +152,9 @@ namespace SourceGit.Views
                 new("Clone Repository…", Primary('r'), () => OnWelcome(ViewModels.Welcome.Instance.Clone)) { Description = App.Text("Hotkeys.Global.Clone") },
                 new("Open Repository…", Primary('l'), () => OnWelcome(ViewModels.Welcome.Instance.OpenLocalRepository)) { Description = App.Text("Hotkeys.Global.OpenLocalRepository") },
                 null,
+                // Upstream's switcher, before its tabs.
+                new(App.Text("Launcher.Workspaces"), null, null) { Submenu = () => Workspaces.Menu(s_launcher) },
+                null,
                 // Upstream's ⌃`: macOS has no Control apart from ⌘ here, and
                 // ⌘` cycles the app's windows.
                 new(App.Text("Welcome.OpenTerminal"), Mac ? null : Primary('`'), () =>
@@ -168,6 +186,9 @@ namespace SourceGit.Views
                 {
                     Description = App.Text("Hotkeys.Global.SwitchTab"),
                 },
+                // Upstream's ⌘⌥P opens its workspace menu; here a palette of
+                // them, as ⌘P's of the tabs.
+                new("Go to Workspace…", Primary('p').WithAlt(), () => s_launcher.CommandPalette = new WorkspaceCommandPalette(s_launcher)),
                 // Upstream's: ⌘⌥← and ⌘⌥→ on macOS, Ctrl+Shift+Tab and
                 // Ctrl+Tab elsewhere.
                 new("Show Previous Tab", Mac ? Primary(Key.Left).WithAlt() : Primary(Key.Tab).WithShift(), () => s_launcher.GotoPrevTab())
