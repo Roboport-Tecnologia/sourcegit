@@ -38,6 +38,10 @@ namespace SourceGit.Views
             page.OnKey(Shortcut.Of(Key.Enter).WithPrimary(), () => Commit(vm, false, false));
             page.OnKey(Shortcut.Of(Key.Enter).WithPrimary().WithShift(), () => Commit(vm, true, false));
             page.OnKey(Shortcut.Of(Key.Enter).WithPrimary().WithAlt(), () => Commit(vm, false, true));
+            // ⌘⇧S stages everything shown, ⌘⇧U unstages it, as upstream's
+            // buttons' hot keys.
+            page.OnKey(StageAllKey, () => _ = vm.StageChangesAsync(vm.VisibleUnstaged, null));
+            page.OnKey(UnstageAllKey, () => _ = vm.UnstageChangesAsync(vm.VisibleStaged, null));
             return page;
         }
 
@@ -107,12 +111,12 @@ namespace SourceGit.Views
             Bind.OneWay(vm, nameof(vm.HasUnsolvedConflicts), () => vm.HasUnsolvedConflicts, v => conflicts.IsVisible = v, owner: conflicts);
             unstagedBar.Add(conflicts);
             unstagedBar.Add(IconButton("Down", "WorkingCopy.Unstaged.Stage", () => Stage(vm, unstaged)));
-            unstagedBar.Add(IconButton("DoubleDown", "WorkingCopy.Unstaged.StageAll", () => _ = vm.StageChangesAsync(vm.VisibleUnstaged, null)));
+            unstagedBar.Add(IconButton("DoubleDown", "WorkingCopy.Unstaged.StageAll", () => _ = vm.StageChangesAsync(vm.VisibleUnstaged, null), StageAllKey));
 
             var stagedBar = Bar(vm, "WorkingCopy.Staged", nameof(vm.StagedCountInfo), () => vm.StagedCountInfo,
                 nameof(vm.IsUnstaging), () => vm.IsUnstaging);
             stagedBar.Add(IconButton("Up", "WorkingCopy.Staged.Unstage", () => Unstage(vm, staged)));
-            stagedBar.Add(IconButton("DoubleUp", "WorkingCopy.Staged.UnstageAll", () => _ = vm.UnstageChangesAsync(vm.VisibleStaged, null)));
+            stagedBar.Add(IconButton("DoubleUp", "WorkingCopy.Staged.UnstageAll", () => _ = vm.UnstageChangesAsync(vm.VisibleStaged, null), UnstageAllKey));
 
             // The two lists share the height, as upstream's rows do, with
             // the platform's divider between them.
@@ -534,14 +538,18 @@ namespace SourceGit.Views
 
         /// <summary>A toolbar's button: upstream's icon, 14 points, its
         /// tooltip the text; disabled when there's no command yet.</summary>
-        private static Button IconButton(string icon, string text, Action command)
+        private static readonly Shortcut StageAllKey = Shortcut.Of('s').WithPrimary().WithShift();
+        private static readonly Shortcut UnstageAllKey = Shortcut.Of('u').WithPrimary().WithShift();
+
+        // A key, if given, follows the name in the tip, as upstream's.
+        private static Button IconButton(string icon, string text, Action command, Shortcut? key = null)
         {
             var button = new Button(App.Text(text))
             {
                 Icon = Icons.Get(icon, 14),
                 IconOnly = true,
                 Style = ButtonStyle.Borderless,
-                ToolTip = App.Text(text),
+                ToolTip = key is { } k ? $"{App.Text(text)}  {Hotkeys.Format(k)}" : App.Text(text),
                 IsEnabled = command != null,
             };
             button.Width = 28;
