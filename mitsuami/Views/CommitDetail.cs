@@ -231,8 +231,10 @@ namespace SourceGit.Views
             var row = new Row { AlignItems = Align.Center };
             row.Height = 24;
             row.Add(new Text(commit.SHA) { Style = TextStyle.Monospace });
-            row.Add(CopyButton(commit.SHA));
-            row.Add(ContainsIn(detail));
+            var actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(0) };
+            row.Add(actions);
+            actions.Add(CopyButton(commit.SHA));
+            actions.Add(ContainsIn(detail));
 
             if (detail.WebLinks is { Count: > 0 } links)
             {
@@ -257,7 +259,7 @@ namespace SourceGit.Views
                     };
                 }
                 button.ToolTip = title;
-                row.Add(button);
+                actions.Add(button);
             }
 
             if (detail.SignInfo is { } sign)
@@ -279,7 +281,7 @@ namespace SourceGit.Views
                         tip += $"\n{App.Text("CommitDetail.Info.Signer")}  {sign.Signer}";
                     tip += $"\n{App.Text("CommitDetail.Info.Key")}  {sign.Key}";
                     mark.ToolTip = tip;
-                    row.Add(mark);
+                    actions.Add(mark);
                 }
             }
             return row;
