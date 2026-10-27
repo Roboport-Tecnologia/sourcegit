@@ -26,9 +26,13 @@ namespace SourceGit.Views
             body.Add(Rail(vm));
 
             // Upstream's sidebar width is a preference, 250 points until
-            // the user drags it; it's at least 200, and the page 100.
+            // the user drags it; it's at least 200, and the page 100. On
+            // Windows it opens at least 320 wide: WinUI's buttons are wider
+            // than upstream's, and at 250 the headers' titles were cut down
+            // to make room for their buttons.
             var layout = ViewModels.Preferences.Instance.Layout;
-            var split = new Split { Position = layout.RepositorySidebarWidth };
+            var sidebarWidth = OperatingSystem.IsWindows() ? Math.Max(layout.RepositorySidebarWidth, 320) : layout.RepositorySidebarWidth;
+            var split = new Split { Position = sidebarWidth };
             split.Grow = 1;
             split.Changed += width => layout.RepositorySidebarWidth = width;
             // While searching commits, upstream's search panel takes the
@@ -434,7 +438,9 @@ namespace SourceGit.Views
             header.Clicked += () => setExpanded(!expanded());
             header.Add(expander);
             header.Add(new Icon(Icons.Get(icon)) { Size = 11, Color = Color.SecondaryLabel });
-            header.Add(new Text(App.Text(title)) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
+            // One line, as upstream's: a narrow sidebar cuts it off, and
+            // the buttons after it keep their room.
+            header.Add(new Text(App.Text(title)) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold, MaxLines = 1 });
             var counter = new Text { Color = Color.SecondaryLabel, Weight = FontWeight.Bold };
             Bind.OneWay(vm, countProperty, count, v => counter.Value = v, owner: header);
             header.Add(counter);

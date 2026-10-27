@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
@@ -34,7 +35,14 @@ namespace SourceGit.Views
             root.Add(tabs);
             root.Add(content);
 
-            var window = new Window(WindowTitle(), 1100, 720) { Content = root };
+            // Upstream's size, as it last had it (1280 by 720 at first). On
+            // Windows at least as wide as the local changes need: XAML's
+            // check boxes are at least 120 wide, and the commit options
+            // pushed Commit & Push and the toolbar's end out of a narrower
+            // window.
+            var layout = ViewModels.Preferences.Instance.Layout;
+            var width = OperatingSystem.IsWindows() ? Math.Max(layout.LauncherWidth, 1320) : layout.LauncherWidth;
+            var window = new Window(WindowTitle(), (float)width, (float)layout.LauncherHeight) { Content = root };
             // Upstream closes the repositories when the window goes, which
             // saves each one's UI state, then saves the preferences (the
             // tabs open, the workspaces).
