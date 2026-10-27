@@ -18,7 +18,7 @@ namespace SourceGit.Views
         public static void Show(string prompt)
         {
             var window = new Window(App.Text("Askpass"), 400);
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Lg, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Add(new Text(prompt));
             var field = new PasswordInput { AccessibleName = prompt };
             column.Add(field);

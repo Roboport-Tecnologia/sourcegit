@@ -38,7 +38,7 @@ namespace SourceGit.Views
             }
             sheet.Closed += Save;
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
             column.Add(Tabs(
                 ("Configure.Git", Git(vm, Over)),

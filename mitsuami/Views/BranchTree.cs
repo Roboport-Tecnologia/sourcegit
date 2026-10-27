@@ -177,7 +177,7 @@ namespace SourceGit.Views
         /// end.</summary>
         private Node Row(ViewModels.BranchTreeNode node)
         {
-            var row = new Row { AlignItems = Align.Center };
+            var row = new Row { AlignItems = Align.Center, Padding = Metrics.ListRow() };
             var path = node.Path;
             row.ContextMenuOnOpen = () => Menu(path);
 

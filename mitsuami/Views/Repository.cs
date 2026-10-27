@@ -87,9 +87,9 @@ namespace SourceGit.Views
         {
             // Every button and line in it is the platform's small spacing
             // from the next, and the band as far from the window's edges.
-            // Its buttons are further apart on macOS (Icons.ToolbarGap).
-            var buttons = Icons.ToolbarGap(Spacing.Sm);
-            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
+            // Its buttons are further apart on macOS (Metrics.ToolbarGap).
+            var buttons = Metrics.ToolbarGap;
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = Metrics.Band, IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
@@ -491,7 +491,7 @@ namespace SourceGit.Views
             space.Grow = 1;
             header.Add(space);
             withRows ??= [];
-            var actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Xs) };
+            var actions = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             foreach (var button in withRows)
                 actions.Add(button);
             foreach (var button in buttons)
@@ -674,7 +674,7 @@ namespace SourceGit.Views
         /// the platform's disclosure and indent.</summary>
         private static Node TagRow(ViewModels.Repository vm, object item, Func<IReadOnlyList<MenuEntry>> menu)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Lg) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Lg, Spacing.Xs) };
             row.ContextMenuOnOpen = menu;
             if (item is ViewModels.TagTreeNode { IsFolder: true } node)
             {
@@ -718,7 +718,7 @@ namespace SourceGit.Views
         /// <summary>A submodule's row, or a folder of them.</summary>
         private static Node SubmoduleRow(ViewModels.Repository vm, object item)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Lg) };
             if (item is ViewModels.SubmoduleTreeNode { IsFolder: true } node)
             {
                 Folder(row, node, () => node.IsExpanded, node.FullPath.Split('/')[^1], node.ChildCounter);
@@ -742,7 +742,7 @@ namespace SourceGit.Views
 
         private static Node WorktreeRow(ViewModels.Repository vm, ViewModels.Worktree worktree)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Lg) };
             row.Add(new Icon(Icons.Get("Worktree")) { Size = 12 });
             row.Add(new Text(worktree.Name));
             row.ToolTip = worktree.FullPath;
@@ -760,7 +760,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node BisectBar(ViewModels.Repository vm)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Sm) };
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = Metrics.Bar };
             bar.Shrink = 0;
             bar.Add(new Tint { Inset = new Thickness(0) });
             var text = new Text { Weight = FontWeight.Bold, MaxLines = 1 };
@@ -823,7 +823,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node InProgressBar(ViewModels.Repository vm)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Sm) };
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = Metrics.Bar };
             bar.Shrink = 0;
             bar.Add(new Tint { Inset = new Thickness(0) });
             var what = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };

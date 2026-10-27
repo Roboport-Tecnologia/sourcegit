@@ -22,7 +22,7 @@ namespace SourceGit.Views
             var title = App.Text("ConfigureCustomActionControls");
             var sheet = new Window(over, title, 560);
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
             var list = ListDetail(controls, c => c.Label, nameof(Models.CustomActionControl.Label), "Parameter", Control,
                 new ListActions<Models.CustomActionControl>

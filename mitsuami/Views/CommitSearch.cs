@@ -124,7 +124,7 @@ namespace SourceGit.Views
         /// the date in the secondary colour.</summary>
         private static Node Row(Models.Commit commit)
         {
-            var row = new Row { AlignItems = Align.Center };
+            var row = new Row { AlignItems = Align.Center, Padding = Metrics.ListRow() };
             var face = new Row { AlignItems = Align.Center, Justify = Justify.Center };
             face.Width = 24;
             var avatar = new Avatar(16, menu: false) { User = commit.Author };

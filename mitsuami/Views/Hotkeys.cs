@@ -31,7 +31,7 @@ namespace SourceGit.Views
             scroll.Grow = 1;
             scroll.MinHeight = 0;
             var column = scroll.Content;
-            column.Padding = Spacing.Xl;
+            column.Padding = Metrics.Panel;
             column.Gap = Spacing.Sm;
             column.AlignItems = Align.Stretch;
 

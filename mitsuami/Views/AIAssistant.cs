@@ -55,7 +55,7 @@ namespace SourceGit.Views
                 vm.Cancel();
             };
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Grow = 1;
             column.Add(new Text(title) { Style = TextStyle.Headline });
             var answer = new TextArea { ReadOnly = true, FollowsEnd = true, AccessibleName = title };

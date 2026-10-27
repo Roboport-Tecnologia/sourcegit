@@ -139,12 +139,12 @@ namespace SourceGit.Views
             // title bar and the content in one colour; its hard edge (26.1)
             // sets the band apart, as GTK's and WinUI's shades do.
             // Spaced as the repository's toolbar band.
-            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = Metrics.Band, IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
-            var start = new Row { AlignItems = Align.Center, Gap = Icons.ToolbarGap(Spacing.Sm) };
-            var end = new Row { AlignItems = Align.Center, Gap = Icons.ToolbarGap(Spacing.Sm) };
+            var start = new Row { AlignItems = Align.Center, Gap = Metrics.ToolbarGap };
+            var end = new Row { AlignItems = Align.Center, Gap = Metrics.ToolbarGap };
             band.Add(start);
             band.Add(end);
 
@@ -178,7 +178,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Row(ViewModels.Welcome vm, ViewModels.RepositoryNode node)
         {
-            var row = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Sm, Spacing.None, Spacing.None) };
+            var row = new Row { AlignItems = Align.Center, Padding = Metrics.ListRow(Spacing.None, Spacing.Sm) };
             row.ContextMenu = Menu(node);
             // Folders dropped on a group go in it; on a repository, in its group.
             row.FileDrop = Drops;

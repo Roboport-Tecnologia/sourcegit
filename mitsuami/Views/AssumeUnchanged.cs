@@ -21,7 +21,7 @@ namespace SourceGit.Views
             sheet.Closed += () => Shown = null;
 
             // Upstream's fixed size: the list fills it.
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Grow = 1;
             column.Add(new Text(title) { Style = TextStyle.Headline });
 
@@ -64,7 +64,7 @@ namespace SourceGit.Views
         /// button that stops assuming it unchanged.</summary>
         private static Node Row(ViewModels.AssumeUnchangedManager vm, string file)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Sm) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Sm, Spacing.Xs) };
             row.Add(new Icon(Icons.Get("File")) { Size = 14 });
             var path = new Text(file) { MaxLines = 1 };
             path.Grow = 1;

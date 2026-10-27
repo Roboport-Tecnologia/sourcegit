@@ -62,7 +62,7 @@ namespace SourceGit.Views
 
             // Upstream's filter row: the field, discarding
             // everything, and the lists' view mode.
-            var top = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = Spacing.Xs };
+            var top = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = Metrics.Bar };
             top.Shrink = 0;
             // Upstream's sidebar toggle: the repository's sidebar hides
             // while the local changes show.
@@ -79,7 +79,7 @@ namespace SourceGit.Views
             filter.Grow = 1;
             Bind.Search(filter, vm, nameof(vm.Filter), () => vm.Filter, v => vm.Filter = v, owner: top);
             top.Add(filter);
-            var topActions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Xs) };
+            var topActions = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             topActions.Add(IconButton("Undo", "WorkingCopy.DiscardAll", vm.DiscardAllChanges));
             topActions.Add(ChangeCollection.ModeButton());
             top.Add(topActions);
@@ -178,7 +178,7 @@ namespace SourceGit.Views
         private static Row Bar(ViewModels.WorkingCopy vm, string title, string countProperty, Func<string> count,
             string busyProperty, Func<bool> busy, out Row actions)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.Xs, Spacing.Xs, Spacing.Sm) };
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = Metrics.Bar };
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get("Changes")) { Size = 14, Color = Color.SecondaryLabel });
             // One line, cut off in a narrow column so the buttons keep
@@ -192,7 +192,7 @@ namespace SourceGit.Views
             var space = new Column();
             space.Grow = 1;
             bar.Add(space);
-            actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Xs) };
+            actions = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             bar.Add(actions);
             return bar;
         }
@@ -323,7 +323,7 @@ namespace SourceGit.Views
 
             var footer = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             footer.Shrink = 0;
-            var tools = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Xs) };
+            var tools = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             var helper = new MenuButton(App.Text("WorkingCopy.CommitMessageHelper"))
             {
                 Icon = Icons.Get("Menu", 12),

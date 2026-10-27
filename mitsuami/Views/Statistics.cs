@@ -32,7 +32,7 @@ namespace SourceGit.Views
                     Shown = null;
             };
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Grow = 1;
             var header = new Row { AlignItems = Align.Center, Justify = Justify.End };
             header.Add(BranchSelect(vm));
@@ -141,7 +141,7 @@ namespace SourceGit.Views
         /// <summary>Upstream's author row: their avatar, name and count.</summary>
         private static Node AuthorRow(Models.StatisticsAuthor author)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
             row.ToolTip = author.User.ToString();
             var avatar = new Avatar(16) { User = author.User };
             row.Add(avatar.View);

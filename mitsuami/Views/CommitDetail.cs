@@ -230,7 +230,7 @@ namespace SourceGit.Views
         {
             var row = new Row { AlignItems = Align.Center };
             row.Add(new Text(commit.SHA) { Style = TextStyle.Monospace });
-            var actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.None) };
+            var actions = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             row.Add(actions);
             actions.Add(CopyButton(commit.SHA));
             actions.Add(ContainsIn(detail));

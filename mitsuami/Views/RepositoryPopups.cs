@@ -367,7 +367,7 @@ namespace SourceGit.Views
         {
             var vm = new ViewModels.PushToNewBranch(push.SelectedRemote.Name);
             var sheet = new Window(owner, App.Text("PushToNewBranch"), 400);
-            var column = new Column { Padding = Spacing.Xl, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Add(new Text(App.Text("PushToNewBranch")) { Style = TextStyle.Headline });
             column.Add(new Text(App.Text("PushToNewBranch.Title")));
             // Upstream shows the remote inside the field, before the name.
@@ -507,7 +507,7 @@ namespace SourceGit.Views
                 _ => ((Models.Branch)t).FullName,
             }, t =>
             {
-                var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
+                var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Sm, Spacing.Sm) };
                 row.Add(RefLabel(t));
                 if (trackStatus && t is Models.Branch { IsTrackStatusVisible: true } branch)
                     row.Add(new Text(branch.TrackStatusDescription) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });

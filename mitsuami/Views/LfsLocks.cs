@@ -21,7 +21,7 @@ namespace SourceGit.Views
             var sheet = Shown = new Window(App.MainWindow, title, 600, 400);
             sheet.Closed += () => Shown = null;
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Grow = 1;
             column.Add(new Text(title) { Style = TextStyle.Headline });
 
@@ -82,7 +82,7 @@ namespace SourceGit.Views
         /// force-unlock buttons (the latter in the error colour).</summary>
         private static Node Row(ViewModels.LFSLocks vm, Models.LFSLock lfsLock)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
             row.Add(new Icon(Icons.Get("File")) { Size = 14 });
             var path = new Text(lfsLock.Path) { MaxLines = 1 };
             path.Grow = 1;
@@ -107,7 +107,7 @@ namespace SourceGit.Views
                 ToolTip = App.Text("GitLFS.Locks.UnlockForce"),
             };
             force.Click += () => _ = vm.UnlockAsync(lfsLock, true);
-            var unlocks = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Sm) };
+            var unlocks = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             unlocks.Add(unlock);
             unlocks.Add(force);
             row.Add(unlocks);

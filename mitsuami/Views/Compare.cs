@@ -34,7 +34,7 @@ namespace SourceGit.Views
                     Shown = null;
             };
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Sm, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Grow = 1;
             var header = new Row { AlignItems = Align.Center, Gap = Spacing.Md };
             header.Add(Side(vm, nameof(vm.BaseHead), () => vm.BaseHead, () => vm.BaseName));
@@ -157,7 +157,7 @@ namespace SourceGit.Views
 
         private static Node Row(Models.Commit commit)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
             row.Add(new Avatar(16, menu: false) { User = commit.Author }.View);
             var subject = new Text(commit.Subject) { MaxLines = 1 };
             subject.Grow = 1;

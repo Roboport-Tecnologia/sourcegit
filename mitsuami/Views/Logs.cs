@@ -24,7 +24,7 @@ namespace SourceGit.Views
             var title = Popups.ButtonText("ViewLogs");
             var window = Shown = new Window(title, 800, 500);
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Grow = 1;
 
             // Upstream's list beside the output, 300 wide.
@@ -120,7 +120,7 @@ namespace SourceGit.Views
         /// when it started and how long it took.</summary>
         private static Node Row(ViewModels.ViewLogs vm, ViewModels.CommandLog log, Dictionary<ViewModels.CommandLog, Text> durations)
         {
-            var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
+            var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
             var spinner = new Spinner();
             row.Add(spinner);
             var name = new Text(log.Name) { MaxLines = 1 };

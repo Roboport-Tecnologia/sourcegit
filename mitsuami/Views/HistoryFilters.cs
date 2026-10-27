@@ -47,7 +47,7 @@ namespace SourceGit.Views
                 IconOnly = true,
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Repository.ClearAllCommitsFilter"),
-                Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Icons.ButtonGap(Spacing.None)),
+                Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Metrics.ButtonGap),
             };
             clear.Click += vm.ClearHistoryFilters;
             row.Add(clear);

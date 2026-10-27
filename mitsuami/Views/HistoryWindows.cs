@@ -142,7 +142,7 @@ namespace SourceGit.Views
         /// its full message as the tooltip.</summary>
         private static Node Row(Models.User author, string sha, ulong time, string subject, Action navigate, Func<string> message)
         {
-            var column = new Column { Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.None) };
+            var column = new Column { Gap = Spacing.Xs, Padding = Metrics.ListRow() };
             var top = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             top.Add(new Avatar(16, menu: false) { User = author }.View);
             var name = new Text(author.Name) { MaxLines = 1 };

@@ -63,7 +63,7 @@ namespace SourceGit.Views
             var title = App.Text("ConfigureWorkspace");
             var sheet = Shown = new Window(App.MainWindow, title, 494);
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
             var body = new Row { Gap = Spacing.Lg, AlignItems = Align.Stretch };
             body.MinHeight = 340;
@@ -83,7 +83,7 @@ namespace SourceGit.Views
             list.MinHeight = 0;
             left.Add(list);
 
-            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.None) };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             var add = Settings.Small("Plus", "Add");
             add.IsEnabled = true;
             add.Click += vm.Add;
@@ -161,7 +161,7 @@ namespace SourceGit.Views
         /// name, and a check on the active one.</summary>
         private static Node Row(ViewModels.Workspace workspace)
         {
-            var row = new Mitsuamia.Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
+            var row = new Mitsuamia.Row { Gap = Metrics.RowGap, AlignItems = Align.Center, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
             row.Add(IconOf(workspace));
             var name = new Text { MaxLines = 1 };
             name.Grow = 1;

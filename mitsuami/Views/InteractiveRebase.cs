@@ -28,7 +28,7 @@ namespace SourceGit.Views
             Shown = sheet;
             sheet.Closed += () => Shown = null;
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Add(Heading(vm));
 
             var list = Commits(sheet, vm);
@@ -190,7 +190,7 @@ namespace SourceGit.Views
         private static Node Row(Window sheet, ViewModels.InteractiveRebase vm, ListView<ViewModels.InteractiveRebaseItem> list,
             ViewModels.InteractiveRebaseItem item)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Sm) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Sm, Spacing.Sm) };
 
             var order = new Text($"#{item.OriginalOrder}") { Style = TextStyle.Monospace };
             order.Width = 36;
@@ -316,7 +316,7 @@ namespace SourceGit.Views
             var sheet = new Window(owner, App.Text("CodeEditor"), 640);
             Editing = sheet;
             sheet.Closed += () => Editing = null;
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             var editor = new TextAreaWithPlaceholder(App.Text("CommitMessageTextBox.Placeholder"));
             editor.Height = 280;
             var message = editor.Area;

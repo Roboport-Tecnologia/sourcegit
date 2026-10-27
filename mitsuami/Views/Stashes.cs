@@ -57,7 +57,7 @@ namespace SourceGit.Views
             column.Add(new Separator());
 
             // Upstream's search row.
-            var search = new Row { AlignItems = Align.Center, Padding = Spacing.Xs };
+            var search = new Row { AlignItems = Align.Center, Padding = Metrics.Bar };
             search.Shrink = 0;
             var filter = new SearchInput();
             filter.Grow = 1;
@@ -90,7 +90,7 @@ namespace SourceGit.Views
         /// at the end.</summary>
         private static Row Bar(string icon, string title, ViewModels.StashesPage vm, string countProperty, Func<int> count)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.Xs, Spacing.Xs, Spacing.Sm) };
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = Metrics.Bar };
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get(icon)) { Size = 14, Color = Color.SecondaryLabel });
             // One line, cut off in a narrow column so the buttons keep
@@ -139,7 +139,7 @@ namespace SourceGit.Views
 
         private static Node Row(ViewModels.Repository repo, ViewModels.StashesPage vm, Models.Stash stash)
         {
-            var row = new Column { AlignItems = Align.Stretch, Justify = Justify.SpaceBetween, Padding = Spacing.Xs };
+            var row = new Column { AlignItems = Align.Stretch, Justify = Justify.SpaceBetween, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
             row.ToolTip = stash.Message;
             row.ContextMenuOnOpen = () => Menu(repo, vm, stash);
 

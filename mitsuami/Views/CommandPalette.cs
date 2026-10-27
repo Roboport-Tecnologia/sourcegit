@@ -188,7 +188,7 @@ namespace SourceGit.Views
                         item =>
                         {
                             var workspace = (ViewModels.Workspace)item;
-                            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
+                            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Sm, Spacing.Sm) };
                             row.Add(Workspaces.IconOf(workspace));
                             var name = new Text(workspace.Name ?? "") { MaxLines = 1 };
                             name.Grow = 1;
@@ -306,7 +306,7 @@ namespace SourceGit.Views
         /// secondary colour, and a note at the end.</summary>
         private static Node Line(string icon, string title, string detail = null, string note = null)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Sm, Spacing.Sm) };
             row.Add(new Icon(Icons.Get(icon)) { Size = 14 });
             var text = new Text(title) { MaxLines = 1 };
             text.Shrink = 0;

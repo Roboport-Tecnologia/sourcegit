@@ -210,7 +210,7 @@ namespace SourceGit.Views
         /// a submodule, a file) and name.</summary>
         private Node Row(ViewModels.RevisionFileTreeNode node)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Xs) };
             row.ToolTip = node.Backend.Path;
             switch (node.Backend.Type)
             {

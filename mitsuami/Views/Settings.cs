@@ -26,7 +26,7 @@ namespace SourceGit.Views
 
         public static Column Page()
         {
-            var page = new Column { Padding = Spacing.Lg, Gap = Spacing.Sm, AlignItems = Align.Stretch };
+            var page = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             page.Grow = 1;
             return page;
         }
@@ -175,7 +175,7 @@ namespace SourceGit.Views
         public static Node ListDetail<T>(IReadOnlyList<T> items, Func<T, string> name, string nameProperty, string icon,
             Func<T, Node> detail, ListActions<T> actions) where T : class, System.ComponentModel.INotifyPropertyChanged
         {
-            var row = new Row { Gap = Spacing.Lg, AlignItems = Align.Stretch, Padding = Spacing.Lg };
+            var row = new Row { Gap = Metrics.PanelGap, AlignItems = Align.Stretch, Padding = Metrics.Panel };
             row.Grow = 1;
             row.MinHeight = 360;
 
@@ -186,7 +186,7 @@ namespace SourceGit.Views
             var next = 0;
             var list = new ListView<T>(item => keys.GetValue(item, _ => (++next).ToString()), item =>
             {
-                var line = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
+                var line = new Row { Gap = Metrics.RowGap, AlignItems = Align.Center, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
                 line.Add(new Icon(Icons.Get(icon)) { Size = 12 });
                 var text = new Text(name(item)) { MaxLines = 1 };
                 text.Shrink = 1;
@@ -251,7 +251,7 @@ namespace SourceGit.Views
             // the pick but changes which way it can go.
             list.ItemsChanged += () => Show(picked != null && items.Contains(picked) ? picked : null);
 
-            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.None) };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             // Upstream's have only icons, and no names to read out.
             buttons.Add(actions.AddButton?.Invoke(Pick) ?? Small("Plus", "Add", () => Pick(actions.Add())));
             buttons.Add(remove);

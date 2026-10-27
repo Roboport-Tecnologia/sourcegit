@@ -51,7 +51,7 @@ namespace SourceGit.Views
             var title = Popups.ButtonText(error ? "Launcher.Error" : "Launcher.Info");
             var sheet = Shown = new Window(owner, title, 560);
 
-            var column = new Column { Padding = Spacing.Xl, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             var header = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             header.Add(new Icon(Icons.Get(error ? "Error" : "Info")) { Size = 14, Color = error ? Color.Error : Color.Success });
             var heading = new Text(title) { Style = TextStyle.Headline };

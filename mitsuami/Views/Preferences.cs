@@ -63,7 +63,7 @@ namespace SourceGit.Views
                         },
                         Remove = s => pref.OpenAIServices.Remove(s),
                     })));
-            var column = new Column { Padding = Spacing.Lg, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, AlignItems = Align.Stretch };
             column.Add(tabs);
             window.Content = column;
         }

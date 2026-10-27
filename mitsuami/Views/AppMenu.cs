@@ -312,10 +312,10 @@ namespace SourceGit.Views
                 return Task.FromResult(commits.FirstOrDefault());
             var done = new TaskCompletionSource<Models.Commit>();
             var sheet = new Window(App.MainWindow, title, 520);
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             var list = new ListView<Models.Commit>(c => c.SHA, c =>
             {
-                var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
+                var row = new Row { Gap = Metrics.RowGap, AlignItems = Align.Center, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
                 row.Add(new Text(c.SHA[..10]) { Style = TextStyle.Monospace, Color = Color.SecondaryLabel });
                 var subject = new Text(c.Subject) { MaxLines = 1 };
                 subject.Shrink = 1;

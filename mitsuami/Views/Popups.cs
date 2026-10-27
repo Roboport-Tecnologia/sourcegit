@@ -84,7 +84,7 @@ namespace SourceGit.Views
             // Upstream's popups are 560 points wide.
             var sheet = new Window(owner, title, 560);
 
-            var column = new Column { Padding = Spacing.Xl, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
             column.Add(form(sheet));
 
@@ -304,7 +304,7 @@ namespace SourceGit.Views
             // folder and its name.
             static Node GroupRow(ViewModels.RepositoryNode node)
             {
-                var row = new Row { AlignItems = Align.Center };
+                var row = new Row { AlignItems = Align.Center, Padding = Metrics.ListRow() };
                 row.Add(Slot(18, new Icon(Icons.Get("Folder")) { Size = 14 }));
                 row.Add(new Text(node.Name));
                 return row;

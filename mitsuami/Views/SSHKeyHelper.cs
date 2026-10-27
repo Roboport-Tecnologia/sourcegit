@@ -25,7 +25,7 @@ namespace SourceGit.Views
             var sheet = Shown = new Window(App.MainWindow, title, 640, 400);
             sheet.Closed += () => Shown = null;
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Grow = 1;
             column.Add(new Text(title) { Style = TextStyle.Headline });
 
@@ -37,7 +37,7 @@ namespace SourceGit.Views
             left.Shrink = 0;
             var keys = new ListView<Models.SSHKeyPair>(k => k.PrivateKeyPath, k =>
             {
-                var line = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
+                var line = new Row { Gap = Metrics.RowGap, AlignItems = Align.Center, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
                 line.Add(new Icon(Icons.Get("Password")) { Size = 14 });
                 var name = new Text(k.Name) { MaxLines = 1 };
                 name.Shrink = 1;
@@ -53,7 +53,7 @@ namespace SourceGit.Views
             keys.Grow = 1;
             keys.MinHeight = 0;
             left.Add(keys);
-            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.None) };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             var add = Settings.Small("Plus", App.Text("SSHKeyHelper.Generator"));
             add.IsEnabled = true;
             add.Click += () => Generate(sheet, vm);
@@ -141,7 +141,7 @@ namespace SourceGit.Views
             var sheet = new Window(owner, title, 500);
             sheet.Closed += vm.CloseGenerator;
 
-            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Sm, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
             var types = Models.SSHKeyType.Supported;
             var type = new Select(App.Text("SSHKeyHelper.Generator.Type"))
