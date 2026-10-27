@@ -99,7 +99,6 @@ namespace SourceGit.Views
                 ToolTip = App.Text("GitLFS.Locks.Unlock"),
             };
             unlock.Click += () => _ = vm.UnlockAsync(lfsLock, false);
-            row.Add(unlock);
             var force = new Button(App.Text("GitLFS.Locks.UnlockForce"))
             {
                 Icon = Icons.Get("Unlock", 14),
@@ -109,7 +108,10 @@ namespace SourceGit.Views
                 ToolTip = App.Text("GitLFS.Locks.UnlockForce"),
             };
             force.Click += () => _ = vm.UnlockAsync(lfsLock, true);
-            row.Add(force);
+            var unlocks = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(8) };
+            unlocks.Add(unlock);
+            unlocks.Add(force);
+            row.Add(unlocks);
             return row;
         }
     }

@@ -83,7 +83,7 @@ namespace SourceGit.Views
             list.MinHeight = 0;
             left.Add(list);
 
-            var buttons = new Row { AlignItems = Align.Center };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(0) };
             var add = Settings.Small("Plus", "Add");
             add.IsEnabled = true;
             add.Click += vm.Add;

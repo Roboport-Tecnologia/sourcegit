@@ -49,6 +49,12 @@ namespace SourceGit
         /// <summary>The side mitsuami gives a button's icon.</summary>
         private const float ButtonIconSide = 16;
 
+        /// <summary>The gap between icon-only borderless buttons side by
+        /// side. AppKit's have no padding of their own, so there it's the
+        /// large spacing, or their icons nearly touch; elsewhere it's
+        /// <paramref name="other"/>, the row's own.</summary>
+        public static Length ButtonGap(Length other) => OperatingSystem.IsMacOS() ? Spacing.Lg : other;
+
         private static Dictionary<string, VectorIcon> Load()
         {
             var icons = new Dictionary<string, VectorIcon>(StringComparer.Ordinal);

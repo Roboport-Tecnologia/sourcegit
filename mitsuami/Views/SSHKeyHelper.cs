@@ -54,7 +54,7 @@ namespace SourceGit.Views
             keys.Grow = 1;
             keys.MinHeight = 0;
             left.Add(keys);
-            var buttons = new Row { AlignItems = Align.Center };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(0) };
             var add = Settings.Small("Plus", App.Text("SSHKeyHelper.Generator"));
             add.IsEnabled = true;
             add.Click += () => Generate(sheet, vm);

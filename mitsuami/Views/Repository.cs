@@ -87,9 +87,8 @@ namespace SourceGit.Views
         {
             // Every button and line in it is the platform's small spacing
             // from the next, and the band as far from the window's edges.
-            // AppKit's borderless buttons have no padding of their own, so
-            // there its buttons get the large spacing, or their icons touch.
-            var buttons = OperatingSystem.IsMacOS() ? Spacing.Lg : Spacing.Sm;
+            // Its buttons are further apart on macOS (Icons.ButtonGap).
+            var buttons = Icons.ButtonGap(Spacing.Sm);
             var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             band.MinHeight = 36;
             // Its height stays when the page below is taller than the
@@ -494,10 +493,12 @@ namespace SourceGit.Views
             space.Grow = 1;
             header.Add(space);
             withRows ??= [];
+            var actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(4) };
             foreach (var button in withRows)
-                header.Add(button);
+                actions.Add(button);
             foreach (var button in buttons)
-                header.Add(button);
+                actions.Add(button);
+            header.Add(actions);
             sidebar.Add(header);
 
             // As tall as its rows, as upstream's. When the open groups

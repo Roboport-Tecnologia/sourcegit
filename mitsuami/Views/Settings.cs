@@ -252,7 +252,7 @@ namespace SourceGit.Views
             // the pick but changes which way it can go.
             list.ItemsChanged += () => Show(picked != null && items.Contains(picked) ? picked : null);
 
-            var buttons = new Row { AlignItems = Align.Center };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(0) };
             // Upstream's have only icons, and no names to read out.
             buttons.Add(actions.AddButton?.Invoke(Pick) ?? Small("Plus", "Add", () => Pick(actions.Add())));
             buttons.Add(remove);

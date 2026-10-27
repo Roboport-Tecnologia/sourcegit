@@ -81,8 +81,10 @@ namespace SourceGit.Views
             filter.Grow = 1;
             Bind.Search(filter, vm, nameof(vm.Filter), () => vm.Filter, v => vm.Filter = v, owner: top);
             top.Add(filter);
-            top.Add(IconButton("Undo", "WorkingCopy.DiscardAll", vm.DiscardAllChanges));
-            top.Add(ChangeCollection.ModeButton());
+            var topActions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(4) };
+            topActions.Add(IconButton("Undo", "WorkingCopy.DiscardAll", vm.DiscardAllChanges));
+            topActions.Add(ChangeCollection.ModeButton());
+            top.Add(topActions);
             column.Add(top);
             column.Add(new Separator());
 
@@ -94,8 +96,8 @@ namespace SourceGit.Views
             // shown or not, the merge tool for every conflict, staging the
             // selection and staging everything.
             var unstagedBar = Bar(vm, "WorkingCopy.Unstaged", nameof(vm.UnstagedCountInfo), () => vm.UnstagedCountInfo,
-                nameof(vm.IsStaging), () => vm.IsStaging);
-            unstagedBar.Add(IconButton("File.Ignore", "WorkingCopy.Unstaged.ViewAssumeUnchanged", () => AssumeUnchanged.Show(vm.Repository)));
+                nameof(vm.IsStaging), () => vm.IsStaging, out var unstagedActions);
+            unstagedActions.Add(IconButton("File.Ignore", "WorkingCopy.Unstaged.ViewAssumeUnchanged", () => AssumeUnchanged.Show(vm.Repository)));
             var untracked = new ToggleButton(App.Text("WorkingCopy.IncludeUntracked"))
             {
                 IconOnly = true,
@@ -108,18 +110,18 @@ namespace SourceGit.Views
                 untracked.Icon = Icons.Get(on ? "Eye" : "EyeClose", 14);
             }, owner: untracked);
             untracked.Changed += on => vm.IncludeUntracked = on;
-            unstagedBar.Add(untracked);
+            unstagedActions.Add(untracked);
             var conflicts = IconButton("Conflict", "WorkingCopy.Conflicts.OpenExternalMergeToolAllConflicts",
                 () => _ = vm.UseExternalMergeToolAsync(null));
             Bind.OneWay(vm, nameof(vm.HasUnsolvedConflicts), () => vm.HasUnsolvedConflicts, v => conflicts.IsVisible = v, owner: conflicts);
-            unstagedBar.Add(conflicts);
-            unstagedBar.Add(IconButton("Down", "WorkingCopy.Unstaged.Stage", () => Stage(vm, unstaged)));
-            unstagedBar.Add(IconButton("DoubleDown", "WorkingCopy.Unstaged.StageAll", () => _ = vm.StageChangesAsync(vm.VisibleUnstaged, null), StageAllKey));
+            unstagedActions.Add(conflicts);
+            unstagedActions.Add(IconButton("Down", "WorkingCopy.Unstaged.Stage", () => Stage(vm, unstaged)));
+            unstagedActions.Add(IconButton("DoubleDown", "WorkingCopy.Unstaged.StageAll", () => _ = vm.StageChangesAsync(vm.VisibleUnstaged, null), StageAllKey));
 
             var stagedBar = Bar(vm, "WorkingCopy.Staged", nameof(vm.StagedCountInfo), () => vm.StagedCountInfo,
-                nameof(vm.IsUnstaging), () => vm.IsUnstaging);
-            stagedBar.Add(IconButton("Up", "WorkingCopy.Staged.Unstage", () => Unstage(vm, staged)));
-            stagedBar.Add(IconButton("DoubleUp", "WorkingCopy.Staged.UnstageAll", () => _ = vm.UnstageChangesAsync(vm.VisibleStaged, null), UnstageAllKey));
+                nameof(vm.IsUnstaging), () => vm.IsUnstaging, out var stagedActions);
+            stagedActions.Add(IconButton("Up", "WorkingCopy.Staged.Unstage", () => Unstage(vm, staged)));
+            stagedActions.Add(IconButton("DoubleUp", "WorkingCopy.Staged.UnstageAll", () => _ = vm.UnstageChangesAsync(vm.VisibleStaged, null), UnstageAllKey));
 
             // The two lists share the height, as upstream's rows do, with
             // the platform's divider between them.
@@ -173,9 +175,10 @@ namespace SourceGit.Views
 
         /// <summary>Upstream's 28-point toolbar over a list: the changes
         /// icon, the list's name and count in bold, both in the secondary
-        /// colour, and a spinner while it works; its buttons go at the end.</summary>
+        /// colour, and a spinner while it works; its buttons go in
+        /// <paramref name="actions"/>, at the end.</summary>
         private static Row Bar(ViewModels.WorkingCopy vm, string title, string countProperty, Func<string> count,
-            string busyProperty, Func<bool> busy)
+            string busyProperty, Func<bool> busy, out Row actions)
         {
             var bar = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4, 0, 8) };
             bar.MinHeight = 28;
@@ -192,6 +195,8 @@ namespace SourceGit.Views
             var space = new Column();
             space.Grow = 1;
             bar.Add(space);
+            actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(4) };
+            bar.Add(actions);
             return bar;
         }
 
@@ -322,6 +327,7 @@ namespace SourceGit.Views
             var footer = new Row { AlignItems = Align.Center, Gap = 4 };
             footer.MinHeight = 24;
             footer.Shrink = 0;
+            var tools = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(4) };
             var helper = new MenuButton(App.Text("WorkingCopy.CommitMessageHelper"))
             {
                 Icon = Icons.Get("Menu", 12),
@@ -329,7 +335,7 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("WorkingCopy.CommitMessageHelper"),
             };
-            footer.Add(helper);
+            tools.Add(helper);
             // Upstream builds it as it opens; a menu button's menu is set
             // ahead, so it's built again whenever what's in it can change:
             // after a commit, and as the page shows.
@@ -346,7 +352,7 @@ namespace SourceGit.Views
                     BuildHelper();
             }, owner: helper);
 
-            footer.Add(IconButton("AIAssist", "AIAssistant.Tip", () =>
+            tools.Add(IconButton("AIAssist", "AIAssistant.Tip", () =>
             {
                 if (vm.Staged == null || vm.Staged.Count == 0)
                     repo.SendNotification("No files added to commit!", true);
@@ -355,8 +361,9 @@ namespace SourceGit.Views
                 else
                     AIAssistant.Ask(repo, vm.Staged);
             }));
-            footer.Add(IconButton("CommitMessageGenerator", "ConventionalCommit",
+            tools.Add(IconButton("CommitMessageGenerator", "ConventionalCommit",
                 () => ConventionalCommit.Show(repo, text => vm.CommitMessage = text)));
+            footer.Add(tools);
 
             var space = new Column();
             space.Grow = 1;
