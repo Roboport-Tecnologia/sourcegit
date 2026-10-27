@@ -87,21 +87,24 @@ namespace SourceGit.Views
         {
             // Every button and line in it is the platform's small spacing
             // from the next, and the band as far from the window's edges.
+            // AppKit's borderless buttons have no padding of their own, so
+            // there its buttons get the large spacing, or their icons touch.
+            var buttons = OperatingSystem.IsMacOS() ? Spacing.Lg : Spacing.Sm;
             var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             band.MinHeight = 36;
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
 
-            var start = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
+            var start = new Row { AlignItems = Align.Center, Gap = buttons };
             start.Grow = 1;
             AddMenu(start, "OpenWith", "Repository.OpenWithExternalTools", () => ToolbarMenus.OpenWith(vm));
             Add(start, "Logs", 14, "Repository.ViewLogs", () => Logs.Show(vm));
             Add(start, "Statistics", 13, "Repository.Statistics", () => Statistics.Show(vm));
             band.Add(start);
 
-            var middle = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
-            var sync = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
+            var middle = new Row { AlignItems = Align.Center, Gap = buttons };
+            var sync = new Row { AlignItems = Align.Center, Gap = buttons };
             Add(sync, "Fetch", 14, "Fetch", () => _ = vm.FetchAsync(false));
             if (!vm.IsBare)
                 Add(sync, "Pull", 14, "Pull", () => _ = vm.PullAsync(false));
@@ -116,7 +119,7 @@ namespace SourceGit.Views
             var line = new Separator(Orientation.Vertical);
             line.Height = 16;
             middle.Add(line);
-            var tools = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
+            var tools = new Row { AlignItems = Align.Center, Gap = buttons };
             Add(tools, "Branch.Add", 14, "CreateBranch", vm.CreateNewBranch);
             if (!vm.IsBare)
             {
@@ -146,7 +149,7 @@ namespace SourceGit.Views
             });
             // The history's own buttons, while it's the page showing, as
             // upstream's sit over the history.
-            var history = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
+            var history = new Row { AlignItems = Align.Center, Gap = buttons };
             var divider = new Separator(Orientation.Vertical);
             divider.Height = 16;
             history.Add(divider);
