@@ -316,6 +316,7 @@ namespace SourceGit.Views
             {
                 var slot = new Row { AlignItems = Align.Center, Justify = Justify.Center };
                 slot.Width = width;
+            slot.Shrink = 0;
                 slot.Add(content);
                 return slot;
             }

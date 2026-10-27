@@ -385,6 +385,7 @@ namespace SourceGit.Views
                 name.Add(new Text(slice.Share.ToString("P1")) { Color = Color.SecondaryLabel });
                 var dot = new Dot(slice.Color);
                 dot.Width = 8;
+                dot.Shrink = 0;
                 dot.Height = 8;
                 name.Add(dot);
                 name.ToolTip = $"{App.Text("Statistics.TopAuthors.Count")}: {slice.Count}";

@@ -58,6 +58,7 @@ namespace SourceGit.Views
         public BisectMark()
         {
             _label.Width = 32;
+            _label.Shrink = 0;
             _label.Height = 16;
             _label.Add(_backdrop);
             _label.Add(new Icon(Icons.Get("Bisect")) { Size = 10, Color = Color.Label, Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) });

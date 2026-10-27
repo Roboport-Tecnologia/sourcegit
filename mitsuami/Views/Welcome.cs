@@ -234,6 +234,7 @@ namespace SourceGit.Views
             {
                 var slot = new Mitsuamia.Row { AlignItems = Align.Center, Justify = Justify.Center };
                 slot.Width = width;
+                slot.Shrink = 0;
                 return slot;
             }
         }

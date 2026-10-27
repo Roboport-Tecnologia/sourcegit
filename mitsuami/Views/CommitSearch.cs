@@ -127,6 +127,7 @@ namespace SourceGit.Views
             var row = new Row { AlignItems = Align.Center, Padding = Metrics.ListRow() };
             var face = new Row { AlignItems = Align.Center, Justify = Justify.Center };
             face.Width = 24;
+            face.Shrink = 0;
             var avatar = new Avatar(16, menu: false) { User = commit.Author };
             face.Add(avatar.View);
             row.Add(face);

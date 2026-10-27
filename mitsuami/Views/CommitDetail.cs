@@ -274,6 +274,7 @@ namespace SourceGit.Views
                 {
                     var mark = new Row { AlignItems = Align.Center, Justify = Justify.Center };
                     mark.Width = 24;
+            mark.Shrink = 0;
                     mark.Add(new Icon(Icons.Get("Verified")) { Size = 14, Color = c, Label = sign.ToolTip });
                     var tip = sign.ToolTip + "\n";
                     if (sign.HasSigner)
@@ -396,6 +397,7 @@ namespace SourceGit.Views
             half.Width = 0;
             var face = new Column { AlignItems = Align.End };
             face.Width = 96;
+            face.Shrink = 0;
             var avatar = new Avatar(64) { User = user };
             face.Add(avatar.View);
             half.Add(face);
@@ -431,6 +433,7 @@ namespace SourceGit.Views
             var row = new Row { AlignItems = center ? Align.Center : Align.Start, Gap = Spacing.Md, Padding = new Thickness(Spacing.Xs, Spacing.None) };
             var name = new Column { AlignItems = Align.End };
             name.Width = 96;
+            name.Shrink = 0;
             name.Add(new Text(label) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
             row.Add(name);
             var holder = new Column { AlignItems = Align.Start };
@@ -490,8 +493,11 @@ namespace SourceGit.Views
         {
             var i = (int)state;
             var (r, g, b) = s_colors[i];
+            // A fixed square: beside a long path, flex would shrink it to
+            // its letter.
             var mark = new Row { AlignItems = Align.Center, Justify = Justify.Center };
             mark.Width = 14;
+            mark.Shrink = 0;
             mark.Height = 14;
             mark.Add(new Square(Color.Rgba(r, g, b, (byte)(i == 0 ? 0 : 255))) { Inset = new Thickness(0) });
             mark.Add(new Text(s_letters[i]) { Style = TextStyle.Caption, Weight = FontWeight.Bold, Color = Color.Rgba(255, 255, 255) });

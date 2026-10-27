@@ -14,9 +14,16 @@ namespace SourceGit
         /// <summary>The icon of a file at <paramref name="path"/>'s type.
         /// A path ending in a slash is a folder (a submodule's, in a diff).</summary>
         public static FileIcon File(string path) =>
-            path.EndsWith('/') ? Folder(path) : new FileIcon(path, FileLookup.FileName);
+            path.EndsWith('/') ? Folder(path) : Fixed(new FileIcon(path, FileLookup.FileName));
 
         /// <summary>A plain folder's icon.</summary>
-        public static FileIcon Folder(string path = "folder") => new(path, FileLookup.Folder);
+        public static FileIcon Folder(string path = "folder") => Fixed(new FileIcon(path, FileLookup.Folder));
+
+        // Its square stays beside a long name.
+        private static FileIcon Fixed(FileIcon icon)
+        {
+            icon.Shrink = 0;
+            return icon;
+        }
     }
 }
