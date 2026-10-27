@@ -83,7 +83,7 @@ namespace SourceGit.Views
         private static Node Row(ViewModels.LFSLocks vm, Models.LFSLock lfsLock)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Xs, Spacing.Xs) };
-            row.Add(new Icon(Icons.Get("File")) { Size = 14 });
+            row.Add(FileIcons.File(lfsLock.Path));
             var path = new Text(lfsLock.Path) { MaxLines = 1 };
             path.Grow = 1;
             path.Shrink = 1;

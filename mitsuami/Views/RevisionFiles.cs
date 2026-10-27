@@ -345,13 +345,15 @@ namespace SourceGit.Views
             Bind.OneWay(vm, nameof(vm.ViewRevisionFileContent), () => vm.ViewRevisionFileContent, content =>
             {
                 shown?.Destroy();
-                shown = Shown(content);
+                shown = Shown(content, vm.ViewRevisionFilePath);
                 body.Add(shown);
             }, owner: body);
             return column;
         }
 
-        internal static Node Shown(object content)
+        /// <summary>What a revision's file holds; <paramref name="path"/>,
+        /// if given, for its type's icon.</summary>
+        internal static Node Shown(object content, string path = null)
         {
             var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = Spacing.Sm };
             column.Grow = 1;
@@ -389,7 +391,10 @@ namespace SourceGit.Views
                     break;
                 case Models.RevisionTextFile:
                 case ViewModels.RevisionLFSImage:
-                    column.Add(new Icon(Icons.Get("File")) { Size = 64, Color = Color.SecondaryLabel });
+                    if (string.IsNullOrEmpty(path))
+                        column.Add(new Icon(Icons.Get("File")) { Size = 64, Color = Color.SecondaryLabel });
+                    else
+                        column.Add(new FileIcon(path, FileLookup.FileName) { Size = 64 });
                     column.Add(new Text("Viewing a file's text isn't ported to mitsuami yet: it needs the code view.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
                     break;
                 default:

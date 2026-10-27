@@ -244,7 +244,7 @@ namespace SourceGit.Views
                 header.Add(open);
             }
             column.Add(header);
-            column.Add(RevisionFiles.Shown(file.Content));
+            column.Add(RevisionFiles.Shown(file.Content, file.Path));
             return column;
         }
 

@@ -50,7 +50,9 @@ namespace SourceGit.Views
             column.Grow = 1;
             column.MinHeight = 0;
             var header = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Xs) };
-            header.Add(new Icon(Icons.Get("File")) { Size = 12 });
+            // The file it's now: a rename's title is its old path, an
+            // arrow, then its new one.
+            header.Add(FileIcons.File(context.Title.Split(" → ")[^1]));
             var title = new Text(context.Title) { Style = TextStyle.Caption, MaxLines = 1, ToolTip = context.Title };
             title.Grow = 1;
             title.Shrink = 1;

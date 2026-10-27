@@ -65,7 +65,7 @@ namespace SourceGit.Views
         private static Node Row(ViewModels.AssumeUnchangedManager vm, string file)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Sm, Spacing.Xs) };
-            row.Add(new Icon(Icons.Get("File")) { Size = 14 });
+            row.Add(FileIcons.File(file));
             var path = new Text(file) { MaxLines = 1 };
             path.Grow = 1;
             path.Shrink = 1;
