@@ -76,7 +76,7 @@ namespace SourceGit.Views
             split.Changed += width => layout.CommitDetailFilesLeftWidth = new(width);
 
             // Room on both sides of the divider, so neither pane runs into it.
-            var left = new Column { AlignItems = Align.Stretch, Gap = 4, Padding = new Thickness(4, 6, 4, 4) };
+            var left = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.Sm, Spacing.Xs, Spacing.Xs) };
             left.MinWidth = 200;
             left.Add(files.SearchField());
             files._list.Grow = 1;
@@ -210,7 +210,7 @@ namespace SourceGit.Views
         /// a submodule, a file) and name.</summary>
         private Node Row(ViewModels.RevisionFileTreeNode node)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 0, 0, 4) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) };
             row.Height = 24;
             row.ToolTip = node.Backend.Path;
             switch (node.Backend.Type)
@@ -307,9 +307,9 @@ namespace SourceGit.Views
         /// button over what it is.</summary>
         private static Node Content(ViewModels.CommitDetail vm)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 4, Padding = new Thickness(0, 0, 0, 6) };
+            var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Sm) };
             column.MinWidth = 100;
-            var header = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4) };
+            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Xs) };
             var path = new Text { Style = TextStyle.Caption, MaxLines = 1 };
             path.Grow = 1;
             path.Shrink = 1;
@@ -341,7 +341,7 @@ namespace SourceGit.Views
                     _ = vm.OpenRevisionFileAsync(vm.ViewRevisionFilePath, null);
             });
 
-            var body = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 12 };
+            var body = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = Spacing.Md };
             body.Grow = 1;
             body.MinHeight = 0;
             column.Add(body);
@@ -357,7 +357,7 @@ namespace SourceGit.Views
 
         internal static Node Shown(object content)
         {
-            var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 8 };
+            var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = Spacing.Sm };
             column.Grow = 1;
             column.MinHeight = 0;
             column.AlignSelf = Align.Stretch;
@@ -365,7 +365,7 @@ namespace SourceGit.Views
             {
                 case Models.RevisionImageFile { Image: { } bitmap } image:
                     column.Add(Picture(bitmap));
-                    var info = new Row { Gap = 8, AlignItems = Align.Center };
+                    var info = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
                     info.Add(new Text(image.ImageType) { Style = TextStyle.Caption, Weight = FontWeight.Bold });
                     info.Add(new Text(image.ImageSize) { Style = TextStyle.Caption });
                     info.Add(new Text(Size(image.FileSize)) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });

@@ -23,9 +23,9 @@ namespace SourceGit.Views
 
             // Upstream's repositories: a column half the page wide, at least
             // 600 points, with a quarter on each side.
-            var body = new Row { Padding = 8, AlignItems = Align.Stretch };
+            var body = new Row { Padding = Spacing.Sm, AlignItems = Align.Stretch };
             body.Grow = 1;
-            var middle = new Column { Gap = 8, AlignItems = Align.Stretch };
+            var middle = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
             middle.Grow = 2;
             middle.MinWidth = 600;
             body.Add(Side());
@@ -179,7 +179,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Row(ViewModels.Welcome vm, ViewModels.RepositoryNode node)
         {
-            var row = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8, 0, 0) };
+            var row = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Sm, Spacing.None, Spacing.None) };
             row.Height = 30;
             row.ContextMenu = Menu(node);
             // Folders dropped on a group go in it; on a repository, in its group.
@@ -208,13 +208,13 @@ namespace SourceGit.Views
             if (node.IsRepository && node.IsInvalid)
             {
                 var gone = new Icon(Icons.Get("Error")) { Size = 12, Color = Color.Rgba(255, 165, 0) };
-                gone.Margin = new Thickness(0, 0, 0, 2);
+                gone.Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs);
                 row.Add(gone);
             }
             else if (node.IsRepository)
             {
                 var path = new Text($"({node.Id})") { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
-                path.Margin = new Thickness(0, 0, 0, 4);
+                path.Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs);
                 row.Add(path);
             }
 
@@ -224,7 +224,7 @@ namespace SourceGit.Views
 
             if (node.IsRepository)
             {
-                var status = new Row { Gap = 6, AlignItems = Align.Center };
+                var status = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
                 Bind.OneWay(node, nameof(node.Status), () => node.Status, s => ShowStatus(status, s), owner: row);
                 row.Add(status);
             }
@@ -323,7 +323,7 @@ namespace SourceGit.Views
                 status.Add(new Text(s.LocalChanges.ToString()) { Style = TextStyle.Caption });
             if (s.IsTrackingStatusVisible)
                 status.Add(new Text(s.TrackingDescription) { Style = TextStyle.Monospace });
-            var branch = new Row { Gap = 2, AlignItems = Align.Center };
+            var branch = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
             branch.Add(new Icon(Icons.Get("Branch")) { Size = 12 });
             branch.Add(new Text(s.CurrentBranch) { Style = TextStyle.Caption });
             status.Add(branch);

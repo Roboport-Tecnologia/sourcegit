@@ -28,11 +28,11 @@ namespace SourceGit.Views
                 Style = TextStyle.Title,
                 Weight = FontWeight.Bold,
                 Color = Color.SecondaryLabel,
-                Margin = new Thickness(16, 0),
+                Margin = new Thickness(Spacing.Lg, Spacing.None),
             });
 
-            var what = new Row { AlignItems = Align.Center, Gap = 8, Margin = new Thickness(0, 0, 8, 0) };
-            var marker = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8) };
+            var what = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Margin = new Thickness(Spacing.None, Spacing.None, Spacing.Sm, Spacing.None) };
+            var marker = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Sm) };
             marker.Height = 16;
             marker.Add(new Pill { Inset = new Thickness(0) });
             marker.Add(new Text(vm.Marker) { Style = TextStyle.Caption, Weight = FontWeight.Bold, Color = Color.Rgba(255, 255, 255) });
@@ -42,7 +42,7 @@ namespace SourceGit.Views
 
             // Upstream's grid: the labels right-aligned in a column of
             // their own, each row 32 points high.
-            var sides = new Row { AlignItems = Align.Stretch, Gap = 16, Padding = new Thickness(8, 8, 8, 16), Margin = new Thickness(0, 16) };
+            var sides = new Row { AlignItems = Align.Stretch, Gap = Spacing.Lg, Padding = new Thickness(Spacing.Sm, Spacing.Sm, Spacing.Sm, Spacing.Lg), Margin = new Thickness(Spacing.None, Spacing.Lg) };
             sides.Add(new Outline(Color.Separator, 4) { Inset = new Thickness(0) });
             var labels = new Column { AlignItems = Align.End };
             var values = new Column { AlignItems = Align.Start };
@@ -56,9 +56,9 @@ namespace SourceGit.Views
                 line.Add(text);
                 labels.Add(line);
             }
-            var mine = new Row { AlignItems = Align.Center, Gap = 4 };
+            var mine = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             mine.Height = 32;
-            var theirs = new Row { AlignItems = Align.Center, Gap = 4 };
+            var theirs = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             theirs.Height = 32;
             values.Add(mine);
             values.Add(theirs);
@@ -66,7 +66,7 @@ namespace SourceGit.Views
             sides.Add(values);
             conflicted.Add(sides);
 
-            var buttons = new Row { AlignItems = Align.Center, Gap = 8, Margin = new Thickness(8, 0, 0, 0) };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Margin = new Thickness(Spacing.Sm, Spacing.None, Spacing.None, Spacing.None) };
             var useTheirs = new Button(Popups.ButtonText("WorkingCopy.Conflicts.UseTheirs")) { Icon = Icons.Get("Incoming", 12) };
             useTheirs.Click += () => _ = vm.UseTheirsAsync();
             buttons.Add(useTheirs);
@@ -88,7 +88,7 @@ namespace SourceGit.Views
                 Style = TextStyle.Title,
                 Weight = FontWeight.Bold,
                 Color = Color.SecondaryLabel,
-                Margin = new Thickness(16, 0, 8, 0),
+                Margin = new Thickness(Spacing.Lg, Spacing.None, Spacing.Sm, Spacing.None),
             });
             resolved.Add(new Text(App.Text("WorkingCopy.CanStageTip")) { Color = Color.SecondaryLabel });
             box.Add(resolved);

@@ -47,9 +47,9 @@ namespace SourceGit.Views
             split.Changed += width => layout.CommitDetailChangesLeftWidth = new(width);
 
             // Room on both sides of the divider, so neither pane runs into it.
-            var left = new Column { AlignItems = Align.Stretch, Gap = 4, Padding = new Thickness(4, 6, 4, 4) };
+            var left = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.Sm, Spacing.Xs, Spacing.Xs) };
             left.MinWidth = 200;
-            var top = new Row { AlignItems = Align.Center, Gap = 4 };
+            var top = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             var search = new SearchInput { Placeholder = App.Text("CommitDetail.Changes.Search") };
             search.Grow = 1;
             Bind.Search(search, vm, filterProperty, filter, setFilter, owner: top);
@@ -92,7 +92,7 @@ namespace SourceGit.Views
             left.Add(counted);
             split.Add(left);
 
-            var right = new Column { AlignItems = Align.Stretch, Padding = new Thickness(0, 0, 0, 6) };
+            var right = new Column { AlignItems = Align.Stretch, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Sm) };
             right.MinWidth = 100;
             right.Add(DiffView.Create(vm, diffProperty, diff));
             split.Add(right);

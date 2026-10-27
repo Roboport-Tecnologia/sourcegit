@@ -30,7 +30,7 @@ namespace SourceGit.Views
         {
             var tabs = new Tabs();
             var info = new ScrollView();
-            info.Content.Padding = new Thickness(0, 12, 8, 4);
+            info.Content.Padding = new Thickness(Spacing.None, Spacing.Md, Spacing.Sm, Spacing.Xs);
             // A tab's page is a container, here filled by the scroll view.
             info.Grow = 1;
             info.MinHeight = 0;
@@ -149,7 +149,7 @@ namespace SourceGit.Views
         /// line in the secondary colour.</summary>
         private static Node Placeholder(string text)
         {
-            var column = new Column { AlignItems = Align.Center, Gap = 16, Padding = new Thickness(24, 0) };
+            var column = new Column { AlignItems = Align.Center, Gap = Spacing.Lg, Padding = new Thickness(Spacing.Xl, Spacing.None) };
             column.Add(new Icon(Icons.Get("Detail")) { Size = 128, Color = Color.SecondaryLabel });
             if (text != null)
                 column.Add(new Text(text) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
@@ -164,18 +164,18 @@ namespace SourceGit.Views
         /// </summary>
         private static void BaseInfo(Container page, Func<bool> hasSingleRemote, ViewModels.CommitDetail detail, Models.Commit commit)
         {
-            var people = new Row { AlignItems = Align.Start, Padding = new Thickness(8, 0) };
+            var people = new Row { AlignItems = Align.Start, Padding = new Thickness(Spacing.Sm, Spacing.None) };
             people.Add(Person(App.Text("CommitDetail.Info.Author"), commit.Author, commit.AuthorTime));
             if (commit.IsCommitterVisible)
                 people.Add(Person(App.Text("CommitDetail.Info.Committer"), commit.Committer, commit.CommitterTime));
             page.Add(people);
-            page.Add(new Separator { Margin = new Thickness(8, 0, 8, 8) });
+            page.Add(new Separator { Margin = new Thickness(Spacing.Sm, Spacing.None, Spacing.Sm, Spacing.Sm) });
 
             page.Add(Field(App.Text("CommitDetail.Info.SHA"), ShaRow(detail, commit), center: true));
 
             if (commit.Parents.Count > 0)
             {
-                var parents = new Row { AlignItems = Align.Center, Gap = 16 };
+                var parents = new Row { AlignItems = Align.Center, Gap = Spacing.Lg };
                 foreach (var parent in commit.Parents)
                 {
                     // Upstream's links to the parents, in its dark orange.
@@ -231,7 +231,7 @@ namespace SourceGit.Views
             var row = new Row { AlignItems = Align.Center };
             row.Height = 24;
             row.Add(new Text(commit.SHA) { Style = TextStyle.Monospace });
-            var actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(0) };
+            var actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.None) };
             row.Add(actions);
             actions.Add(CopyButton(commit.SHA));
             actions.Add(ContainsIn(detail));
@@ -302,7 +302,7 @@ namespace SourceGit.Views
 
             var popover = new Popover { AlignItems = Align.Stretch };
             popover.Add(new Text(App.Text("CommitDetail.Info.ContainsIn.Title")) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold, AlignSelf = Align.Center });
-            popover.Add(new Separator { Margin = new Thickness(8, 0) });
+            popover.Add(new Separator { Margin = new Thickness(Spacing.Sm, Spacing.None) });
             var scroll = new ScrollView();
             scroll.MinWidth = 300;
             scroll.MaxWidth = 500;
@@ -310,7 +310,7 @@ namespace SourceGit.Views
             var chips = new Row { Wrap = true, AlignItems = Align.Center };
             scroll.Content.Add(chips);
             popover.Add(scroll);
-            var spinner = new Spinner { AlignSelf = Align.Center, Margin = new Thickness(8, 0) };
+            var spinner = new Spinner { AlignSelf = Align.Center, Margin = new Thickness(Spacing.Sm, Spacing.None) };
             popover.Add(spinner);
             holder.Add(popover);
 
@@ -336,8 +336,8 @@ namespace SourceGit.Views
         /// round ends, its icon and name.</summary>
         private static Node Chip(Models.Decorator decorator)
         {
-            var line = new Row { AlignItems = Align.Center, Margin = new Thickness(4, 6, 0, 0) };
-            var chip = new Row { AlignItems = Align.Center, Gap = 2, Padding = new Thickness(0, 8) };
+            var line = new Row { AlignItems = Align.Center, Margin = new Thickness(Spacing.Xs, Spacing.Sm, Spacing.None, Spacing.None) };
+            var chip = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Sm) };
             chip.Height = 20;
             chip.Add(new ChipOutline { Inset = new Thickness(0) });
             chip.Add(new Icon(Icons.Get(decorator.IsTag ? "Tag" : "Branch")) { Size = 10, Color = Color.Label });
@@ -400,10 +400,10 @@ namespace SourceGit.Views
             var avatar = new Avatar(64) { User = user };
             face.Add(avatar.View);
             half.Add(face);
-            var text = new Column { Margin = new Thickness(0, 4, 0, 16) };
+            var text = new Column { Margin = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Lg) };
             text.Grow = 1;
             text.Add(new Text(title) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
-            var who = new Row { AlignItems = Align.Center, Gap = 4, Margin = new Thickness(10, 0, 8, 0) };
+            var who = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Margin = new Thickness(Spacing.Md, Spacing.None, Spacing.Sm, Spacing.None) };
             who.ToolTip = $"{user.Name} <{user.Email}>";
             who.Add(new Text(user.Name) { MaxLines = 1 });
             who.Add(new Text(user.Email) { Color = Color.SecondaryLabel, MaxLines = 1 });
@@ -415,7 +415,7 @@ namespace SourceGit.Views
             ];
             text.Add(who);
             var date = Models.DateTimeFormat.Format(time);
-            var when = new Row { Margin = new Thickness(0, 0, 0, 2) };
+            var when = new Row { Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) };
             when.Add(new Text(date) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
             when.ContextMenu = [new MenuItem(App.Text("Copy"), () => Clipboard.SetText(date))];
             text.Add(when);
@@ -429,7 +429,7 @@ namespace SourceGit.Views
         /// SHA's row, as high as its buttons).</summary>
         private static Node Field(string label, Node value, bool center = false)
         {
-            var row = new Row { AlignItems = center ? Align.Center : Align.Start, Gap = 12, Padding = new Thickness(4, 0) };
+            var row = new Row { AlignItems = center ? Align.Center : Align.Start, Gap = Spacing.Md, Padding = new Thickness(Spacing.Xs, Spacing.None) };
             var name = new Column { AlignItems = Align.End };
             name.Width = 96;
             name.Add(new Text(label) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
@@ -450,11 +450,11 @@ namespace SourceGit.Views
         {
             if (detail.Changes is not { Count: > 0 } changes)
                 return;
-            page.Add(new Separator { Margin = new Thickness(8, 0, 8, 8) });
-            var list = new Column { Margin = new Thickness(0, 0, 4, 64) };
+            page.Add(new Separator { Margin = new Thickness(Spacing.Sm, Spacing.None, Spacing.Sm, Spacing.Sm) });
+            var list = new Column { Margin = new Thickness(Spacing.None, Spacing.None, Spacing.Xs, 64) };
             foreach (var change in changes.Take(100))
             {
-                var row = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 0, 0, 16) };
+                var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg) };
                 row.Height = 24;
                 row.ToolTip = $"{change.Path} • {change.IndexDesc}";
                 row.Add(new StatusMark(change.Index).View);
@@ -463,7 +463,7 @@ namespace SourceGit.Views
             }
             page.Add(list);
             if (changes.Count > 100)
-                page.Add(new Text(App.Text("CommitDetail.Info.GotoChangesPage")) { Color = Color.SecondaryLabel, Margin = new Thickness(0, 12, 16, 108) });
+                page.Add(new Text(App.Text("CommitDetail.Info.GotoChangesPage")) { Color = Color.SecondaryLabel, Margin = new Thickness(Spacing.None, Spacing.Md, Spacing.Lg, 108) });
         }
     }
 

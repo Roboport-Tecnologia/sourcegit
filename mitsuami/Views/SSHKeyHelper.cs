@@ -25,19 +25,19 @@ namespace SourceGit.Views
             var sheet = Shown = new Window(App.MainWindow, title, 640, 400);
             sheet.Closed += () => Shown = null;
 
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Grow = 1;
             column.Add(new Text(title) { Style = TextStyle.Headline });
 
-            var row = new Row { Gap = 16, AlignItems = Align.Stretch };
+            var row = new Row { Gap = Spacing.Lg, AlignItems = Align.Stretch };
             row.Grow = 1;
             row.MinHeight = 0;
-            var left = new Column { Gap = 4, AlignItems = Align.Stretch };
+            var left = new Column { Gap = Spacing.Xs, AlignItems = Align.Stretch };
             left.Width = 200;
             left.Shrink = 0;
             var keys = new ListView<Models.SSHKeyPair>(k => k.PrivateKeyPath, k =>
             {
-                var line = new Row { Gap = 6, AlignItems = Align.Center, Padding = new Thickness(0, 4) };
+                var line = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
                 line.Height = 26;
                 line.Add(new Icon(Icons.Get("Password")) { Size = 14 });
                 var name = new Text(k.Name) { MaxLines = 1 };
@@ -54,7 +54,7 @@ namespace SourceGit.Views
             keys.Grow = 1;
             keys.MinHeight = 0;
             left.Add(keys);
-            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(0) };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.None) };
             var add = Settings.Small("Plus", App.Text("SSHKeyHelper.Generator"));
             add.IsEnabled = true;
             add.Click += () => Generate(sheet, vm);
@@ -102,13 +102,13 @@ namespace SourceGit.Views
         /// be selected, and its public key to copy.</summary>
         private static Node Detail(Models.SSHKeyPair key)
         {
-            var column = new Column { Gap = 4, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Spacing.Xs, AlignItems = Align.Stretch };
             column.Grow = 1;
             void Add(string label, Node value, bool first = false)
             {
                 var heading = new Text(App.Text(label)) { Weight = FontWeight.Bold, Color = Color.SecondaryLabel };
                 if (!first)
-                    heading.Margin = new Thickness(12, 0, 0, 0);
+                    heading.Margin = new Thickness(Spacing.Md, Spacing.None, Spacing.None, Spacing.None);
                 column.Add(heading);
                 column.Add(value);
             }
@@ -142,7 +142,7 @@ namespace SourceGit.Views
             var sheet = new Window(owner, title, 500);
             sheet.Closed += vm.CloseGenerator;
 
-            var column = new Column { Padding = 16, Gap = 8, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Sm, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
             var types = Models.SSHKeyType.Supported;
             var type = new Select(App.Text("SSHKeyHelper.Generator.Type"))
@@ -175,7 +175,7 @@ namespace SourceGit.Views
 
             var errors = new Text { Color = Color.Error, IsVisible = false };
             column.Add(errors);
-            var buttons = new Row { Justify = Justify.End, Gap = 8 };
+            var buttons = new Row { Justify = Justify.End, Gap = Spacing.Sm };
             var cancel = new Button(Popups.ButtonText("Cancel"));
             cancel.Click += sheet.Destroy;
             var start = new Button(Popups.ButtonText("SSHKeyHelper.Generator.Start")) { Role = ButtonRole.Default };

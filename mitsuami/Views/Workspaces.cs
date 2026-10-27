@@ -63,12 +63,12 @@ namespace SourceGit.Views
             var title = App.Text("ConfigureWorkspace");
             var sheet = Shown = new Window(App.MainWindow, title, 494);
 
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
-            var body = new Row { Gap = 16, AlignItems = Align.Stretch };
+            var body = new Row { Gap = Spacing.Lg, AlignItems = Align.Stretch };
             body.MinHeight = 340;
 
-            var left = new Column { AlignItems = Align.Stretch, Gap = 4 };
+            var left = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             left.Width = 200;
             left.Shrink = 0;
             var keys = new System.Runtime.CompilerServices.ConditionalWeakTable<ViewModels.Workspace, string>();
@@ -83,7 +83,7 @@ namespace SourceGit.Views
             list.MinHeight = 0;
             left.Add(list);
 
-            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(0) };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.None) };
             var add = Settings.Small("Plus", "Add");
             add.IsEnabled = true;
             add.Click += vm.Add;
@@ -161,7 +161,7 @@ namespace SourceGit.Views
         /// name, and a check on the active one.</summary>
         private static Node Row(ViewModels.Workspace workspace)
         {
-            var row = new Mitsuamia.Row { Gap = 8, AlignItems = Align.Center, Padding = new Thickness(0, 4) };
+            var row = new Mitsuamia.Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
             row.Height = 26;
             row.Add(IconOf(workspace));
             var name = new Text { MaxLines = 1 };
@@ -180,7 +180,7 @@ namespace SourceGit.Views
         /// their fields.</summary>
         private static Node Detail(Window sheet, ViewModels.Workspace workspace)
         {
-            var form = new Column { Gap = 12, AlignItems = Align.Stretch };
+            var form = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
 
             var name = new TextInput();
             Bind.Value(name, workspace, nameof(workspace.Name), () => workspace.Name, v =>
@@ -190,7 +190,7 @@ namespace SourceGit.Views
             });
             form.Add(Settings.Stacked(App.Text("ConfigureWorkspace.Name"), name));
 
-            var folder = new Mitsuamia.Row { Gap = 4, AlignItems = Align.Center };
+            var folder = new Mitsuamia.Row { Gap = Spacing.Xs, AlignItems = Align.Center };
             var path = new TextInput();
             path.Grow = 1;
             path.MinWidth = 0;

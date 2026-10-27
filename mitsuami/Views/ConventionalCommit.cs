@@ -25,7 +25,7 @@ namespace SourceGit.Views
             var sheet = Shown = new Window(App.MainWindow, title, 600);
             sheet.Closed += () => Shown = null;
 
-            var column = new Column { Padding = 16, Gap = 8, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Sm, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
             var types = vm.Types;
             var type = new Select(App.Text("ConventionalCommit.Type"))
@@ -49,7 +49,7 @@ namespace SourceGit.Views
 
             var errors = new Text { Color = Color.Error, IsVisible = false };
             column.Add(errors);
-            var buttons = new Row { Justify = Justify.End, Gap = 8 };
+            var buttons = new Row { Justify = Justify.End, Gap = Spacing.Sm };
             var cancel = new Button(Popups.ButtonText("Cancel"));
             cancel.Click += sheet.Destroy;
             buttons.Add(cancel);

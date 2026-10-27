@@ -16,12 +16,12 @@ namespace SourceGit.Views
     {
         public static Node Create(ViewModels.SearchCommitContext ctx)
         {
-            var panel = new Column { AlignItems = Align.Stretch, Padding = new Thickness(0, 4, 0, 6) };
+            var panel = new Column { AlignItems = Align.Stretch, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Sm) };
             panel.Add(new Text(App.Text("Repository.Search"))
             {
                 Color = Color.SecondaryLabel,
                 Weight = FontWeight.Bold,
-                Margin = new Thickness(6, 0, 8, 0),
+                Margin = new Thickness(Spacing.Sm, Spacing.None, Spacing.Sm, Spacing.None),
                 AlignSelf = Align.Center,
             });
 
@@ -63,7 +63,7 @@ namespace SourceGit.Views
 
             // Upstream's "SEARCH BY" label beside the methods, and under
             // them the current-branch check for every method but SHA.
-            var by = new Row { AlignItems = Align.Center, Gap = 8, Margin = new Thickness(4) };
+            var by = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Margin = new Thickness(Spacing.Xs) };
             by.Add(new Text(App.Text("Repository.Search.Method")) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
             var method = new Select(App.Text("Repository.Search.Method"))
             {
@@ -80,7 +80,7 @@ namespace SourceGit.Views
             method.Changed += i => ctx.Method = i;
             by.Add(method);
             panel.Add(by);
-            var current = new Checkbox(App.Text("Repository.Search.InCurrentBranch")) { Margin = new Thickness(0, 4, 4, 0) };
+            var current = new Checkbox(App.Text("Repository.Search.InCurrentBranch")) { Margin = new Thickness(Spacing.None, Spacing.Xs, Spacing.Xs, Spacing.None) };
             current.Changed += on => ctx.OnlySearchCurrentBranch = on;
             panel.Add(current);
             Bind.OneWay(ctx, nameof(ctx.Method), () => ctx.Method, i =>
@@ -91,7 +91,7 @@ namespace SourceGit.Views
             Bind.OneWay(ctx, nameof(ctx.OnlySearchCurrentBranch), () => ctx.OnlySearchCurrentBranch, on => current.IsChecked = on, owner: panel);
 
             // The commits found, over upstream's empty icon or a spinner.
-            var area = new Column { AlignItems = Align.Stretch, Justify = Justify.Center, Margin = new Thickness(6, 0) };
+            var area = new Column { AlignItems = Align.Stretch, Justify = Justify.Center, Margin = new Thickness(Spacing.Sm, Spacing.None) };
             area.Grow = 1;
             area.MinHeight = 0;
             var results = new ListView<Models.Commit>(c => c.SHA, Row, itemAnimations: false) { EstimatedRowHeight = 28 };
@@ -132,12 +132,12 @@ namespace SourceGit.Views
             face.Add(avatar.View);
             row.Add(face);
             if (commit.IsMerged)
-                row.Add(new Icon(Icons.Get("Check")) { Size = 14, Color = Color.Rgba(0, 128, 0), Margin = new Thickness(0, 2, 0, 0) });
-            var subject = new Text(commit.Subject) { MaxLines = 1, Margin = new Thickness(0, 0, 0, 2) };
+                row.Add(new Icon(Icons.Get("Check")) { Size = 14, Color = Color.Rgba(0, 128, 0), Margin = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.None) });
+            var subject = new Text(commit.Subject) { MaxLines = 1, Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) };
             subject.Grow = 1;
             subject.Width = 0;
             row.Add(subject);
-            row.Add(new Text(Models.DateTimeFormat.Format(commit.CommitterTime, true)) { Color = Color.SecondaryLabel, Margin = new Thickness(0, 4) });
+            row.Add(new Text(Models.DateTimeFormat.Format(commit.CommitterTime, true)) { Color = Color.SecondaryLabel, Margin = new Thickness(Spacing.None, Spacing.Xs) });
             row.ToolTip = $"{commit.SHA[..10]}  {commit.Subject}";
             return row;
         }

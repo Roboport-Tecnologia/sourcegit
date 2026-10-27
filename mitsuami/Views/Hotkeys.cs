@@ -31,8 +31,8 @@ namespace SourceGit.Views
             scroll.Grow = 1;
             scroll.MinHeight = 0;
             var column = scroll.Content;
-            column.Padding = 20;
-            column.Gap = 6;
+            column.Padding = Spacing.Xl;
+            column.Gap = Spacing.Sm;
             column.AlignItems = Align.Stretch;
 
             var sections = AppMenu.Sections()
@@ -52,12 +52,12 @@ namespace SourceGit.Views
                     continue;
                 var heading = new Text(title) { Weight = FontWeight.Bold, Color = Color.SecondaryLabel };
                 if (!first)
-                    heading.Margin = new Thickness(14, 0, 0, 0);
+                    heading.Margin = new Thickness(Spacing.Lg, Spacing.None, Spacing.None, Spacing.None);
                 first = false;
                 column.Add(heading);
                 foreach (var (name, key) in keys)
                 {
-                    var row = new Row { Gap = 12, AlignItems = Align.Center };
+                    var row = new Row { Gap = Spacing.Md, AlignItems = Align.Center };
                     var keyText = new Text(Format(key)) { Weight = FontWeight.Semibold };
                     keyText.Width = 150;
                     keyText.Shrink = 0;

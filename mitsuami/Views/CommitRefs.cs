@@ -15,7 +15,7 @@ namespace SourceGit.Views
     /// </summary>
     public sealed class CommitRefs
     {
-        private readonly Row _row = new() { AlignItems = Align.Center, Gap = 4 };
+        private readonly Row _row = new() { AlignItems = Align.Center, Gap = Spacing.Xs };
         private string _shown;
 
         public Node View => _row;
@@ -93,7 +93,7 @@ namespace SourceGit.Views
                 _ => "Branch",
             }))
             // Upstream's icons are the names' colour.
-            { Size = 10, Margin = new Thickness(0, 3), Color = Color.Label };
+            { Size = 10, Margin = new Thickness(Spacing.None, Spacing.Xs), Color = Color.Label };
             label.Add(icon);
 
             // Upstream's name is 12 points, a head's 13 and bold.
@@ -102,17 +102,17 @@ namespace SourceGit.Views
                 Style = isHead ? TextStyle.Body : TextStyle.Callout,
                 Weight = isHead ? FontWeight.Bold : FontWeight.Regular,
                 MaxLines = 1,
-                Margin = new Thickness(0, 4),
+                Margin = new Thickness(Spacing.None, Spacing.Xs),
             };
             label.Add(name);
 
             foreach (var remote in remotes)
             {
                 label.Add(new Divider(color));
-                label.Add(new Icon(Icons.Get("Remote")) { Size = 10, Margin = new Thickness(0, hasSingleRemote ? 4 : 2, 0, 3), Color = Color.Label });
+                label.Add(new Icon(Icons.Get("Remote")) { Size = 10, Margin = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Xs), Color = Color.Label });
                 if (hasSingleRemote)
                     break;
-                label.Add(new Text(remote) { Style = TextStyle.Callout, Weight = FontWeight.Bold, MaxLines = 1, Margin = new Thickness(0, 6, 0, 0) });
+                label.Add(new Text(remote) { Style = TextStyle.Callout, Weight = FontWeight.Bold, MaxLines = 1, Margin = new Thickness(Spacing.None, Spacing.Sm, Spacing.None, Spacing.None) });
             }
             return label;
         }

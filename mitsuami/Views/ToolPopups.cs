@@ -140,7 +140,7 @@ namespace SourceGit.Views
                 m => $"{m.Name}  ({m.Desc})", () => vm.SelectedWhiteSpaceMode, m => vm.SelectedWhiteSpaceMode = m);
             Bind.OneWay(vm, nameof(vm.IgnoreWhiteSpace), () => vm.IgnoreWhiteSpace, ignore => mode.IsEnabled = !ignore, owner: mode);
 
-            var form = new Column { Gap = 8, AlignItems = Align.Stretch };
+            var form = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
             form.Add(TopField(App.Text("Apply.Source"), source));
             form.Add(fileRow);
             form.Add(Field(App.Text("Apply.WS"), mode));
@@ -182,7 +182,7 @@ namespace SourceGit.Views
         /// there; beside it here), and the branch it starts at.</summary>
         private static Node GitFlowStartForm(Window sheet, ViewModels.GitFlowStart vm)
         {
-            var name = new Row { Gap = 4, AlignItems = Align.Center };
+            var name = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
             var prefix = new Text(vm.Prefix) { Color = Color.SecondaryLabel };
             prefix.Shrink = 0;
             name.Add(prefix);

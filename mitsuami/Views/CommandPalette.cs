@@ -70,7 +70,7 @@ namespace SourceGit.Views
                 }
             };
 
-            var column = new Column { Padding = 12, Gap = 8, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Md, Gap = Spacing.Sm, AlignItems = Align.Stretch };
             column.Grow = 1;
             var field = new SearchInput { Placeholder = spec.Placeholder };
             Bind.Search(field, palette, spec.FilterProperty, spec.Filter, spec.SetFilter, owner: field);
@@ -188,7 +188,7 @@ namespace SourceGit.Views
                         item =>
                         {
                             var workspace = (ViewModels.Workspace)item;
-                            var row = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 6) };
+                            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
                             row.Height = 28;
                             row.Add(Workspaces.IconOf(workspace));
                             var name = new Text(workspace.Name ?? "") { MaxLines = 1 };
@@ -307,7 +307,7 @@ namespace SourceGit.Views
         /// secondary colour, and a note at the end.</summary>
         private static Node Line(string icon, string title, string detail = null, string note = null)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 6) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
             row.Height = 28;
             row.Add(new Icon(Icons.Get(icon)) { Size = 14 });
             var text = new Text(title) { MaxLines = 1 };

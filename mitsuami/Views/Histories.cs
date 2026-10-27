@@ -171,13 +171,13 @@ namespace SourceGit.Views
             var graph = new CommitGraphCell(rows) { AlignSelf = Align.Stretch };
             cell.Add(graph);
             // Upstream's ahead/behind dot and bisect mark, 2 in.
-            var status = new CommitStatusDot { Margin = new Thickness(0, 0, 0, 2) };
+            var status = new CommitStatusDot { Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) };
             cell.Add(status);
             var bisect = new BisectMark();
             cell.Add(bisect.View);
             // Upstream's 2 before the labels and 4 after them.
             var refs = new CommitRefs();
-            refs.View.Margin = new Thickness(0, 4, 0, 2);
+            refs.View.Margin = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Xs);
             cell.Add(refs.View);
             var subject = new Text { MaxLines = 1 };
             subject.Grow = 1;
@@ -198,7 +198,7 @@ namespace SourceGit.Views
         /// their name 8 after it.</summary>
         private static Node AuthorCell(Models.Commit commit, LiveCells live)
         {
-            var cell = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 0, 0, 4) };
+            var cell = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) };
             var avatar = new Avatar(16, menu: false);
             cell.Add(avatar.View);
             var name = new Text { MaxLines = 1 };

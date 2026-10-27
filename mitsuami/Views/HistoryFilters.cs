@@ -20,17 +20,17 @@ namespace SourceGit.Views
         {
             var bar = new Column { AlignItems = Align.Stretch };
             bar.Shrink = 0;
-            var row = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 12, 0, 8) };
+            var row = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Md, Spacing.None, Spacing.Sm) };
             row.MinHeight = 30;
             row.Add(new Background { Inset = new Thickness(0) });
             var mode = new Icon(Icons.Get("Filter")) { Size = 12, Color = Color.SecondaryLabel };
             row.Add(mode);
 
-            var chips = new Row { AlignItems = Align.Center, Wrap = true, Margin = new Thickness(4, 8) };
+            var chips = new Row { AlignItems = Align.Center, Wrap = true, Margin = new Thickness(Spacing.Xs, Spacing.Sm) };
             chips.Grow = 1;
             chips.Width = 0;
             row.Add(chips);
-            var summary = new Text { Color = Color.SecondaryLabel, Margin = new Thickness(0, 0, 0, 6) };
+            var summary = new Text { Color = Color.SecondaryLabel, Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Sm) };
             summary.Grow = 1;
             row.Add(summary);
 
@@ -38,7 +38,7 @@ namespace SourceGit.Views
             {
                 IconOnly = true,
                 Style = ButtonStyle.Borderless,
-                Margin = new Thickness(0, 0, 0, 16),
+                Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg),
             };
             collapse.Click += () => vm.IsHistoryFiltersCollapsed = !vm.IsHistoryFiltersCollapsed;
             row.Add(collapse);
@@ -48,7 +48,7 @@ namespace SourceGit.Views
                 IconOnly = true,
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Repository.ClearAllCommitsFilter"),
-                Margin = new Thickness(0, 0, 0, Icons.ButtonGap(0)),
+                Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Icons.ButtonGap(Spacing.None)),
             };
             clear.Click += vm.ClearHistoryFilters;
             row.Add(clear);
@@ -122,9 +122,9 @@ namespace SourceGit.Views
         /// and a button removing it.</summary>
         private static Node Chip(ViewModels.Repository vm, Models.HistoryFilter filter)
         {
-            var line = new Row { AlignItems = Align.Center, Margin = new Thickness(1, 6, 1, 0) };
+            var line = new Row { AlignItems = Align.Center, Margin = new Thickness(Spacing.Xs, Spacing.Sm, Spacing.Xs, Spacing.None) };
             line.MinHeight = 20;
-            var chip = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8) };
+            var chip = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Sm) };
             chip.MinHeight = 20;
             var (r, g, b) = filter.Mode == Models.FilterMode.Excluded ? ((byte)255, (byte)0, (byte)0) : ((byte)0, (byte)128, (byte)0);
             chip.Add(new Outline(Color.Rgba(r, g, b)) { Inset = new Thickness(0) });
@@ -138,7 +138,7 @@ namespace SourceGit.Views
                 pattern = pattern[11..];
             else if (pattern.StartsWith("refs/remotes/", StringComparison.Ordinal))
                 pattern = pattern[13..];
-            var text = new Text(pattern) { MaxLines = 1, Margin = new Thickness(0, 8, 0, 4) };
+            var text = new Text(pattern) { MaxLines = 1, Margin = new Thickness(Spacing.None, Spacing.Sm, Spacing.None, Spacing.Xs) };
             text.MaxWidth = 480;
             text.ToolTip = filter.Pattern;
             chip.Add(text);

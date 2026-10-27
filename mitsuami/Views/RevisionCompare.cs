@@ -17,11 +17,11 @@ namespace SourceGit.Views
     {
         public static Node Create(ViewModels.RevisionCompare vm)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 8 };
+            var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Sm };
             column.Grow = 1;
             column.MinHeight = 0;
 
-            var header = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 4) };
+            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
             var start = Side(vm, nameof(vm.StartPoint), () => vm.StartPoint);
             header.Add(start);
             var swap = new Button(App.Text("Diff.SwapCommits"))
@@ -86,8 +86,8 @@ namespace SourceGit.Views
 
         private static Node Commit(ViewModels.RevisionCompare vm, Models.Commit commit)
         {
-            var column = new Column { Gap = 4 };
-            var top = new Row { AlignItems = Align.Center, Gap = 8 };
+            var column = new Column { Gap = Spacing.Xs };
+            var top = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             var avatar = new Avatar(16, menu: false) { User = commit.Author };
             top.Add(avatar.View);
             var author = new Text(commit.Author.Name) { MaxLines = 1 };

@@ -27,13 +27,13 @@ namespace SourceGit.Views
             var window = s_shown = new Window(App.Text("About"), 520);
             window.Closed += () => s_shown = null;
 
-            var row = new Row { Padding = new Thickness(18, 24, 18, 8), Gap = 12, AlignItems = Align.Center };
+            var row = new Row { Padding = new Thickness(Spacing.Lg, Spacing.Xl, Spacing.Lg, Spacing.Sm), Gap = Spacing.Md, AlignItems = Align.Center };
             if (AppIcon() is { } icon)
                 row.Add(icon);
 
-            var column = new Column { Gap = 4 };
+            var column = new Column { Gap = Spacing.Xs };
             column.Grow = 1;
-            var title = new Row { Gap = 12, AlignItems = Align.Center };
+            var title = new Row { Gap = Spacing.Md, AlignItems = Align.Center };
             title.Add(new Text("SourceGit") { Style = TextStyle.LargeTitle, Weight = FontWeight.Bold });
             var (version, date) = Version();
             var notes = new Button(version) { ToolTip = App.Text("About.ReleaseNotes") };
@@ -46,13 +46,13 @@ namespace SourceGit.Views
             column.Add(title);
             column.Add(new Text(App.Text("About.SubTitle")) { Style = TextStyle.Title });
 
-            var links = new Row { Gap = 8, Margin = new Thickness(8, 0, 0, 0) };
+            var links = new Row { Gap = Spacing.Sm, Margin = new Thickness(Spacing.Sm, Spacing.None, Spacing.None, Spacing.None) };
             links.Add(Link("Remotes", "https://sourcegit-scm.github.io/"));
             links.Add(Link("GitHub", "https://github.com/sourcegit-scm/sourcegit"));
             column.Add(links);
 
             var spacer = new Row();
-            spacer.Height = 20;
+            spacer.Height = Spacing.Xl;
             column.Add(spacer);
             if (date != null)
                 column.Add(new Text(App.Text("About.ReleaseDate", Models.DateTimeFormat.Format(date.Value, true))) { Color = Color.SecondaryLabel });

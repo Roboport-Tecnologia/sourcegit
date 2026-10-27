@@ -21,11 +21,11 @@ namespace SourceGit.Views
             var sheet = Shown = new Window(App.MainWindow, title, 600, 400);
             sheet.Closed += () => Shown = null;
 
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Grow = 1;
             column.Add(new Text(title) { Style = TextStyle.Headline });
 
-            var area = new Column { AlignItems = Align.Stretch, Justify = Justify.Center, Gap = 16 };
+            var area = new Column { AlignItems = Align.Stretch, Justify = Justify.Center, Gap = Spacing.Lg };
             area.Grow = 1;
             area.MinHeight = 0;
             var list = new ListView<Models.LFSLock>(l => l.ID, l => Row(vm, l), itemAnimations: false)
@@ -54,7 +54,7 @@ namespace SourceGit.Views
             Bind.OneWay(vm, nameof(vm.VisibleLocks), () => vm.VisibleLocks, _ => Refresh(), owner: area);
             Bind.OneWay(vm, nameof(vm.IsLoading), () => vm.IsLoading, _ => Refresh(), owner: area);
 
-            var buttons = new Row { AlignItems = Align.Center, Gap = 8 };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             var mine = new Checkbox(App.Text("GitLFS.Locks.OnlyMine"));
             Bind.Checked(mine, vm, nameof(vm.ShowOnlyMyLocks), () => vm.ShowOnlyMyLocks, v => vm.ShowOnlyMyLocks = v);
             buttons.Add(mine);
@@ -82,7 +82,7 @@ namespace SourceGit.Views
         /// force-unlock buttons (the latter in the error colour).</summary>
         private static Node Row(ViewModels.LFSLocks vm, Models.LFSLock lfsLock)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 4) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
             row.Height = 28;
             row.Add(new Icon(Icons.Get("File")) { Size = 14 });
             var path = new Text(lfsLock.Path) { MaxLines = 1 };
@@ -108,7 +108,7 @@ namespace SourceGit.Views
                 ToolTip = App.Text("GitLFS.Locks.UnlockForce"),
             };
             force.Click += () => _ = vm.UnlockAsync(lfsLock, true);
-            var unlocks = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(8) };
+            var unlocks = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Sm) };
             unlocks.Add(unlock);
             unlocks.Add(force);
             row.Add(unlocks);

@@ -142,7 +142,7 @@ namespace SourceGit.Views
         /// local branch.</summary>
         private static Node FetchIntoForm(ViewModels.FetchInto vm)
         {
-            var row = new Row { Gap = 8, AlignItems = Align.Center, Justify = Justify.Center };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Justify = Justify.Center };
             row.Add(IconLabel("Branch", vm.Upstream.FriendlyName));
             row.Add(new Text("→"));
             row.Add(IconLabel("Branch", vm.Local.Name));
@@ -205,7 +205,7 @@ namespace SourceGit.Views
         /// colour, as upstream's runs.</summary>
         private static Node RemoveWorktreeForm(ViewModels.RemoveWorktree vm)
         {
-            var target = new Row { Gap = 8, AlignItems = Align.Center };
+            var target = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             target.Add(new Icon(Icons.Get("Worktree")) { Size = 12 });
             // The path gives way, not the name.
             var name = new Text(vm.Target.Name) { MaxLines = 1 };
@@ -231,7 +231,7 @@ namespace SourceGit.Views
         private static Row UrlField(Window sheet, INotifyPropertyChanged vm, string property, Func<string> get, Action<string> set,
             string placeholder)
         {
-            var row = new Row { Gap = 4, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
             var input = TextField(sheet, vm, property, get, set, placeholder);
             input.Grow = 1;
             row.Add(input);

@@ -63,7 +63,7 @@ namespace SourceGit.Views
                         },
                         Remove = s => pref.OpenAIServices.Remove(s),
                     })));
-            var column = new Column { Padding = 16, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, AlignItems = Align.Stretch };
             column.Add(tabs);
             window.Content = column;
         }
@@ -142,7 +142,7 @@ namespace SourceGit.Views
             page.Add(Field(App.Text("Preferences.General.Locale"),
                 Choice(App.Text("Preferences.General.Locale"), locales.Select(l => l.Name),
                     locales.FindIndex(l => l.Key == pref.Locale), i => pref.Locale = locales[i].Key)));
-            var date = new Row { Gap = 8, AlignItems = Align.Center };
+            var date = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             var format = Choice(App.Text("Preferences.General.DateFormat"),
                 Models.DateTimeFormat.Supported.Select(f => $"{f.Example}  ({f.DateFormat})"), pref.DateTimeFormat, i => pref.DateTimeFormat = i);
             format.Grow = 1;
@@ -175,7 +175,7 @@ namespace SourceGit.Views
         /// <summary>Upstream's sliders show their value beside them.</summary>
         private static Row Slider(double min, double max, double step, double value, Action<double> set)
         {
-            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             var slider = new Mitsuamia.Slider();
             slider.SetRange(min, max, step);
             slider.Value = value;
@@ -235,7 +235,7 @@ namespace SourceGit.Views
         private static Node Git(ViewModels.Preferences pref, GitConfig git)
         {
             var page = Page();
-            var version = new Row { Gap = 8, AlignItems = Align.Center };
+            var version = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             void ShowVersion()
             {
                 Empty(version);
@@ -262,7 +262,7 @@ namespace SourceGit.Views
             if (OperatingSystem.IsLinux())
                 page.Add(Field("", Check(App.Text("Preferences.Git.UseLibsecret"), pref.UseLibsecretInsteadOfGCM, v => pref.UseLibsecretInsteadOfGCM = v)));
             page.Add(Field("", Check(App.Text("Preferences.Git.UseStashAndReapplyByDefault"), pref.UseStashAndReapplyByDefault, v => pref.UseStashAndReapplyByDefault = v)));
-            var fetch = new Row { Gap = 8, AlignItems = Align.Center };
+            var fetch = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             var interval = new NumberInput(App.Text("Configure.Git.AutoFetch")) { IsEnabled = pref.EnableAutoFetch };
             fetch.Add(Check(App.Text("Configure.Git.AutoFetch"), pref.EnableAutoFetch, v =>
             {
@@ -311,10 +311,10 @@ namespace SourceGit.Views
         private static Node Integration(ViewModels.Preferences pref)
         {
             var page = Page();
-            page.Gap = 8;
+            page.Gap = Spacing.Sm;
             page.Add(Section("Terminal", App.Text("Preferences.Shell")));
             var shells = Models.ShellOrTerminal.Supported;
-            var shellFields = new Column { Gap = 8, AlignItems = Align.Stretch };
+            var shellFields = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
             // macOS opens its terminals by name: upstream asks no path there.
             void ShowShell()
             {
@@ -335,11 +335,11 @@ namespace SourceGit.Views
             ShowShell();
             page.Add(shellFields);
             var gap = new Row();
-            gap.Height = 16;
+            gap.Height = Spacing.Lg;
             page.Add(gap);
             page.Add(Section("Diff", App.Text("Preferences.DiffMerge")));
             var mergers = Models.ExternalMerger.Supported;
-            var mergerFields = new Column { Gap = 8, AlignItems = Align.Stretch };
+            var mergerFields = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
             void ShowMerger()
             {
                 Empty(mergerFields);
@@ -367,10 +367,10 @@ namespace SourceGit.Views
         /// or the variable it's read from.</summary>
         private static Node Service(AI.Service service)
         {
-            var column = new Column { Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Add(Stacked(App.Text("Preferences.AI.Name"), TextValue(service.Name, v => service.Name = v)));
             column.Add(Stacked(App.Text("Preferences.AI.Server"), TextValue(service.Server, v => service.Server = v)));
-            var keyColumn = new Column { Gap = 4, AlignItems = Align.Stretch };
+            var keyColumn = new Column { Gap = Spacing.Xs, AlignItems = Align.Stretch };
             keyColumn.Add(new Text(App.Text("Preferences.AI.ApiKey").Trim()));
             var keyField = new Column { AlignItems = Align.Stretch };
             keyColumn.Add(keyField);

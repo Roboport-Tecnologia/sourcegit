@@ -37,7 +37,7 @@ namespace SourceGit.Views
 
         private static Node Welcome()
         {
-            var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 16 };
+            var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = Spacing.Lg };
             column.Grow = 1;
             column.Add(new Icon(Icons.Get("Diff")) { Size = 64, Color = Color.SecondaryLabel });
             column.Add(new Text(App.Text("Diff.Welcome")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
@@ -46,10 +46,10 @@ namespace SourceGit.Views
 
         private static Node Diff(ViewModels.DiffContext context)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 4 };
+            var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             column.Grow = 1;
             column.MinHeight = 0;
-            var header = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(4, 4) };
+            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Xs) };
             header.Add(new Icon(Icons.Get("File")) { Size = 12 });
             var title = new Text(context.Title) { Style = TextStyle.Caption, MaxLines = 1, ToolTip = context.Title };
             title.Grow = 1;
@@ -85,7 +85,7 @@ namespace SourceGit.Views
 
         private static Node Content(object content)
         {
-            var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = 12 };
+            var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = Spacing.Md };
             column.Grow = 1;
             column.MinHeight = 0;
             switch (content)
@@ -105,7 +105,7 @@ namespace SourceGit.Views
                 case Models.SubmoduleDiff submodule:
                     column.Justify = Justify.Start;
                     column.AlignItems = Align.Stretch;
-                    column.Padding = 12;
+                    column.Padding = Spacing.Md;
                     column.Add(new Text(App.Text("Diff.Submodule")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
                     if (submodule.New == null)
                         column.Add(new Text(App.Text("Diff.Submodule.Deleted")) { Weight = FontWeight.Bold, Color = Color.Error });
@@ -133,7 +133,7 @@ namespace SourceGit.Views
         /// pixels, shrunk to fit, under its old or new mark and sizes.</summary>
         private static Node Images(Models.ImageDiff diff)
         {
-            var row = new Row { AlignItems = Align.Stretch, Gap = 16, Padding = 8 };
+            var row = new Row { AlignItems = Align.Stretch, Gap = Spacing.Lg, Padding = Spacing.Sm };
             row.Grow = 1;
             row.MinHeight = 0;
             row.Add(Side(App.Text("Diff.Old"), diff.Old, diff.OldImageSize, diff.OldFileSize));
@@ -142,10 +142,10 @@ namespace SourceGit.Views
 
             static Node Side(string label, Avalonia.Media.Imaging.Bitmap bitmap, string size, long fileSize)
             {
-                var column = new Column { AlignItems = Align.Center, Gap = 8 };
+                var column = new Column { AlignItems = Align.Center, Gap = Spacing.Sm };
                 column.Grow = 1;
                 column.MinWidth = 0;
-                var info = new Row { AlignItems = Align.Center, Gap = 8 };
+                var info = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
                 info.Add(new Text(label) { Style = TextStyle.Caption, Weight = FontWeight.Bold });
                 info.Add(new Text(size) { Style = TextStyle.Caption });
                 info.Add(new Text(Bytes(fileSize)) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
@@ -163,10 +163,10 @@ namespace SourceGit.Views
 
         private static Node Sizes(long old, long now)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 4 };
+            var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             foreach (var (label, size) in new[] { (App.Text("Diff.Old"), old), (App.Text("Diff.New"), now) })
             {
-                var row = new Row { AlignItems = Align.Center, Gap = 16, Justify = Justify.SpaceBetween };
+                var row = new Row { AlignItems = Align.Center, Gap = Spacing.Lg, Justify = Justify.SpaceBetween };
                 row.Add(new Text(label) { Style = TextStyle.Caption, Weight = FontWeight.Bold });
                 row.Add(new Text(Bytes(size)) { Style = TextStyle.Title, Color = Color.SecondaryLabel });
                 column.Add(row);
@@ -176,11 +176,11 @@ namespace SourceGit.Views
 
         private static Node Commit(string label, Models.RevisionSubmodule revision)
         {
-            var column = new Column { Gap = 4 };
+            var column = new Column { Gap = Spacing.Xs };
             column.Add(new Text(label) { Style = TextStyle.Caption, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
             if (revision.Commit is { } commit)
             {
-                var top = new Row { AlignItems = Align.Center, Gap = 8 };
+                var top = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
                 top.Add(new Avatar(16, menu: false) { User = commit.Author }.View);
                 top.Add(new Text(commit.Author.Name));
                 top.Add(new Text(commit.SHA[..10]) { Style = TextStyle.Monospace, Color = Color.Rgba(255, 140, 0), Selectable = true });

@@ -22,7 +22,7 @@ namespace SourceGit.Views
             var title = App.Text("ConfigureCustomActionControls");
             var sheet = new Window(over, title, 560);
 
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
             var list = ListDetail(controls, c => c.Label, nameof(Models.CustomActionControl.Label), "Parameter", Control,
                 new ListActions<Models.CustomActionControl>
@@ -52,14 +52,14 @@ namespace SourceGit.Views
         /// then what its type takes.</summary>
         private static Node Control(Models.CustomActionControl control)
         {
-            var column = new Column { Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Add(Stacked(App.Text("ConfigureCustomActionControls.Label"), TextValue(control.Label, v => control.Label = v)));
             string[] types = ["TextBox", "Path Selector", "CheckBox", "ComboBox", "Local Branch Selector", "Remote Branch Selector"];
             column.Add(Stacked(App.Text("ConfigureCustomActionControls.Type"), Choice(App.Text("ConfigureCustomActionControls.Type"),
                 types, (int)control.Type, i => control.Type = (Models.CustomActionControlType)i)));
             column.Add(Stacked(App.Text("ConfigureCustomActionControls.Description"),
                 TextValue(control.Description, v => control.Description = v)));
-            var typed = new Column { Gap = 12, AlignItems = Align.Stretch };
+            var typed = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Add(typed);
             Node shown = null;
             void Show()
@@ -85,7 +85,7 @@ namespace SourceGit.Views
         private static Node Typed(Models.CustomActionControl control)
         {
             var type = control.Type;
-            var column = new Column { Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
             var valueLabel = type switch
             {
                 Models.CustomActionControlType.CheckBox => "ConfigureCustomActionControls.CheckedValue",

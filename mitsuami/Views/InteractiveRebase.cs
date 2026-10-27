@@ -28,7 +28,7 @@ namespace SourceGit.Views
             Shown = sheet;
             sheet.Closed += () => Shown = null;
 
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Add(Heading(vm));
 
             var list = Commits(sheet, vm);
@@ -81,11 +81,11 @@ namespace SourceGit.Views
         /// the commit it goes on.</summary>
         private static Node Heading(ViewModels.InteractiveRebase vm)
         {
-            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             row.Add(new Text(App.Text("InteractiveRebase.Target")) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold });
             row.Add(new Icon(Icons.Get("Branch")) { Size = 14 });
             row.Add(new Text(vm.Current.FriendlyName));
-            var on = new Text(App.Text("InteractiveRebase.On")) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold, Margin = new Thickness(0, 0, 0, 16) };
+            var on = new Text(App.Text("InteractiveRebase.On")) { Color = Color.SecondaryLabel, Weight = FontWeight.Bold, Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg) };
             row.Add(on);
             row.Add(new Icon(Icons.Get("Commit")) { Size = 14 });
             row.Add(new Text(Sha(vm.On.SHA)) { Style = TextStyle.Monospace, Color = s_sha });
@@ -190,7 +190,7 @@ namespace SourceGit.Views
         private static Node Row(Window sheet, ViewModels.InteractiveRebase vm, ListView<ViewModels.InteractiveRebaseItem> list,
             ViewModels.InteractiveRebaseItem item)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 8) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Sm) };
             row.Height = 28;
 
             var order = new Text($"#{item.OriginalOrder}") { Style = TextStyle.Monospace };
@@ -247,7 +247,7 @@ namespace SourceGit.Views
             row.Add(subject);
 
             var avatar = new Avatar(16, menu: false) { User = item.Commit.Author };
-            avatar.View.Margin = new Thickness(0, 0, 0, 8);
+            avatar.View.Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Sm);
             row.Add(avatar.View);
             var author = new Text(item.Commit.Author.Name) { MaxLines = 1 };
             author.Width = 108;
@@ -256,7 +256,7 @@ namespace SourceGit.Views
             var sha = new Text(Sha(item.Commit.SHA)) { Style = TextStyle.Monospace, MaxLines = 1 };
             sha.Shrink = 0;
             row.Add(sha);
-            var time = new Text(Models.DateTimeFormat.Format(item.Commit.CommitterTime)) { Margin = new Thickness(0, 8, 0, 16), MaxLines = 1 };
+            var time = new Text(Models.DateTimeFormat.Format(item.Commit.CommitterTime)) { Margin = new Thickness(Spacing.None, Spacing.Sm, Spacing.None, Spacing.Lg), MaxLines = 1 };
             time.Shrink = 0;
             row.Add(time);
 
@@ -275,7 +275,7 @@ namespace SourceGit.Views
         /// spinner while the rebase runs, then the sheet closes.</summary>
         private static Node Footer(Window sheet, ViewModels.InteractiveRebase vm)
         {
-            var row = new Row { Gap = 16, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Lg, AlignItems = Align.Center };
             var autoStash = new Checkbox(App.Text("InteractiveRebase.AutoStash")) { IsChecked = vm.AutoStash };
             autoStash.Changed += v => vm.AutoStash = v;
             var noVerify = new Checkbox(App.Text("InteractiveRebase.NoVerify")) { IsChecked = vm.NoVerify };
@@ -289,7 +289,7 @@ namespace SourceGit.Views
 
             var running = new Spinner { IsVisible = false };
             row.Add(running);
-            var buttons = new Row { Gap = 8 };
+            var buttons = new Row { Gap = Spacing.Sm };
             var cancel = new Button(Popups.ButtonText("Cancel")) { Role = ButtonRole.Cancel };
             cancel.Click += sheet.Destroy;
             var start = new Button(Popups.ButtonText("Start")) { Role = ButtonRole.Default };
@@ -317,7 +317,7 @@ namespace SourceGit.Views
             var sheet = new Window(owner, App.Text("CodeEditor"), 640);
             Editing = sheet;
             sheet.Closed += () => Editing = null;
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             var editor = new TextAreaWithPlaceholder(App.Text("CommitMessageTextBox.Placeholder"));
             editor.Height = 280;
             var message = editor.Area;
@@ -325,7 +325,7 @@ namespace SourceGit.Views
             message.AccessibleName = App.Text("CodeEditor");
             column.Add(editor);
 
-            var buttons = new Row { Gap = 8, Justify = Justify.End };
+            var buttons = new Row { Gap = Spacing.Sm, Justify = Justify.End };
             var cancel = new Button(Popups.ButtonText("Cancel")) { Role = ButtonRole.Cancel };
             cancel.Click += sheet.Destroy;
             var sure = new Button(Popups.ButtonText("Sure")) { Role = ButtonRole.Default };

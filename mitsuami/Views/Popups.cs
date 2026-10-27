@@ -84,12 +84,12 @@ namespace SourceGit.Views
             // Upstream's popups are 560 points wide.
             var sheet = new Window(owner, title, 560);
 
-            var column = new Column { Padding = 20, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Xl, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Add(new Text(title) { Style = TextStyle.Headline });
             column.Add(form(sheet));
 
             // Upstream's progress: git's last line while the popup runs.
-            var progress = new Row { Gap = 8, AlignItems = Align.Center };
+            var progress = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             var progressText = new Text { Style = TextStyle.Caption };
             progressText.Grow = 1;
             progress.Add(new Spinner());
@@ -102,7 +102,7 @@ namespace SourceGit.Views
             var errors = new Text { Style = TextStyle.Caption, IsVisible = false };
             column.Add(errors);
 
-            var buttons = new Row { Gap = 8, Justify = Justify.End };
+            var buttons = new Row { Gap = Spacing.Sm, Justify = Justify.End };
             var cancel = new Button(ButtonText("Cancel")) { Role = ButtonRole.Cancel };
             cancel.Click += page.CancelPopup;
             var sure = new Button(ButtonText("Sure")) { Role = ButtonRole.Default, IsEnabled = ported };
@@ -258,10 +258,10 @@ namespace SourceGit.Views
         private static Node MoveForm(ViewModels.MoveRepositoryNode vm)
         {
             // Upstream's: the label, then the name, in a row of their own.
-            var target = new Row { Gap = 8, AlignItems = Align.Center };
+            var target = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             target.Add(new Text(App.Text("MoveRepositoryNode.Target")));
             target.Add(new Text(vm.Target.Name));
-            var form = new Column { Gap = 8, AlignItems = Align.Stretch };
+            var form = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
             form.Add(target);
 
             // Upstream's framed tree of the groups, ROOT first, each open,
@@ -348,7 +348,7 @@ namespace SourceGit.Views
 
         private static Column Fields(Window sheet, params (string Label, Node Control)[] rows)
         {
-            var column = new Column { Gap = 8, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
             foreach (var (label, control) in rows)
                 column.Add(Field(label, control));
             return column;
@@ -370,7 +370,7 @@ namespace SourceGit.Views
             side.Add(new Text(label));
             var line = new Text(" ") { Style = TextStyle.Caption, IsVisible = false };
             side.Add(line);
-            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             row.Add(side);
             withError.Grow = 1;
             row.Add(withError);
@@ -394,7 +394,7 @@ namespace SourceGit.Views
 
         private static Row FieldRow(string label, Node control)
         {
-            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             var text = new Text(label);
             text.Width = LabelWidth;
             // The control gives way, a commit's subject truncating, not
@@ -458,7 +458,7 @@ namespace SourceGit.Views
         private static Row PathField(Window sheet, INotifyPropertyChanged vm, string property, Func<string> get,
             Action<string> set, string placeholder, bool folders)
         {
-            var row = new Row { Gap = 4, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
             var input = TextField(sheet, vm, property, get, set, placeholder);
             input.Grow = 1;
             var browse = new Button("…");

@@ -71,7 +71,7 @@ namespace SourceGit.Views
             list.SelectionChanged += selected => vm.SelectedRevisions = [.. selected];
             split.Add(Loading(list, vm, nameof(vm.IsLoading), () => vm.IsLoading));
 
-            var detail = new Column { AlignItems = Align.Stretch, Padding = new Thickness(0, 0, 0, 8) };
+            var detail = new Column { AlignItems = Align.Stretch, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Sm) };
             detail.Grow = 1;
             detail.MinWidth = 0;
             Node shown = null;
@@ -105,9 +105,9 @@ namespace SourceGit.Views
         /// over a line, then what's under it.</summary>
         private static Column Page(Window window, string icon, System.ComponentModel.INotifyPropertyChanged vm, string property, Func<string> title)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 8, Padding = 12 };
+            var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Sm, Padding = Spacing.Md };
             column.Grow = 1;
-            var heading = new Row { AlignItems = Align.Center, Gap = 6 };
+            var heading = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             heading.Add(new Icon(Icons.Get(icon)) { Size = 14 });
             var text = new Text { Weight = FontWeight.Bold, Selectable = true };
             Bind.OneWay(vm, property, title, t => text.Value = t ?? "", owner: text);
@@ -142,9 +142,9 @@ namespace SourceGit.Views
         /// its full message as the tooltip.</summary>
         private static Node Row(Models.User author, string sha, ulong time, string subject, Action navigate, Func<string> message)
         {
-            var column = new Column { Gap = 4, Padding = new Thickness(4, 0) };
+            var column = new Column { Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.None) };
             column.Height = 48;
-            var top = new Row { AlignItems = Align.Center, Gap = 8 };
+            var top = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             top.Add(new Avatar(16, menu: false) { User = author }.View);
             var name = new Text(author.Name) { MaxLines = 1 };
             name.Grow = 1;
@@ -183,7 +183,7 @@ namespace SourceGit.Views
         /// content (upstream's switch), and checking the file out as it was.</summary>
         private static Node Single(ViewModels.FileHistoriesSingleRevision vm)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 8 };
+            var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Sm };
             column.Grow = 1;
             var tabs = new Tabs();
             tabs.Grow = 1;
@@ -224,9 +224,9 @@ namespace SourceGit.Views
         /// over it, as the Files tab shows one.</summary>
         private static Node File(ViewModels.FileHistoriesSingleRevision vm, ViewModels.FileHistoriesRevisionFile file)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 4 };
+            var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             column.Grow = 1;
-            var header = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(4, 4) };
+            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.Xs) };
             var path = new Text(file.Path) { Style = TextStyle.Caption, MaxLines = 1 };
             path.Grow = 1;
             path.Shrink = 1;
@@ -253,9 +253,9 @@ namespace SourceGit.Views
         /// them, saving the difference as a patch, and the diff.</summary>
         private static Node Compared(ViewModels.FileHistoriesCompareRevisions vm)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 8 };
+            var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Sm };
             column.Grow = 1;
-            var header = new Row { AlignItems = Align.Center, Gap = 8 };
+            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             header.Add(Side(vm, nameof(vm.StartPoint), () => vm.StartPoint));
             var swap = new Button(App.Text("Diff.SwapCommits"))
             {
@@ -287,7 +287,7 @@ namespace SourceGit.Views
 
         private static Node Side(ViewModels.FileHistoriesCompareRevisions vm, string property, Func<Models.FileVersion> point)
         {
-            var holder = new Column { AlignItems = Align.Stretch, Gap = 4 };
+            var holder = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             holder.Grow = 1;
             holder.MinWidth = 0;
             Bind.OneWay(vm, property, point, version =>
@@ -296,7 +296,7 @@ namespace SourceGit.Views
                     child.Destroy();
                 if (version == null)
                     return;
-                var top = new Row { AlignItems = Align.Center, Gap = 8 };
+                var top = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
                 top.Add(new Avatar(16, menu: false) { User = version.Author }.View);
                 top.Add(new Text(version.Author.Name) { MaxLines = 1 });
                 top.Add(new Text(version.SHA[..10]) { Style = TextStyle.Monospace, Color = Color.Rgba(255, 140, 0) });

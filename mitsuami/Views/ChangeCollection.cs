@@ -414,7 +414,7 @@ namespace SourceGit.Views
         /// its icon in goldenrod, open or closed as it is.</summary>
         private Node Row(Item item)
         {
-            var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 0, 0, 4) };
+            var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) };
             row.Height = 24;
             var key = item.Key;
             row.ContextMenuOnOpen = () => MenuFor(key);

@@ -55,7 +55,7 @@ namespace SourceGit.Views
                 vm.Cancel();
             };
 
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Grow = 1;
             column.Add(new Text(title) { Style = TextStyle.Headline });
             var answer = new TextArea { ReadOnly = true, FollowsEnd = true, AccessibleName = title };
@@ -64,7 +64,7 @@ namespace SourceGit.Views
             Bind.OneWay(vm, nameof(vm.Text), () => vm.Text, text => answer.Value = text ?? "", owner: answer);
             column.Add(answer);
 
-            var buttons = new Row { AlignItems = Align.Center, Gap = 8 };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             buttons.Add(new Text(Popups.ButtonText("AIAssistant.Model")));
             var model = new Select(App.Text("AIAssistant.Model")) { MinWidth = 0 };
             model.Grow = 1;

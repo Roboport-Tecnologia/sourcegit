@@ -57,7 +57,7 @@ namespace SourceGit.Views
             column.Add(new Separator());
 
             // Upstream's search row, 36 points high.
-            var search = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 4) };
+            var search = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
             search.Height = 36;
             search.Shrink = 0;
             var filter = new SearchInput();
@@ -91,7 +91,7 @@ namespace SourceGit.Views
         /// at the end.</summary>
         private static Row Bar(string icon, string title, ViewModels.StashesPage vm, string countProperty, Func<int> count)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4, 0, 8) };
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Sm) };
             bar.MinHeight = 28;
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get(icon)) { Size = 14, Color = Color.SecondaryLabel });
@@ -141,12 +141,12 @@ namespace SourceGit.Views
 
         private static Node Row(ViewModels.Repository repo, ViewModels.StashesPage vm, Models.Stash stash)
         {
-            var row = new Column { AlignItems = Align.Stretch, Justify = Justify.SpaceBetween, Padding = 4 };
+            var row = new Column { AlignItems = Align.Stretch, Justify = Justify.SpaceBetween, Padding = Spacing.Xs };
             row.Height = 50;
             row.ToolTip = stash.Message;
             row.ContextMenuOnOpen = () => Menu(repo, vm, stash);
 
-            var top = new Mitsuamia.Row { AlignItems = Align.Center, Gap = 8 };
+            var top = new Mitsuamia.Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             var name = new Text(stash.Name) { Color = s_name, MaxLines = 1 };
             name.Grow = 1;
             top.Add(name);
@@ -161,7 +161,7 @@ namespace SourceGit.Views
         /// name (and "WIP |"), 11 points, then the rest of the subject.</summary>
         private static Node Subject(string subject)
         {
-            var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = 4 };
+            var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             string prefix = null;
             if (s_on.Match(subject) is { Success: true } on)
             {
@@ -175,7 +175,7 @@ namespace SourceGit.Views
             }
             if (prefix != null)
             {
-                var chip = new Mitsuamia.Row { AlignItems = Align.Center, Padding = new Thickness(2, 6) };
+                var chip = new Mitsuamia.Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.Xs, Spacing.Sm) };
                 chip.Shrink = 0;
                 chip.Add(new Chip { Inset = new Thickness(0) });
                 chip.Add(new Text(prefix) { Style = TextStyle.Caption, MaxLines = 1 });

@@ -18,12 +18,12 @@ namespace SourceGit.Views
         public static void Show(string prompt)
         {
             var window = new Window(App.Text("Askpass"), 400);
-            var column = new Column { Padding = 16, Gap = 16, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Lg, AlignItems = Align.Stretch };
             column.Add(new Text(prompt));
             var field = new PasswordInput { AccessibleName = prompt };
             column.Add(field);
 
-            var buttons = new Row { Gap = 8, Justify = Justify.End };
+            var buttons = new Row { Gap = Spacing.Sm, Justify = Justify.End };
             var cancel = new Button(Popups.ButtonText("Cancel")) { Role = ButtonRole.Cancel };
             var sure = new Button(Popups.ButtonText("Sure")) { Role = ButtonRole.Default };
             buttons.Add(cancel);

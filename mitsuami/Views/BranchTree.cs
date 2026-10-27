@@ -221,7 +221,7 @@ namespace SourceGit.Views
             if (node.Counter > 0)
             {
                 var count = new Text(node.BranchesCount) { Color = Color.SecondaryLabel };
-                count.Margin = new Thickness(0, 0, 0, 4);
+                count.Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs);
                 count.Shrink = 0;
                 row.Add(count);
             }
@@ -234,15 +234,15 @@ namespace SourceGit.Views
             if (node.ShowUpstreamGoneTip)
             {
                 var gone = new Icon(Icons.Get("Error")) { Size = 12, Color = Color.Warning };
-                gone.Margin = new Thickness(0, 8);
+                gone.Margin = new Thickness(Spacing.None, Spacing.Sm);
                 row.Add(gone);
             }
             if (node.Backend is Models.Branch { TrackStatusDescription: { Length: > 0 } track })
             {
-                var status = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 9) };
+                var status = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Md) };
                 status.Height = 18;
                 status.Shrink = 0;
-                status.Margin = new Thickness(0, 4, 0, 8);
+                status.Margin = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Sm);
                 status.Add(new TrackPill { Inset = new Thickness(0) });
                 status.Add(new Text(track) { Style = TextStyle.Caption, MaxLines = 1 });
                 row.Add(status);

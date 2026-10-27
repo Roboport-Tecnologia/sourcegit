@@ -312,10 +312,10 @@ namespace SourceGit.Views
                 return Task.FromResult(commits.FirstOrDefault());
             var done = new TaskCompletionSource<Models.Commit>();
             var sheet = new Window(App.MainWindow, title, 520);
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             var list = new ListView<Models.Commit>(c => c.SHA, c =>
             {
-                var row = new Row { Gap = 8, AlignItems = Align.Center, Padding = new Thickness(0, 4) };
+                var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
                 row.Height = 28;
                 row.Add(new Text(c.SHA[..10]) { Style = TextStyle.Monospace, Color = Color.SecondaryLabel });
                 var subject = new Text(c.Subject) { MaxLines = 1 };
@@ -332,7 +332,7 @@ namespace SourceGit.Views
             list.Height = Math.Min(commits.Count, 8) * 28 + 12;
             list.SelectedItems = [commits[0]];
             column.Add(list);
-            var buttons = new Row { Justify = Justify.End, Gap = 8 };
+            var buttons = new Row { Justify = Justify.End, Gap = Spacing.Sm };
             var cancel = new Button(Popups.ButtonText("Cancel"));
             var ok = new Button(Popups.ButtonText("Sure")) { Role = ButtonRole.Default };
             buttons.Add(cancel);

@@ -50,8 +50,8 @@ namespace SourceGit.Views
     /// </summary>
     public sealed class BisectMark
     {
-        private readonly Row _label = new() { AlignItems = Align.Center, Margin = new Thickness(0, 4, 0, 0) };
-        private readonly Icon _state = new(Icons.Get("Good")) { Size = 10, Color = Color.Label, Margin = new Thickness(0, 0, 0, 6) };
+        private readonly Row _label = new() { AlignItems = Align.Center, Margin = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.None) };
+        private readonly Icon _state = new(Icons.Get("Good")) { Size = 10, Color = Color.Label, Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Sm) };
         private readonly Backdrop _backdrop = new() { Inset = new Thickness(0) };
         private Models.BisectCommitFlag _flag = Models.BisectCommitFlag.None;
 
@@ -60,7 +60,7 @@ namespace SourceGit.Views
             _label.Width = 32;
             _label.Height = 16;
             _label.Add(_backdrop);
-            _label.Add(new Icon(Icons.Get("Bisect")) { Size = 10, Color = Color.Label, Margin = new Thickness(0, 0, 0, 3) });
+            _label.Add(new Icon(Icons.Get("Bisect")) { Size = 10, Color = Color.Label, Margin = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) });
             _label.Add(_state);
             _label.IsVisible = false;
         }

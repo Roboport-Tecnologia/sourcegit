@@ -32,7 +32,7 @@ namespace SourceGit.Views
                     Shown = null;
             };
 
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Grow = 1;
             var header = new Row { AlignItems = Align.Center, Justify = Justify.End };
             header.Add(BranchSelect(vm));
@@ -45,7 +45,7 @@ namespace SourceGit.Views
             var pages = new List<Column>();
             foreach (var key in new[] { "Statistics.Overview", "Statistics.ThisMonth", "Statistics.ThisWeek" })
             {
-                var page = new Column { AlignItems = Align.Stretch, Justify = Justify.Center, Padding = 12 };
+                var page = new Column { AlignItems = Align.Stretch, Justify = Justify.Center, Padding = Spacing.Md };
                 page.Grow = 1;
                 pages.Add(page);
                 tabs.Add(Popups.ButtonText(key), page);
@@ -98,11 +98,11 @@ namespace SourceGit.Views
         /// beside the pie and the bars.</summary>
         private static Node Report(ViewModels.Statistics vm, Models.StatisticsReport report)
         {
-            var row = new Row { AlignItems = Align.Stretch, Gap = 16 };
+            var row = new Row { AlignItems = Align.Stretch, Gap = Spacing.Lg };
             row.Grow = 1;
             row.MinHeight = 0;
 
-            var left = new Column { AlignItems = Align.Stretch, Gap = 6 };
+            var left = new Column { AlignItems = Align.Stretch, Gap = Spacing.Sm };
             left.Width = 256;
             left.Shrink = 0;
             var authors = new ListView<Models.StatisticsAuthor>(a => a.User.ToString(), AuthorRow, itemAnimations: false)
@@ -118,7 +118,7 @@ namespace SourceGit.Views
             left.Add(Totals(report));
             row.Add(left);
 
-            var right = new Column { AlignItems = Align.Stretch, Gap = 6 };
+            var right = new Column { AlignItems = Align.Stretch, Gap = Spacing.Sm };
             right.Grow = 1;
             right.MinWidth = 0;
             right.Add(Heading("Statistics.TopAuthors", App.Text("Statistics.TopAuthors.Tip")));
@@ -141,7 +141,7 @@ namespace SourceGit.Views
         /// <summary>Upstream's author row: their avatar, name and count.</summary>
         private static Node AuthorRow(Models.StatisticsAuthor author)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 4) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
             row.Height = 26;
             row.ToolTip = author.User.ToString();
             var avatar = new Avatar(16) { User = author.User };
@@ -169,7 +169,7 @@ namespace SourceGit.Views
 
             static Row Total(string key, int count)
             {
-                var total = new Row { AlignItems = Align.Center, Gap = 4 };
+                var total = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
                 total.Add(new Text(Popups.ButtonText(key).Trim()) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
                 total.Add(new Text(count.ToString()) { Style = TextStyle.Caption });
                 return total;
@@ -178,7 +178,7 @@ namespace SourceGit.Views
 
         private static Node Heading(string key, string tip)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 4 };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             row.Add(new Text(Popups.ButtonText(key)) { Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
             if (tip != null)
                 row.Add(new Icon(Icons.Get("Info")) { Size = 14, Color = Color.SecondaryLabel, ToolTip = tip });
@@ -335,7 +335,7 @@ namespace SourceGit.Views
                         var top = Math.Max(midY - height / 2, firstY - NameHeight / 2);
                         for (var i = 0; i < batch.Count; i += 2)
                         {
-                            var line = new Row { AlignItems = Align.Center, Gap = 8 };
+                            var line = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
                             line.Height = NameHeight;
                             foreach (var slice in batch.Skip(i).Take(2))
                                 line.Add(Name(slice));
@@ -381,7 +381,7 @@ namespace SourceGit.Views
 
             private static Row Name(Slice slice)
             {
-                var name = new Row { AlignItems = Align.Center, Gap = 4 };
+                var name = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
                 name.Add(new Text(slice.Title) { MaxLines = 1 });
                 name.Add(new Text(slice.Share.ToString("P1")) { Color = Color.SecondaryLabel });
                 var dot = new Dot(slice.Color);

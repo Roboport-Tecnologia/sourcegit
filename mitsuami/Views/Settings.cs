@@ -26,7 +26,7 @@ namespace SourceGit.Views
 
         public static Column Page()
         {
-            var page = new Column { Padding = 16, Gap = 8, AlignItems = Align.Stretch };
+            var page = new Column { Padding = Spacing.Lg, Gap = Spacing.Sm, AlignItems = Align.Stretch };
             page.Grow = 1;
             return page;
         }
@@ -36,12 +36,12 @@ namespace SourceGit.Views
         /// a tall control (<paramref name="top"/>), at its top.</summary>
         public static Row Field(string label, Node control, bool top = false)
         {
-            var row = new Row { Gap = 12, AlignItems = top ? Align.Start : Align.Center };
+            var row = new Row { Gap = Spacing.Md, AlignItems = top ? Align.Start : Align.Center };
             var side = new Row { Justify = Justify.End };
             side.Width = LabelWidth;
             side.Shrink = 0;
             if (!string.IsNullOrEmpty(label))
-                side.Add(new Text(label.Trim()) { MaxLines = 1, Margin = new Thickness(top ? 4 : 0, 0, 0, 0) });
+                side.Add(new Text(label.Trim()) { MaxLines = 1, Margin = new Thickness(top ? Spacing.Xs : Spacing.None, Spacing.None, Spacing.None, Spacing.None) });
             row.Add(side);
             control.Grow = 1;
             control.MinWidth = 0;
@@ -94,7 +94,7 @@ namespace SourceGit.Views
         public static Row Path(Func<Window> window, string value, Action<string> set, string placeholder = "",
             Pick pick = Pick.File, string title = "")
         {
-            var row = new Row { Gap = 4, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
             var input = TextValue(value, set, placeholder);
             input.Grow = 1;
             input.MinWidth = 0;
@@ -118,7 +118,7 @@ namespace SourceGit.Views
         /// tooltip says what the field takes.</summary>
         public static Row WithTip(Node control, string tip)
         {
-            var row = new Row { Gap = 6, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             control.Grow = 1;
             control.MinWidth = 0;
             row.Add(control);
@@ -130,8 +130,8 @@ namespace SourceGit.Views
         /// line under them.</summary>
         public static Node Section(string icon, string title)
         {
-            var column = new Column { Gap = 8, AlignItems = Align.Stretch, Margin = new Thickness(8, 0, 0, 0) };
-            var heading = new Row { Gap = 6, AlignItems = Align.Center };
+            var column = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch, Margin = new Thickness(Spacing.Sm, Spacing.None, Spacing.None, Spacing.None) };
+            var heading = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             heading.Add(new Icon(Icons.Get(icon)) { Size = 12 });
             heading.Add(new Text(title) { Weight = FontWeight.Bold });
             column.Add(heading);
@@ -142,7 +142,7 @@ namespace SourceGit.Views
         /// <summary>A label over its control, as upstream's item forms are.</summary>
         public static Column Stacked(string label, Node control)
         {
-            var column = new Column { Gap = 4, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Spacing.Xs, AlignItems = Align.Stretch };
             column.Add(new Text(label.Trim()));
             column.Add(control);
             return column;
@@ -175,18 +175,18 @@ namespace SourceGit.Views
         public static Node ListDetail<T>(IReadOnlyList<T> items, Func<T, string> name, string nameProperty, string icon,
             Func<T, Node> detail, ListActions<T> actions) where T : class, System.ComponentModel.INotifyPropertyChanged
         {
-            var row = new Row { Gap = 16, AlignItems = Align.Stretch, Padding = 16 };
+            var row = new Row { Gap = Spacing.Lg, AlignItems = Align.Stretch, Padding = Spacing.Lg };
             row.Grow = 1;
             row.MinHeight = 360;
 
-            var left = new Column { AlignItems = Align.Stretch, Gap = 4 };
+            var left = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             left.Width = 200;
             left.Shrink = 0;
             var keys = new System.Runtime.CompilerServices.ConditionalWeakTable<T, string>();
             var next = 0;
             var list = new ListView<T>(item => keys.GetValue(item, _ => (++next).ToString()), item =>
             {
-                var line = new Row { Gap = 6, AlignItems = Align.Center, Padding = new Thickness(0, 4) };
+                var line = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
                 line.Height = 26;
                 line.Add(new Icon(Icons.Get(icon)) { Size = 12 });
                 var text = new Text(name(item)) { MaxLines = 1 };
@@ -233,7 +233,7 @@ namespace SourceGit.Views
                 }
                 else
                 {
-                    var fields = new Column { Gap = 12, AlignItems = Align.Stretch, Justify = Justify.Start };
+                    var fields = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch, Justify = Justify.Start };
                     fields.Grow = 1;
                     fields.Add(detail(item));
                     shown = fields;
@@ -252,7 +252,7 @@ namespace SourceGit.Views
             // the pick but changes which way it can go.
             list.ItemsChanged += () => Show(picked != null && items.Contains(picked) ? picked : null);
 
-            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(0) };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.None) };
             // Upstream's have only icons, and no names to read out.
             buttons.Add(actions.AddButton?.Invoke(Pick) ?? Small("Plus", "Add", () => Pick(actions.Add())));
             buttons.Add(remove);
@@ -308,7 +308,7 @@ namespace SourceGit.Views
         /// over <paramref name="window"/>.</summary>
         public static Node CustomAction(Func<Window> window, Models.CustomAction action)
         {
-            var column = new Column { Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Add(Stacked(App.Text("Configure.CustomAction.Name"), TextValue(action.Name, v => action.Name = v)));
             column.Add(Stacked(App.Text("Configure.CustomAction.Scope"), Choice(App.Text("Configure.CustomAction.Scope"),
                 new[] { "Repository", "Commit", "Branch", "Tag", "Remote", "File" }.Select(s => App.Text($"Configure.CustomAction.Scope.{s}")),

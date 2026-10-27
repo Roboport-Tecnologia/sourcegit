@@ -208,7 +208,7 @@ namespace SourceGit.Views
         /// beside it does.</summary>
         private static Node Badge(ViewModels.Repository vm, string property, Func<int> count, Action pick)
         {
-            var badge = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 5), Inset = new Thickness(4, 4, Length.Auto, Length.Auto) };
+            var badge = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs), Inset = new Thickness(4, 4, Length.Auto, Length.Auto) };
             badge.Height = 14;
             badge.Add(new Pill { Inset = new Thickness(0) });
             var text = new Text("") { Style = TextStyle.Caption, Color = Color.Rgba(255, 255, 255) };
@@ -235,13 +235,14 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Rail(ViewModels.Repository vm)
         {
-            // Upstream's items: 41 by 42 points, 4 from everything (AppKit
-            // draws a button that tall as its flexible push button); their
-            // icons are the 16 points a button's icon has, upstream's 18.
+            // Upstream's items: 41 by 42 points, the platform's smallest
+            // spacing from everything (AppKit draws a button that tall as
+            // its flexible push button); their icons are the 16 points a
+            // button's icon has, upstream's 18.
             // The window's navigation, which upstream sets apart from the
             // branches beside it: on Windows, on the chosen tab's layer, as
             // the toolbar band is.
-            var rail = new Column { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(4, 0), IsSidebarPane = true };
+            var rail = new Column { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.None), IsSidebarPane = true };
             rail.Width = 49;
             var pages = new List<(string Icon, string Text)> { ("Dashboard", "Dashboard") };
             if (!vm.IsBare)
@@ -296,7 +297,7 @@ namespace SourceGit.Views
                 IconOnly = true,
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Repository.Configure"),
-                Margin = new Thickness(0, 0, 4, 0),
+                Margin = new Thickness(Spacing.None, Spacing.None, Spacing.Xs, Spacing.None),
             };
             settings.Click += () => RepositorySettings.Show(vm);
             rail.Add(settings);
@@ -312,7 +313,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Container Sidebar(ViewModels.Repository vm)
         {
-            var sidebar = new Column { AlignItems = Align.Stretch, Padding = new Thickness(6, 4, 0, 6), Gap = 4 };
+            var sidebar = new Column { AlignItems = Align.Stretch, Padding = new Thickness(Spacing.Sm, Spacing.Xs, Spacing.None, Spacing.Sm), Gap = Spacing.Xs };
 
             var filter = new SearchInput { Placeholder = App.Text("Repository.Filter") };
             Bind.Search(filter, vm, nameof(vm.Filter), () => vm.Filter, v => vm.Filter = v, owner: sidebar);
@@ -473,7 +474,7 @@ namespace SourceGit.Views
             string countProperty, Func<string> count, string expandedProperty, Func<bool> expanded, Action<bool> setExpanded,
             ListView list, Node[] buttons, Node[] withRows = null, bool branches = false)
         {
-            var header = new Row { AlignItems = Align.Center, Gap = 4 };
+            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             header.MinHeight = 28;
             header.Shrink = 0;
             var expander = new Button(App.Text(title)) { IconOnly = true, Style = ButtonStyle.Borderless };
@@ -493,7 +494,7 @@ namespace SourceGit.Views
             space.Grow = 1;
             header.Add(space);
             withRows ??= [];
-            var actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(4) };
+            var actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Xs) };
             foreach (var button in withRows)
                 actions.Add(button);
             foreach (var button in buttons)
@@ -676,7 +677,7 @@ namespace SourceGit.Views
         /// the platform's disclosure and indent.</summary>
         private static Node TagRow(ViewModels.Repository vm, object item, Func<IReadOnlyList<MenuEntry>> menu)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 4, 0, 16) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Lg) };
             row.Height = 24;
             row.ContextMenuOnOpen = menu;
             if (item is ViewModels.TagTreeNode { IsFolder: true } node)
@@ -721,7 +722,7 @@ namespace SourceGit.Views
         /// <summary>A submodule's row, or a folder of them.</summary>
         private static Node SubmoduleRow(ViewModels.Repository vm, object item)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 0, 0, 16) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg) };
             row.Height = 24;
             if (item is ViewModels.SubmoduleTreeNode { IsFolder: true } node)
             {
@@ -746,7 +747,7 @@ namespace SourceGit.Views
 
         private static Node WorktreeRow(ViewModels.Repository vm, ViewModels.Worktree worktree)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 0, 0, 16) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg) };
             row.Height = 24;
             row.Add(new Icon(Icons.Get("Worktree")) { Size = 12 });
             row.Add(new Text(worktree.Name));
@@ -765,7 +766,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node BisectBar(ViewModels.Repository vm)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 8) };
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
             bar.MinHeight = 28;
             bar.Shrink = 0;
             bar.Add(new Tint { Inset = new Thickness(0) });
@@ -829,11 +830,11 @@ namespace SourceGit.Views
         /// </summary>
         private static Node InProgressBar(ViewModels.Repository vm)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 8) };
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
             bar.Height = 28;
             bar.Shrink = 0;
             bar.Add(new Tint { Inset = new Thickness(0) });
-            var what = new Row { AlignItems = Align.Center, Gap = 4 };
+            var what = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             what.Grow = 1;
             what.Width = 0;
             var text = new Text { Weight = FontWeight.Bold, MaxLines = 1 };

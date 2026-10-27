@@ -62,7 +62,7 @@ namespace SourceGit.Views
 
             // Upstream's filter row, 36 points high: the field, discarding
             // everything, and the lists' view mode.
-            var top = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4) };
+            var top = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Xs) };
             top.Height = 36;
             top.Shrink = 0;
             // Upstream's sidebar toggle: the repository's sidebar hides
@@ -81,7 +81,7 @@ namespace SourceGit.Views
             filter.Grow = 1;
             Bind.Search(filter, vm, nameof(vm.Filter), () => vm.Filter, v => vm.Filter = v, owner: top);
             top.Add(filter);
-            var topActions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(4) };
+            var topActions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Xs) };
             topActions.Add(IconButton("Undo", "WorkingCopy.DiscardAll", vm.DiscardAllChanges));
             topActions.Add(ChangeCollection.ModeButton());
             top.Add(topActions);
@@ -180,7 +180,7 @@ namespace SourceGit.Views
         private static Row Bar(ViewModels.WorkingCopy vm, string title, string countProperty, Func<string> count,
             string busyProperty, Func<bool> busy, out Row actions)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4, 0, 8) };
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Sm) };
             bar.MinHeight = 28;
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get("Changes")) { Size = 14, Color = Color.SecondaryLabel });
@@ -195,7 +195,7 @@ namespace SourceGit.Views
             var space = new Column();
             space.Grow = 1;
             bar.Add(space);
-            actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(4) };
+            actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Xs) };
             bar.Add(actions);
             return bar;
         }
@@ -268,7 +268,7 @@ namespace SourceGit.Views
 
         private static Container Right(ViewModels.WorkingCopy vm)
         {
-            var column = new Column { AlignItems = Align.Stretch, Gap = 4, Padding = new Thickness(4, 6, 0, 4) };
+            var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.Sm, Spacing.None, Spacing.Xs) };
             column.Add(Detail(vm));
             column.Add(MessageBox(vm));
             column.Add(Options(vm));
@@ -311,7 +311,7 @@ namespace SourceGit.Views
         {
             var repo = vm.Repository;
             var prefs = ViewModels.Preferences.Instance;
-            var box = new Column { AlignItems = Align.Stretch, Gap = 4 };
+            var box = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             box.Height = 128;
             box.Shrink = 0;
 
@@ -324,10 +324,10 @@ namespace SourceGit.Views
             Bind.Value(message, vm, nameof(vm.CommitMessage), () => vm.CommitMessage, v => vm.CommitMessage = v);
             box.Add(editor);
 
-            var footer = new Row { AlignItems = Align.Center, Gap = 4 };
+            var footer = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             footer.MinHeight = 24;
             footer.Shrink = 0;
-            var tools = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(4) };
+            var tools = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Xs) };
             var helper = new MenuButton(App.Text("WorkingCopy.CommitMessageHelper"))
             {
                 Icon = Icons.Get("Menu", 12),
@@ -481,14 +481,14 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Options(ViewModels.WorkingCopy vm)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 12 };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Md };
             row.MinHeight = 40;
             row.Shrink = 0;
             // The checks wrap onto more lines in a narrow pane, before the
             // buttons run out of it: XAML's check boxes are at least 120
             // wide, and three of them and the buttons passed the pane at a
             // 1280-wide window.
-            var checks = new Row { AlignItems = Align.Center, Gap = 12, Wrap = true };
+            var checks = new Row { AlignItems = Align.Center, Gap = Spacing.Md, Wrap = true };
             checks.Shrink = 1;
             checks.Add(Check(vm, nameof(vm.EnableSignOff), "WorkingCopy.SignOff", "--signoff", () => vm.EnableSignOff, v => vm.EnableSignOff = v));
             checks.Add(Check(vm, nameof(vm.NoVerifyOnCommit), "WorkingCopy.NoVerify", "--no-verify", () => vm.NoVerifyOnCommit, v => vm.NoVerifyOnCommit = v));
@@ -506,7 +506,7 @@ namespace SourceGit.Views
             spinner.AlignSelf = Align.End;
             row.Add(spinner);
 
-            var buttons = new Row { AlignItems = Align.Center, Gap = 8 };
+            var buttons = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             // Upstream's split button: its menu commits the message as the
             // operation stopped to let it edit.
             var proceed = new SplitButton(Popups.ButtonText("Repository.Continue")) { Style = ButtonStyle.Prominent };

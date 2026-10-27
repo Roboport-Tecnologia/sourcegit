@@ -331,7 +331,7 @@ namespace SourceGit.Views
         {
             // Upstream's remote branch picker, and a button beside it that
             // asks for a new branch's name.
-            var to = new Row { Gap = 4, AlignItems = Align.Center };
+            var to = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
             var remoteBranch = Choice(App.Text("Push.To"), vm, nameof(vm.RemoteBranches), () => vm.RemoteBranches,
                 nameof(vm.SelectedRemoteBranch), b => b.Name, () => vm.SelectedRemoteBranch, b => vm.SelectedRemoteBranch = b);
             remoteBranch.Grow = 1;
@@ -367,11 +367,11 @@ namespace SourceGit.Views
         {
             var vm = new ViewModels.PushToNewBranch(push.SelectedRemote.Name);
             var sheet = new Window(owner, App.Text("PushToNewBranch"), 400);
-            var column = new Column { Padding = 20, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Xl, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Add(new Text(App.Text("PushToNewBranch")) { Style = TextStyle.Headline });
             column.Add(new Text(App.Text("PushToNewBranch.Title")));
             // Upstream shows the remote inside the field, before the name.
-            var row = new Row { Gap = 4, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
             var remote = new Text($"{vm.Remote}/") { Color = Color.SecondaryLabel };
             remote.Shrink = 0;
             row.Add(remote);
@@ -382,7 +382,7 @@ namespace SourceGit.Views
             var errors = new Text { Style = TextStyle.Caption, IsVisible = false };
             column.Add(errors);
 
-            var buttons = new Row { Gap = 8, Justify = Justify.End };
+            var buttons = new Row { Gap = Spacing.Sm, Justify = Justify.End };
             var cancel = new Button(ButtonText("Cancel")) { Role = ButtonRole.Cancel };
             cancel.Click += sheet.Destroy;
             var sure = new Button(ButtonText("Sure")) { Role = ButtonRole.Default };
@@ -407,7 +407,7 @@ namespace SourceGit.Views
         private static Node DeleteBranchForm(ViewModels.DeleteBranch vm)
         {
             var target = vm.Target;
-            var branch = new Row { Gap = 8, AlignItems = Align.Center };
+            var branch = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             branch.Add(RefLabel(target));
             if (target.IsTrackStatusVisible)
                 branch.Add(new Text(target.TrackStatusDescription) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
@@ -437,7 +437,7 @@ namespace SourceGit.Views
 
         private static Column Rows(params (string Label, Node Control)[] rows)
         {
-            var column = new Column { Gap = 8, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
             foreach (var (label, control) in rows)
                 column.Add(Field(label, control));
             return column;
@@ -477,7 +477,7 @@ namespace SourceGit.Views
 
         private static Row IconLabel(string icon, string text)
         {
-            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             row.Add(new Icon(Icons.Get(icon)) { Size = 14 });
             row.Add(new Text(text) { MaxLines = 1 });
             return row;
@@ -485,7 +485,7 @@ namespace SourceGit.Views
 
         private static Row CommitLabel(Models.Commit commit)
         {
-            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             row.Add(new Icon(Icons.Get("Commit")) { Size = 14 });
             row.Add(new Text(ShortSha(commit.SHA)) { Style = TextStyle.Monospace, Color = s_sha });
             var subject = new Text(commit.Subject) { MaxLines = 1 };
@@ -507,7 +507,7 @@ namespace SourceGit.Views
                 _ => ((Models.Branch)t).FullName,
             }, t =>
             {
-                var row = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 6) };
+                var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
                 row.Height = 26;
                 row.Add(RefLabel(t));
                 if (trackStatus && t is Models.Branch { IsTrackStatusVisible: true } branch)
@@ -598,7 +598,7 @@ namespace SourceGit.Views
         /// the platform's warning colour.</summary>
         private static Row Warning(string text)
         {
-            var row = new Row { Gap = 8, AlignItems = Align.Start };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Start };
             row.Add(new Icon(Icons.Get("Error")) { Size = 14, Color = Color.Warning });
             var message = new Text(text) { Color = Color.Warning };
             message.Shrink = 1;
@@ -612,7 +612,7 @@ namespace SourceGit.Views
         /// opens: a spinner while it runs, then whether it conflicts.</summary>
         private static Row Testing(INotifyPropertyChanged vm, string property, Func<(Tested State, string Text)> get)
         {
-            var row = new Row { Gap = 8, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
             var spinner = new Spinner();
             var fine = new Icon(Icons.Get("CheckCircled")) { Size = 14, Color = Color.Success };
             var conflicts = new Icon(Icons.Get("Error")) { Size = 14, Color = Color.Warning };
@@ -637,7 +637,7 @@ namespace SourceGit.Views
         private static Row SaveField(Window sheet, INotifyPropertyChanged vm, string property, Func<string> get, Action<string> set,
             string placeholder)
         {
-            var row = new Row { Gap = 4, AlignItems = Align.Center };
+            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
             var input = TextField(sheet, vm, property, get, set, placeholder);
             input.Grow = 1;
             var browse = new Button("…");

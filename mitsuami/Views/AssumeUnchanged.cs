@@ -21,11 +21,11 @@ namespace SourceGit.Views
             sheet.Closed += () => Shown = null;
 
             // Upstream's fixed size: the list fills it.
-            var column = new Column { Padding = 16, Gap = 12, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Md, AlignItems = Align.Stretch };
             column.Grow = 1;
             column.Add(new Text(title) { Style = TextStyle.Headline });
 
-            var area = new Column { AlignItems = Align.Stretch, Justify = Justify.Center, Gap = 16 };
+            var area = new Column { AlignItems = Align.Stretch, Justify = Justify.Center, Gap = Spacing.Lg };
             area.Grow = 1;
             area.MinHeight = 0;
             var files = new ListView<string>(file => file, file => Row(vm, file), itemAnimations: false)
@@ -64,7 +64,7 @@ namespace SourceGit.Views
         /// button that stops assuming it unchanged.</summary>
         private static Node Row(ViewModels.AssumeUnchangedManager vm, string file)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4, 0, 8) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Sm) };
             row.MinHeight = 26;
             row.Add(new Icon(Icons.Get("File")) { Size = 14 });
             var path = new Text(file) { MaxLines = 1 };

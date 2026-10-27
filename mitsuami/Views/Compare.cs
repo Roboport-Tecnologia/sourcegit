@@ -34,9 +34,9 @@ namespace SourceGit.Views
                     Shown = null;
             };
 
-            var column = new Column { Padding = 16, Gap = 8, AlignItems = Align.Stretch };
+            var column = new Column { Padding = Spacing.Lg, Gap = Spacing.Sm, AlignItems = Align.Stretch };
             column.Grow = 1;
-            var header = new Row { AlignItems = Align.Center, Gap = 12 };
+            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Md };
             header.Add(Side(vm, nameof(vm.BaseHead), () => vm.BaseHead, () => vm.BaseName));
             var swap = new Button(App.Text("Diff.SwapCommits"))
             {
@@ -57,7 +57,7 @@ namespace SourceGit.Views
             var tabs = new Tabs();
             tabs.Grow = 1;
             tabs.MinHeight = 0;
-            var changes = new Column { AlignItems = Align.Stretch, Padding = 8 };
+            var changes = new Column { AlignItems = Align.Stretch, Padding = Spacing.Sm };
             changes.Add(CommitChanges.Pane(vm, vm.GetAbsPath,
                 nameof(vm.SearchFilter), () => vm.SearchFilter, v => vm.SearchFilter = v,
                 nameof(vm.VisibleChanges), () => vm.VisibleChanges,
@@ -78,7 +78,7 @@ namespace SourceGit.Views
         /// or tag's name, its SHA (a click goes to it), time and subject.</summary>
         private static Node Side(ViewModels.Compare vm, string property, Func<Models.Commit> head, Func<string> name)
         {
-            var holder = new Column { AlignItems = Align.Stretch, Gap = 4 };
+            var holder = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             holder.Grow = 1;
             holder.MinWidth = 0;
             Bind.OneWay(vm, property, head, commit =>
@@ -87,7 +87,7 @@ namespace SourceGit.Views
                     child.Destroy();
                 if (commit == null)
                     return;
-                var top = new Row { AlignItems = Align.Center, Gap = 8 };
+                var top = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
                 top.Add(new Avatar(16, menu: false) { User = commit.Author }.View);
                 var author = new Text(commit.Author.Name) { MaxLines = 1 };
                 author.Shrink = 1;
@@ -110,7 +110,7 @@ namespace SourceGit.Views
         /// has, then the right side's, and the tip about cherry-picking.</summary>
         private static Node Commits(ViewModels.Compare vm)
         {
-            var page = new Column { AlignItems = Align.Stretch, Gap = 6, Padding = 8 };
+            var page = new Column { AlignItems = Align.Stretch, Gap = Spacing.Sm, Padding = Spacing.Sm };
             page.Grow = 1;
             Add("Compare.Commits.LeftOnly", nameof(vm.LeftOnlyCommits), () => vm.LeftOnlyCommits, () => vm.BaseName, () => vm.BaseHead);
             Add("Compare.Commits.RightOnly", nameof(vm.RightOnlyCommits), () => vm.RightOnlyCommits, () => vm.ToName, () => vm.ToHead);
@@ -119,7 +119,7 @@ namespace SourceGit.Views
 
             void Add(string title, string property, Func<List<Models.Commit>> commits, Func<string> name, Func<Models.Commit> side)
             {
-                var heading = new Row { AlignItems = Align.Center, Gap = 6 };
+                var heading = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
                 heading.Add(new Text(Popups.ButtonText(title)) { Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
                 var named = new Text { Weight = FontWeight.Bold };
                 Bind.OneWay(vm, nameof(vm.BaseName), name, n => named.Value = side()?.IsCurrentHead == true ? $"✓ {n}" : n, owner: named);
@@ -157,7 +157,7 @@ namespace SourceGit.Views
 
         private static Node Row(Models.Commit commit)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 4) };
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
             row.Height = 28;
             row.Add(new Avatar(16, menu: false) { User = commit.Author }.View);
             var subject = new Text(commit.Subject) { MaxLines = 1 };
