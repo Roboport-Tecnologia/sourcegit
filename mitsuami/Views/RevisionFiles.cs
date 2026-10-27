@@ -19,7 +19,7 @@ namespace SourceGit.Views
     public sealed class RevisionFiles
     {
         private readonly ViewModels.CommitDetail _vm;
-        private readonly ListView<ViewModels.RevisionFileTreeNode> _list;
+        private readonly TreeView<ViewModels.RevisionFileTreeNode> _list;
         private readonly List<ViewModels.RevisionFileTreeNode> _tree = [];
         private List<ViewModels.RevisionFileTreeNode> _search = [];
         private bool _loaded;
@@ -27,10 +27,22 @@ namespace SourceGit.Views
         private RevisionFiles(ViewModels.CommitDetail vm)
         {
             _vm = vm;
-            _list = new ListView<ViewModels.RevisionFileTreeNode>(n => n.Backend.Path, Row, itemAnimations: false)
+            _list = new TreeView<ViewModels.RevisionFileTreeNode>(n => n.Backend.Path, n => n.IsFolder ? n.Children : null, Row,
+                itemAnimations: false)
             {
                 Style = ListStyle.Framed,
                 EstimatedRowHeight = 24,
+            };
+            // The user opened or closed folders with the platform's
+            // disclosure or keys: each opened loads what's in it.
+            _list.ExpandedChanged += open =>
+            {
+                var now = open.ToHashSet();
+                foreach (var node in Folders(_search.Count > 0 ? _search : _tree))
+                {
+                    if (node.IsExpanded != now.Contains(node))
+                        _ = Toggle(node);
+                }
             };
             _list.SelectionChanged += selected =>
                 _ = _vm.ViewRevisionFileAsync(selected is [{ IsFolder: false } node] ? node.Backend : null);
@@ -39,7 +51,8 @@ namespace SourceGit.Views
                 if (node.IsFolder)
                     _ = Toggle(node);
             };
-            // Upstream's tree keys: → opens a folder, ← closes it.
+            // Upstream's tree keys: → opens a folder, ← closes it, where the
+            // platform's tree leaves them (GTK's take Shift).
             _list.OnKey(Shortcut.Of(Key.Right), () =>
             {
                 if (_list.SelectedItem is { IsFolder: true, IsExpanded: false } node)
@@ -157,19 +170,20 @@ namespace SourceGit.Views
 
         private void ShowRows(List<ViewModels.RevisionFileTreeNode> nodes)
         {
-            var rows = new List<ViewModels.RevisionFileTreeNode>();
-            MakeRows(rows, nodes, 0);
-            _list.Items = rows;
+            _list.Roots = nodes;
+            _list.ExpandedItems = Folders(nodes).Where(n => n.IsExpanded).ToList();
         }
 
-        private static void MakeRows(List<ViewModels.RevisionFileTreeNode> rows, List<ViewModels.RevisionFileTreeNode> nodes, int depth)
+        /// <summary>Every folder in the tree, loaded so far.</summary>
+        private static IEnumerable<ViewModels.RevisionFileTreeNode> Folders(List<ViewModels.RevisionFileTreeNode> nodes)
         {
             foreach (var node in nodes)
             {
-                node.Depth = depth;
-                rows.Add(node);
-                if (node.IsFolder && node.IsExpanded)
-                    MakeRows(rows, node.Children, depth + 1);
+                if (!node.IsFolder)
+                    continue;
+                yield return node;
+                foreach (var folder in Folders(node.Children))
+                    yield return folder;
             }
         }
 
@@ -191,37 +205,29 @@ namespace SourceGit.Views
             ShowRows(_search.Count > 0 ? _search : _tree);
         }
 
-        /// <summary>Upstream's row: indented by depth, a folder's chevron,
-        /// its icon (a folder in goldenrod, a submodule, a file) and name.</summary>
+        /// <summary>Upstream's row, after the platform's disclosure and
+        /// indent: its icon (a folder in goldenrod, open or closed as it is,
+        /// a submodule, a file) and name.</summary>
         private Node Row(ViewModels.RevisionFileTreeNode node)
         {
             var row = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 0, 0, 4) };
             row.Height = 24;
             row.ToolTip = node.Backend.Path;
-            for (var level = 0; level < node.Depth; level++)
-                row.Add(new Column { Width = Spacing.Indent });
-            var expander = new Row { Justify = Justify.Center, AlignItems = Align.Center };
-            expander.Width = 16;
-            expander.Shrink = 0;
-            if (node.IsFolder)
+            switch (node.Backend.Type)
             {
-                var button = new Button(node.Name)
-                {
-                    IconOnly = true,
-                    Style = ButtonStyle.Borderless,
-                    Icon = node.IsExpanded ? Welcome.s_open : Welcome.s_closed,
-                };
-                button.Click += () => _ = Toggle(node);
-                expander.Add(button);
+                case Models.ObjectType.Blob:
+                    row.Add(new Icon(Icons.Get("File")) { Size = 14 });
+                    break;
+                case Models.ObjectType.Commit:
+                    row.Add(new Icon(Icons.Get("Submodule")) { Size = 14 });
+                    break;
+                default:
+                    var icon = new Icon(Icons.Get("Folder")) { Size = 14, Color = s_folder };
+                    Bind.OneWay(node, nameof(node.IsExpanded), () => node.IsExpanded,
+                        open => icon.Vector = Icons.Get(open ? "Folder.Open" : "Folder"), owner: row);
+                    row.Add(icon);
+                    break;
             }
-            row.Add(expander);
-            var icon = node.Backend.Type switch
-            {
-                Models.ObjectType.Blob => new Icon(Icons.Get("File")) { Size = 14 },
-                Models.ObjectType.Commit => new Icon(Icons.Get("Submodule")) { Size = 14 },
-                _ => new Icon(Icons.Get(node.IsExpanded ? "Folder.Open" : "Folder")) { Size = 14, Color = s_folder },
-            };
-            row.Add(icon);
             var name = new Text(node.Name) { MaxLines = 1 };
             name.Shrink = 1;
             name.MinWidth = 0;

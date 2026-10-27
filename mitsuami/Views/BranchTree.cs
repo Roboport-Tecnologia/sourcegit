@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 using Mitsuamia;
 
@@ -7,15 +6,14 @@ namespace SourceGit.Views
 {
     /// <summary>
     /// Upstream's <c>BranchTree</c> (<c>Views/BranchTree.axaml</c>): a
-    /// repository's local or remote branches as a tree in a list, folders
-    /// opening and closing, each row indented a level per folder it's in.
-    /// Upstream's view flattens the view model's nodes into rows itself, and
-    /// so does this.
+    /// repository's local or remote branches as a tree, folders opening and
+    /// closing. The platform's tree draws the disclosures and indents the
+    /// levels, where upstream's view flattens its nodes into rows and draws
+    /// its own; which folders are open is the view model's, as upstream's.
     /// </summary>
     public sealed class BranchTree
     {
         private readonly ViewModels.Repository _repo;
-        private List<ViewModels.BranchTreeNode> _nodes = [];
         // A row stays while its key does, and a refresh brings new nodes:
         // its menu and keys act on the node now at its path.
         private readonly Dictionary<string, ViewModels.BranchTreeNode> _byPath = [];
@@ -24,10 +22,30 @@ namespace SourceGit.Views
         {
             _repo = repo;
             // Several at once, as upstream's: merging or deleting them.
-            View = new ListView<ViewModels.BranchTreeNode>(node => node.Path, Row, SelectionMode.Multiple, itemAnimations: false)
+            View = new TreeView<ViewModels.BranchTreeNode>(node => node.Path, node => node.IsBranch ? null : node.Children,
+                Row, SelectionMode.Multiple, itemAnimations: false)
             {
                 EstimatedRowHeight = 24,
-                Items = Rows,
+            };
+            // The user opened or closed folders: the repository remembers
+            // them, as upstream's toggle does.
+            View.ExpandedChanged += open =>
+            {
+                var now = new HashSet<string>();
+                foreach (var node in open)
+                    now.Add(node.Path);
+                // Taken first: remembering one can refresh the nodes.
+                var changed = new List<ViewModels.BranchTreeNode>();
+                foreach (var node in _byPath.Values)
+                {
+                    if (!node.IsBranch && node.IsExpanded != now.Contains(node.Path))
+                        changed.Add(node);
+                }
+                foreach (var node in changed)
+                {
+                    node.IsExpanded = !node.IsExpanded;
+                    _repo.UpdateBranchNodeIsExpanded(node);
+                }
             };
             // A branch picked goes to its head in the history, as upstream's.
             View.SelectionChanged += selected =>
@@ -60,39 +78,49 @@ namespace SourceGit.Views
             });
         }
 
-        public ListView<ViewModels.BranchTreeNode> View { get; }
+        public TreeView<ViewModels.BranchTreeNode> View { get; }
 
-        public ObservableCollection<ViewModels.BranchTreeNode> Rows { get; } = [];
-
-        /// <summary>The tree's top nodes, from the view model.</summary>
+        /// <summary>The tree's top nodes, from the view model, and the
+        /// folders it has open.</summary>
         public List<ViewModels.BranchTreeNode> Nodes
         {
             set
             {
-                _nodes = value ?? [];
-                Refresh();
+                var nodes = value ?? [];
+                _byPath.Clear();
+                var open = new List<ViewModels.BranchTreeNode>();
+                Collect(nodes, open);
+                View.Roots = nodes;
+                View.ExpandedItems = open;
             }
         }
 
-        /// <summary>Upstream's <c>ToggleNodeIsExpanded</c>: the folder's rows
-        /// come or go, and the repository remembers it.</summary>
+        /// <summary>Upstream's <c>ToggleNodeIsExpanded</c>: the folder opens
+        /// or closes, and the repository remembers it.</summary>
         public void Toggle(ViewModels.BranchTreeNode node)
         {
             node.IsExpanded = !node.IsExpanded;
             _repo.UpdateBranchNodeIsExpanded(node);
-            Refresh();
+            var open = new List<ViewModels.BranchTreeNode>();
+            foreach (var n in _byPath.Values)
+            {
+                if (!n.IsBranch && n.IsExpanded)
+                    open.Add(n);
+            }
+            View.ExpandedItems = open;
         }
 
-        private void Refresh()
+        /// <summary>Every node by its path, and the open folders.</summary>
+        private void Collect(List<ViewModels.BranchTreeNode> nodes, List<ViewModels.BranchTreeNode> open)
         {
-            var rows = new List<ViewModels.BranchTreeNode>();
-            MakeRows(rows, _nodes, 0);
-            Rows.Clear();
-            _byPath.Clear();
-            foreach (var row in rows)
+            foreach (var node in nodes)
             {
-                Rows.Add(row);
-                _byPath[row.Path] = row;
+                _byPath[node.Path] = node;
+                if (node.IsBranch)
+                    continue;
+                if (node.IsExpanded)
+                    open.Add(node);
+                Collect(node.Children, open);
             }
         }
 
@@ -140,43 +168,19 @@ namespace SourceGit.Views
                 _repo.DeleteMultipleBranches(branches, branches[0].IsLocal);
         }
 
-        private static void MakeRows(List<ViewModels.BranchTreeNode> rows, List<ViewModels.BranchTreeNode> nodes, int depth)
-        {
-            foreach (var node in nodes)
-            {
-                node.Depth = depth;
-                rows.Add(node);
-                if (node.IsExpanded && !node.IsBranch)
-                    MakeRows(rows, node.Children, depth + 1);
-            }
-        }
-
-        /// <summary>Upstream's row: 24 points high, indented by the
-        /// platform's tree indentation per level; an expander for folders in
-        /// a 16-point slot; the node's icon in an 18-point one (a remote, a
-        /// branch, the current branch's check in green, a worktree's branch
-        /// in cyan, a folder open or closed); the name, bold for the current
-        /// branch, and a folder's count in the secondary colour; then a branch's
-        /// gone upstream and tracking status at the end.</summary>
+        /// <summary>Upstream's row, after the platform's disclosure and
+        /// indent: 24 points high; the node's icon in an 18-point slot (a
+        /// remote, a branch, the current branch's check in green, a
+        /// worktree's branch in cyan, a folder open or closed); the name,
+        /// bold for the current branch, and a folder's count in the secondary
+        /// colour; then a branch's gone upstream and tracking status at the
+        /// end.</summary>
         private Node Row(ViewModels.BranchTreeNode node)
         {
             var row = new Row { AlignItems = Align.Center };
             row.Height = 24;
             var path = node.Path;
             row.ContextMenuOnOpen = () => Menu(path);
-            for (var level = 0; level < node.Depth; level++)
-                row.Add(new Column { Width = Spacing.Indent });
-
-            var expander = Slot(16);
-            if (!node.IsBranch)
-            {
-                var button = new Button(node.Name) { IconOnly = true, Style = ButtonStyle.Borderless };
-                Bind.OneWay(node, nameof(node.IsExpanded), () => node.IsExpanded,
-                    open => button.Icon = open ? Welcome.s_open : Welcome.s_closed, owner: row);
-                button.Click += () => Toggle(node);
-                expander.Add(button);
-            }
-            row.Add(expander);
 
             var mark = Slot(18);
             switch (node.Backend)

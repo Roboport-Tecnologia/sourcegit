@@ -1,17 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 using Mitsuamia;
 
 namespace SourceGit.Views
 {
     /// <summary>
-    /// Upstream's <c>ChangeCollectionView</c>: local changes in a list with
-    /// several rows selectable, as a list of paths, a grid (the file's name,
-    /// then its folder in the secondary colour) or a tree of folders that
-    /// open and close. Each change shows its status mark, the worktree's
-    /// state in the unstaged list and the index's in the staged one.
+    /// Upstream's <c>ChangeCollectionView</c>: local changes with several
+    /// rows selectable, as a list of paths, a grid (the file's name, then
+    /// its folder in the secondary colour) or the platform's tree of folders
+    /// that open and close. Each change shows its status mark, the
+    /// worktree's state in the unstaged list and the index's in the staged
+    /// one. All three are a tree: as a list or a grid, no row opens.
     /// </summary>
     public sealed class ChangeCollection
     {
@@ -20,6 +22,8 @@ namespace SourceGit.Views
 
         private readonly bool _unstaged;
         private readonly Dictionary<string, Item> _byKey = [];
+        private readonly Dictionary<ViewModels.ChangeTreeNode, Item> _byNode = [];
+        private List<Item> _roots = [];
         private Models.ChangeViewMode _mode = Models.ChangeViewMode.List;
         private bool _compactFolders;
         private List<Models.Change> _changes = [];
@@ -29,7 +33,18 @@ namespace SourceGit.Views
         public ChangeCollection(bool unstaged)
         {
             _unstaged = unstaged;
-            _list = new ListView<Item>(item => item.Key, Row, SelectionMode.Multiple, itemAnimations: false) { EstimatedRowHeight = 24 };
+            _list = new TreeView<Item>(item => item.Key, Children, Row, SelectionMode.Multiple, itemAnimations: false) { EstimatedRowHeight = 24 };
+            // The user opened or closed folders with the platform's
+            // disclosure or keys.
+            _list.ExpandedChanged += open =>
+            {
+                var now = open.ToHashSet();
+                foreach (var item in _byNode.Values)
+                {
+                    if (item.Node.IsFolder)
+                        item.Node.IsExpanded = now.Contains(item);
+                }
+            };
             _list.SelectionChanged += _ =>
             {
                 var selection = new ViewModels.ChangeSelection(Selected(_list.SelectedItems));
@@ -47,13 +62,14 @@ namespace SourceGit.Views
                 else
                     Activated?.Invoke();
             };
-            // Upstream's tree keys: ← closes a folder or goes to its parent,
-            // → opens one or goes to its first child.
+            // Upstream's tree keys, where the platform's tree leaves them
+            // (GTK's take Shift): ← closes a folder or goes to its parent, →
+            // opens one or goes to its first child.
             _list.OnKey(Shortcut.Of(Key.Left), () => Step(back: true));
             _list.OnKey(Shortcut.Of(Key.Right), () => Step(back: false));
         }
 
-        private readonly ListView<Item> _list;
+        private readonly TreeView<Item> _list;
 
         public ListView View => _list;
 
@@ -133,7 +149,7 @@ namespace SourceGit.Views
 
             // In the order the rows show them.
             var shown = new List<Models.Change>();
-            foreach (var item in _list.Items)
+            foreach (var item in Shown())
             {
                 if (item.Change != null)
                     shown.Add(item.Change);
@@ -177,40 +193,105 @@ namespace SourceGit.Views
 
         private void Refresh()
         {
-            var items = new List<Item>();
+            _byKey.Clear();
+            _byNode.Clear();
+            _roots = [];
             if (_mode == Models.ChangeViewMode.Tree)
             {
                 // Folders the user closed stay closed.
                 var folded = new HashSet<string>();
-                foreach (var item in _byKey.Values)
+                foreach (var node in Folders(_tree))
                 {
-                    if (item.Node is { IsFolder: true, IsExpanded: false } node)
+                    if (!node.IsExpanded)
                         folded.Add(node.FullPath);
                 }
                 _tree = ViewModels.ChangeTreeNode.Build(_changes, folded, _compactFolders);
-                MakeRows(items, _tree);
+                _roots = MakeItems(_tree);
             }
             else
             {
+                _tree = [];
                 foreach (var c in _changes)
-                    items.Add(new Item(ChangeKey(c), c, null));
+                {
+                    var item = new Item(ChangeKey(c), c, null);
+                    _byKey[item.Key] = item;
+                    _roots.Add(item);
+                }
             }
-
-            _byKey.Clear();
-            foreach (var item in items)
-                _byKey[item.Key] = item;
-            _list.Items = items;
+            _list.Roots = _roots;
+            ShowOpen();
             ShowSelection();
         }
 
-        private void MakeRows(List<Item> rows, List<ViewModels.ChangeTreeNode> nodes)
+        /// <summary>The tree's nodes as rows' items, all the way down.</summary>
+        private List<Item> MakeItems(List<ViewModels.ChangeTreeNode> nodes)
+        {
+            var items = new List<Item>();
+            foreach (var node in nodes)
+            {
+                var item = new Item(node.IsFolder ? FolderKey(node) : ChangeKey(node.Change), node.Change, node);
+                _byKey[item.Key] = item;
+                _byNode[node] = item;
+                items.Add(item);
+                if (node.IsFolder)
+                    MakeItems(node.Children);
+            }
+            return items;
+        }
+
+        private IReadOnlyList<Item> Children(Item item)
+        {
+            if (item.Node is not { IsFolder: true } folder)
+                return null;
+            var children = new List<Item>();
+            foreach (var node in folder.Children)
+            {
+                if (_byNode.TryGetValue(node, out var child))
+                    children.Add(child);
+            }
+            return children;
+        }
+
+        private static IEnumerable<ViewModels.ChangeTreeNode> Folders(List<ViewModels.ChangeTreeNode> nodes)
         {
             foreach (var node in nodes)
             {
-                rows.Add(new Item(node.IsFolder ? FolderKey(node) : ChangeKey(node.Change), node.Change, node));
-                if (node.IsFolder && node.IsExpanded)
-                    MakeRows(rows, node.Children);
+                if (!node.IsFolder)
+                    continue;
+                yield return node;
+                foreach (var folder in Folders(node.Children))
+                    yield return folder;
             }
+        }
+
+        /// <summary>The tree shows the folders open that are.</summary>
+        private void ShowOpen()
+        {
+            var open = new List<Item>();
+            foreach (var node in Folders(_tree))
+            {
+                if (node.IsExpanded && _byNode.TryGetValue(node, out var item))
+                    open.Add(item);
+            }
+            _list.ExpandedItems = open;
+        }
+
+        /// <summary>The rows that show, in order: the top ones, and the
+        /// children of open folders.</summary>
+        private List<Item> Shown()
+        {
+            var shown = new List<Item>();
+            void Walk(IEnumerable<Item> items)
+            {
+                foreach (var item in items)
+                {
+                    shown.Add(item);
+                    if (item.Node is { IsFolder: true, IsExpanded: true } && Children(item) is { } children)
+                        Walk(children);
+                }
+            }
+            Walk(_roots);
+            return shown;
         }
 
         /// <summary>A row stays while its key does: the key has the view
@@ -219,8 +300,7 @@ namespace SourceGit.Views
         private string ChangeKey(Models.Change c) =>
             $"{_mode}\n{c.Path}\n{(_unstaged ? c.WorkTree : c.Index)}\n{c.ConflictReason}";
 
-        /// <summary>A folder's row shows whether it's open.</summary>
-        private static string FolderKey(ViewModels.ChangeTreeNode node) => $"{(node.IsExpanded ? "open" : "closed")}\n{node.FullPath}";
+        private static string FolderKey(ViewModels.ChangeTreeNode node) => $"folder\n{node.FullPath}";
 
         private void ShowSelection()
         {
@@ -228,7 +308,7 @@ namespace SourceGit.Views
             foreach (var c in _selection.Changes)
                 keys.Add(ChangeKey(c));
             var selected = new List<Item>();
-            foreach (var item in _list.Items)
+            foreach (var item in _byKey.Values)
             {
                 if (item.Change != null && keys.Contains(item.Key))
                     selected.Add(item);
@@ -248,32 +328,14 @@ namespace SourceGit.Views
         /// come or go.</summary>
         private void Toggle(string folder)
         {
-            Item toggled = null;
-            foreach (var item in _byKey.Values)
+            foreach (var node in Folders(_tree))
             {
-                if (item.Node is { IsFolder: true } n && n.FullPath == folder)
-                    toggled = item;
-            }
-            if (toggled == null)
+                if (node.FullPath != folder)
+                    continue;
+                node.IsExpanded = !node.IsExpanded;
+                ShowOpen();
                 return;
-            // The rows selected stay so, the folder too under its new key.
-            var selected = new HashSet<string>();
-            foreach (var item in _list.SelectedItems)
-                selected.Add(item.Node is { IsFolder: true } n ? n.FullPath : item.Key);
-            toggled.Node.IsExpanded = !toggled.Node.IsExpanded;
-
-            var items = new List<Item>();
-            MakeRows(items, _tree);
-            _byKey.Clear();
-            var reselected = new List<Item>();
-            foreach (var item in items)
-            {
-                _byKey[item.Key] = item;
-                if (selected.Contains(item.Node is { IsFolder: true } n ? n.FullPath : item.Key))
-                    reselected.Add(item);
             }
-            _list.Items = items;
-            _list.SelectedItems = reselected;
         }
 
         private void Step(bool back)
@@ -289,8 +351,8 @@ namespace SourceGit.Views
                 else
                 {
                     // The nearest row above that's less deep.
-                    var items = _list.Items;
-                    for (var i = IndexOf(node) - 1; i >= 0; i--)
+                    var items = Shown();
+                    for (var i = IndexOf(items, node) - 1; i >= 0; i--)
                     {
                         if (items[i].Node is { } parent && parent.Depth < node.Depth)
                         {
@@ -304,14 +366,13 @@ namespace SourceGit.Views
             {
                 if (!node.IsExpanded)
                     Toggle(node.FullPath);
-                else if (IndexOf(node) + 1 is var next && next < _list.Items.Count && node.Children.Count > 0)
-                    Pick(_list.Items[next]);
+                else if (Shown() is var items && IndexOf(items, node) + 1 is var next && next < items.Count && node.Children.Count > 0)
+                    Pick(items[next]);
             }
         }
 
-        private int IndexOf(ViewModels.ChangeTreeNode node)
+        private static int IndexOf(List<Item> items, ViewModels.ChangeTreeNode node)
         {
-            var items = _list.Items;
             for (var i = 0; i < items.Count; i++)
             {
                 if (items[i].Node == node)
@@ -346,37 +407,17 @@ namespace SourceGit.Views
             return selection.Count > 0 ? Menu(selection) : [];
         }
 
-        /// <summary>Upstream's rows, 24 points high. A change: its status
-        /// mark, a conflict's marker in bold dark orange, and its path (the
-        /// list), its name then its folder (the grid) or its name (the tree,
-        /// indented a level per folder). A folder: an expander and the
-        /// folder's icon in goldenrod.</summary>
+        /// <summary>Upstream's rows, 24 points high, after the platform's
+        /// disclosure and indent in the tree. A change: its status mark, a
+        /// conflict's marker in bold dark orange, and its path (the list), its
+        /// name then its folder (the grid) or its name (the tree). A folder:
+        /// its icon in goldenrod, open or closed as it is.</summary>
         private Node Row(Item item)
         {
             var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 0, 0, 4) };
             row.Height = 24;
             var key = item.Key;
             row.ContextMenuOnOpen = () => MenuFor(key);
-
-            if (item.Node is { } node)
-            {
-                for (var level = 0; level < node.Depth; level++)
-                    row.Add(new Column { Width = Spacing.Indent });
-                var expander = Slot(16);
-                if (node.IsFolder)
-                {
-                    var button = new Button(node.DisplayName)
-                    {
-                        IconOnly = true,
-                        Style = ButtonStyle.Borderless,
-                        Icon = node.IsExpanded ? Welcome.s_open : Welcome.s_closed,
-                    };
-                    var path = node.FullPath;
-                    button.Click += () => Toggle(path);
-                    expander.Add(button);
-                }
-                row.Add(expander);
-            }
 
             if (item.Change is { } change)
             {
@@ -407,18 +448,14 @@ namespace SourceGit.Views
             }
             else if (item.Node is { } folder)
             {
-                row.Add(new Icon(Icons.Get(folder.IsExpanded ? "Folder.Open" : "Folder")) { Size = 14, Color = s_folder });
+                var icon = new Icon(Icons.Get("Folder")) { Size = 14, Color = s_folder };
+                Bind.OneWay(folder, nameof(folder.IsExpanded), () => folder.IsExpanded,
+                    open => icon.Vector = Icons.Get(open ? "Folder.Open" : "Folder"), owner: row);
+                row.Add(icon);
                 row.Add(new Text(folder.DisplayName) { MaxLines = 1 });
                 row.ToolTip = folder.FullPath;
             }
             return row;
-
-            static Mitsuamia.Row Slot(float width)
-            {
-                var slot = new Mitsuamia.Row { AlignItems = Align.Center, Justify = Justify.Center };
-                slot.Width = width;
-                return slot;
-            }
         }
 
         private static readonly Color s_conflict = Color.Rgba(255, 140, 0);

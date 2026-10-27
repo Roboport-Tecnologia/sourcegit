@@ -264,15 +264,33 @@ namespace SourceGit.Views
             var form = new Column { Gap = 8, AlignItems = Align.Stretch };
             form.Add(target);
 
-            // Upstream's framed list of the groups, ROOT first, each open,
+            // Upstream's framed tree of the groups, ROOT first, each open,
             // 28 to 400 points high: as high as its rows, up to that.
-            var groups = new ListView<ViewModels.RepositoryNode>(node => node.Id, GroupRow, itemAnimations: false)
+            // Upstream flattens them by depth; each row's parent is the
+            // nearest one above it a level up.
+            var children = new Dictionary<ViewModels.RepositoryNode, List<ViewModels.RepositoryNode>>();
+            var path = new List<ViewModels.RepositoryNode>();
+            foreach (var row in vm.Rows)
+            {
+                while (path.Count > row.Depth)
+                    path.RemoveAt(path.Count - 1);
+                if (path.Count > 0)
+                {
+                    if (!children.TryGetValue(path[^1], out var siblings))
+                        children[path[^1]] = siblings = [];
+                    siblings.Add(row);
+                }
+                path.Add(row);
+            }
+            var groups = new TreeView<ViewModels.RepositoryNode>(node => node.Id, node => children.GetValueOrDefault(node), GroupRow,
+                itemAnimations: false)
             {
                 Style = ListStyle.Framed,
                 EstimatedRowHeight = 30,
-                Items = vm.Rows,
+                Roots = vm.Rows.Where(r => r.Depth == 0).ToList(),
                 SelectedItem = vm.Selected,
             };
+            groups.ExpandedItems = vm.Rows;
             groups.Height = Math.Clamp(vm.Rows.Count * 30 + 8, 28, 400);
             groups.SelectionChanged += selected =>
             {
@@ -282,15 +300,12 @@ namespace SourceGit.Views
             form.Add(groups);
             return form;
 
-            // A group's row: indented a level per group it's in, an open
-            // expander (inert: every group shows), its folder, its name.
+            // A group's row, after the platform's disclosure and indent: its
+            // folder and its name.
             static Node GroupRow(ViewModels.RepositoryNode node)
             {
                 var row = new Row { AlignItems = Align.Center };
                 row.Height = 30;
-                for (var level = 0; level < node.Depth; level++)
-                    row.Add(new Column { Width = Spacing.Indent });
-                row.Add(Slot(16, new Icon(Welcome.s_open) { Size = 16 }));
                 row.Add(Slot(18, new Icon(Icons.Get("Folder")) { Size = 14 }));
                 row.Add(new Text(node.Name));
                 return row;

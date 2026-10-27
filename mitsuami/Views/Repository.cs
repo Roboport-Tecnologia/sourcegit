@@ -337,26 +337,49 @@ namespace SourceGit.Views
                     HeaderButton("Remote.Add", "Repository.Remotes.Add", vm.AddRemote)], branches: true);
 
             // Several at once, as upstream's: deleting them. Upstream's
-            // visible tags (the filter applied), as a list or a tree whose
-            // folders open and close.
-            ListView<object> tags = null;
-            tags = new ListView<object>(TagKey, item => TagRow(vm, item, () => TagsMenu(vm, tags, item)),
+            // visible tags (the filter applied), as a list or the platform's
+            // tree, whose folders upstream remembers open.
+            TreeView<object> tags = null;
+            tags = new TreeView<object>(TagKey,
+                item => item is ViewModels.TagTreeNode { IsFolder: true } n ? n.Children.Cast<object>().ToList() : null,
+                item => TagRow(vm, item, () => TagsMenu(vm, tags, item)),
                 SelectionMode.Multiple, itemAnimations: false) { EstimatedRowHeight = 24 };
-            Bind.OneWay(vm, nameof(vm.VisibleTags), () => vm.VisibleTags, visible => tags.Items = visible switch
+            Bind.OneWay(vm, nameof(vm.VisibleTags), () => vm.VisibleTags, visible =>
             {
-                ViewModels.TagCollectionAsList list => list.TagItems.Cast<object>().ToList(),
-                ViewModels.TagCollectionAsTree tree => new Rows<ViewModels.TagTreeNode>(tree.Rows),
-                _ => [],
+                switch (visible)
+                {
+                    case ViewModels.TagCollectionAsTree tree:
+                        ShowTree(tags, tree.Tree, n => n.IsFolder, n => n.IsExpanded, n => n.Children);
+                        break;
+                    case ViewModels.TagCollectionAsList list:
+                        ShowTree(tags, list.TagItems, _ => false, _ => false, _ => []);
+                        break;
+                    default:
+                        ShowTree<object>(tags, [], _ => false, _ => false, _ => []);
+                        break;
+                }
             }, owner: sidebar);
             tags.SelectionChanged += selected =>
             {
                 if (selected is [var item] && TagOf(item) is { } tag)
                     vm.NavigateToCommit(tag.SHA);
             };
+            void ToggleTag(ViewModels.TagTreeNode folder)
+            {
+                if (vm.VisibleTags is not ViewModels.TagCollectionAsTree tree)
+                    return;
+                tree.ToggleExpand(folder);
+                ShowTree(tags, tree.Tree, n => n.IsFolder, n => n.IsExpanded, n => n.Children);
+            }
             tags.Activated += item =>
             {
-                if (item is ViewModels.TagTreeNode { IsFolder: true } folder && vm.VisibleTags is ViewModels.TagCollectionAsTree tree)
-                    tree.ToggleExpand(folder);
+                if (item is ViewModels.TagTreeNode { IsFolder: true } folder)
+                    ToggleTag(folder);
+            };
+            tags.ExpandedChanged += open =>
+            {
+                if (vm.VisibleTags is ViewModels.TagCollectionAsTree tree)
+                    Follow(open, tree.Tree, n => n.IsFolder, n => n.IsExpanded, n => n.Children, tree.ToggleExpand);
             };
             Group(sidebar, vm, "Tags", "Repository.Tags", nameof(vm.Tags), () => $"({vm.Tags?.Count ?? 0})",
                 nameof(vm.IsTagGroupExpanded), () => vm.IsTagGroupExpanded, v => vm.IsTagGroupExpanded = v,
@@ -367,17 +390,36 @@ namespace SourceGit.Views
                     HeaderButton("Tag.Add", "Repository.Tags.Add", vm.CreateNewTag)]);
 
             // Upstream's visible submodules, as a list or a tree.
-            var submodules = new ListView<object>(SubmoduleKey, item => SubmoduleRow(vm, item), itemAnimations: false) { EstimatedRowHeight = 24 };
-            Bind.OneWay(vm, nameof(vm.VisibleSubmodules), () => vm.VisibleSubmodules, visible => submodules.Items = visible switch
+            var submodules = new TreeView<object>(SubmoduleKey,
+                item => item is ViewModels.SubmoduleTreeNode { IsFolder: true } n ? n.Children.Cast<object>().ToList() : null,
+                item => SubmoduleRow(vm, item), itemAnimations: false) { EstimatedRowHeight = 24 };
+            Bind.OneWay(vm, nameof(vm.VisibleSubmodules), () => vm.VisibleSubmodules, visible =>
             {
-                ViewModels.SubmoduleCollectionAsList list => list.Submodules.Cast<object>().ToList(),
-                ViewModels.SubmoduleCollectionAsTree tree => new Rows<ViewModels.SubmoduleTreeNode>(tree.Rows),
-                _ => [],
+                switch (visible)
+                {
+                    case ViewModels.SubmoduleCollectionAsTree tree:
+                        ShowTree(submodules, tree.Tree, n => n.IsFolder, n => n.IsExpanded, n => n.Children);
+                        break;
+                    case ViewModels.SubmoduleCollectionAsList list:
+                        ShowTree(submodules, list.Submodules, _ => false, _ => false, _ => []);
+                        break;
+                    default:
+                        ShowTree<object>(submodules, [], _ => false, _ => false, _ => []);
+                        break;
+                }
             }, owner: sidebar);
             submodules.Activated += item =>
             {
                 if (item is ViewModels.SubmoduleTreeNode { IsFolder: true } folder && vm.VisibleSubmodules is ViewModels.SubmoduleCollectionAsTree tree)
+                {
                     tree.ToggleExpand(folder);
+                    ShowTree(submodules, tree.Tree, n => n.IsFolder, n => n.IsExpanded, n => n.Children);
+                }
+            };
+            submodules.ExpandedChanged += open =>
+            {
+                if (vm.VisibleSubmodules is ViewModels.SubmoduleCollectionAsTree tree)
+                    Follow(open, tree.Tree, n => n.IsFolder, n => n.IsExpanded, n => n.Children, tree.ToggleExpand);
             };
             Group(sidebar, vm, "Submodules", "Repository.Submodules", nameof(vm.Submodules), () => $"({vm.Submodules?.Count ?? 0})",
                 nameof(vm.IsSubmoduleGroupExpanded), () => vm.IsSubmoduleGroupExpanded, v => vm.IsSubmoduleGroupExpanded = v,
@@ -463,9 +505,14 @@ namespace SourceGit.Views
             // up their room first, down to 120 points each, and the branches
             // share what's left; each list then scrolls.
             // An open group without rows shows nothing under its header.
+            // Upstream's rows are 24 points. WinUI's tree rows with their
+            // check boxes, the branches' several at once, are 28 with 2 of
+            // margin above and below, and at 24 the lists cut off their
+            // last row.
+            var rowHeight = branches && OperatingSystem.IsWindows() ? 32 : 24;
             void Fit()
             {
-                var rows = list.ItemCount * 24;
+                var rows = list.ItemCount * rowHeight;
                 list.Height = rows;
                 list.MinHeight = branches ? 0 : Math.Min(120, rows);
                 list.Shrink = branches ? 1 : 1000;
@@ -524,7 +571,7 @@ namespace SourceGit.Views
         /// key now.</summary>
         /// <summary>The tags selected, the row right-clicked among them (or
         /// alone if it isn't), as upstream's menus take them.</summary>
-        private static IReadOnlyList<MenuEntry> TagsMenu(ViewModels.Repository vm, ListView<object> list, object item)
+        private static IReadOnlyList<MenuEntry> TagsMenu(ViewModels.Repository vm, TreeView<object> list, object item)
         {
             if (TagOf(item) is not { } clicked)
                 return [];
@@ -578,41 +625,63 @@ namespace SourceGit.Views
             return toggle;
         }
 
-        /// <summary>A tree's rows as a list's items: upstream's rows, which
-        /// grow and shrink as folders open and close.</summary>
-        private sealed class Rows<T>(Avalonia.Collections.AvaloniaList<T> rows) : IReadOnlyList<object>, System.Collections.Specialized.INotifyCollectionChanged
+        /// <summary>Shows upstream's nodes in the platform's tree: the top
+        /// ones, their children, and the folders open.</summary>
+        private static void ShowTree<T>(TreeView<object> view, IEnumerable<T> roots, Func<T, bool> isFolder,
+            Func<T, bool> isOpen, Func<T, IEnumerable<T>> children)
         {
-            public object this[int index] => rows[index];
-            public int Count => rows.Count;
-            public IEnumerator<object> GetEnumerator() => rows.Cast<object>().GetEnumerator();
-            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-
-            public event System.Collections.Specialized.NotifyCollectionChangedEventHandler CollectionChanged
+            var open = new List<object>();
+            void Collect(IEnumerable<T> nodes)
             {
-                add => rows.CollectionChanged += value;
-                remove => rows.CollectionChanged -= value;
+                foreach (var node in nodes)
+                {
+                    if (!isFolder(node))
+                        continue;
+                    if (isOpen(node))
+                        open.Add(node);
+                    Collect(children(node));
+                }
             }
+            Collect(roots);
+            view.Roots = roots.Cast<object>().ToList();
+            view.ExpandedItems = open;
         }
 
-        /// <summary>A tag's row, or a folder of tags: indented by its depth
-        /// in the tree, a folder's chevron and its count.</summary>
+        /// <summary>Upstream's folders follow the user's opening and closing
+        /// in the platform's tree: each one that changed is toggled, as
+        /// upstream's toggle does, which remembers it.</summary>
+        private static void Follow<T>(IReadOnlyList<object> open, IEnumerable<T> roots, Func<T, bool> isFolder,
+            Func<T, bool> isOpen, Func<T, IEnumerable<T>> children, Action<T> toggle)
+        {
+            var now = open.ToHashSet();
+            var changed = new List<T>();
+            void Collect(IEnumerable<T> nodes)
+            {
+                foreach (var node in nodes)
+                {
+                    if (!isFolder(node))
+                        continue;
+                    if (isOpen(node) != now.Contains(node))
+                        changed.Add(node);
+                    Collect(children(node));
+                }
+            }
+            Collect(roots);
+            foreach (var node in changed)
+                toggle(node);
+        }
+
+        /// <summary>A tag's row, or a folder of tags with its count, after
+        /// the platform's disclosure and indent.</summary>
         private static Node TagRow(ViewModels.Repository vm, object item, Func<IReadOnlyList<MenuEntry>> menu)
         {
             var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 4, 0, 16) };
             row.Height = 24;
             row.ContextMenuOnOpen = menu;
-            if (item is ViewModels.TagTreeNode node)
+            if (item is ViewModels.TagTreeNode { IsFolder: true } node)
             {
-                for (var level = 0; level < node.Depth; level++)
-                    row.Add(new Column { Width = Spacing.Indent });
-                if (node.IsFolder)
-                {
-                    Folder(row, node, () => node.IsExpanded, node.FullPath.Split('/')[^1], node.TagsCount,
-                        () => (vm.VisibleTags as ViewModels.TagCollectionAsTree)?.ToggleExpand(node));
-                    return row;
-                }
-                // Under the folders' chevrons, as the branch tree's rows.
-                row.Add(new Column { Width = 16 });
+                Folder(row, node, () => node.IsExpanded, node.FullPath.Split('/')[^1], node.TagsCount);
+                return row;
             }
             var tag = TagOf(item);
             row.Add(new Icon(Icons.Get("Tag")) { Size = 12 });
@@ -632,21 +701,14 @@ namespace SourceGit.Views
             return row;
         }
 
-        /// <summary>A folder of a sidebar tree: its chevron, which opens or
-        /// closes it, its icon, name and count.</summary>
-        private static void Folder(Container row, System.ComponentModel.INotifyPropertyChanged node, Func<bool> open, string name, string count, Action toggle)
+        /// <summary>A folder of a sidebar tree: its icon, open or closed as
+        /// it is, its name and count.</summary>
+        private static void Folder(Container row, System.ComponentModel.INotifyPropertyChanged node, Func<bool> open, string name, string count)
         {
-            var button = new Button(name) { IconOnly = true, Style = ButtonStyle.Borderless };
-            button.Click += toggle;
-            row.Add(button);
             var icon = new Icon(Icons.Get("Folder")) { Size = 12 };
             row.Add(icon);
             // The row stays as the folder opens and closes.
-            Bind.OneWay(node, "IsExpanded", open, now =>
-            {
-                button.Icon = now ? Welcome.s_open : Welcome.s_closed;
-                icon.Vector = Icons.Get(now ? "Folder.Open" : "Folder");
-            }, owner: row);
+            Bind.OneWay(node, "IsExpanded", open, now => icon.Vector = Icons.Get(now ? "Folder.Open" : "Folder"), owner: row);
             var text = new Text(name) { MaxLines = 1 };
             text.Shrink = 1;
             text.MinWidth = 0;
@@ -660,17 +722,10 @@ namespace SourceGit.Views
         {
             var row = new Row { AlignItems = Align.Center, Gap = 6, Padding = new Thickness(0, 0, 0, 16) };
             row.Height = 24;
-            if (item is ViewModels.SubmoduleTreeNode node)
+            if (item is ViewModels.SubmoduleTreeNode { IsFolder: true } node)
             {
-                for (var level = 0; level < node.Depth; level++)
-                    row.Add(new Column { Width = Spacing.Indent });
-                if (node.IsFolder)
-                {
-                    Folder(row, node, () => node.IsExpanded, node.FullPath.Split('/')[^1], node.ChildCounter,
-                        () => (vm.VisibleSubmodules as ViewModels.SubmoduleCollectionAsTree)?.ToggleExpand(node));
-                    return row;
-                }
-                row.Add(new Column { Width = 16 });
+                Folder(row, node, () => node.IsExpanded, node.FullPath.Split('/')[^1], node.ChildCounter);
+                return row;
             }
             var submodule = item switch
             {

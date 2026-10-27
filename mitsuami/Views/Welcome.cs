@@ -41,17 +41,41 @@ namespace SourceGit.Views
             Bind.Search(search, vm, nameof(vm.SearchFilter), () => vm.SearchFilter, v => vm.SearchFilter = v, owner: page);
             middle.Add(search);
 
-            // Rows dragged onto a group go in it; onto a repository, in its
-            // group; onto the list's empty part, at the top, as upstream's.
+            // The groups and repositories, in the platform's tree: the ones
+            // the search leaves, and the groups open, as upstream's rows
+            // show them, read again whenever upstream makes its rows again.
+            // Rows dragged onto a group go in it; between rows, in the group
+            // of the row they land before (the platform's tree takes drops
+            // onto folders only, so upstream's drop onto a repository is
+            // this); onto the tree's empty part, at the top, as upstream's.
             // Rows just show, as upstream's do: WinUI's list slid and faded
             // them all in again on each move, expand and search.
-            var list = new ListView<ViewModels.RepositoryNode>(node => node.Id, node => Row(vm, node),
-                moves: RowMoves.OntoRows, itemAnimations: false)
+            var list = new TreeView<ViewModels.RepositoryNode>(node => node.Id,
+                node => node.IsRepository ? null : node.SubNodes.Where(n => n.IsVisible).ToList(), node => Row(vm, node),
+                moves: RowMoves.OntoRows | RowMoves.BetweenRows, itemAnimations: false)
             {
                 EstimatedRowHeight = 30,
-                Items = vm.Rows,
             };
             list.Grow = 1;
+            void Show()
+            {
+                var roots = ViewModels.Preferences.Instance.RepositoryNodes.Where(n => n.IsVisible).ToList();
+                list.Roots = roots;
+                list.ExpandedItems = Groups(roots).Where(n => n.IsExpanded).ToList();
+            }
+            Show();
+            NotifyCollectionChangedEventHandler rows = (_, _) => Show();
+            vm.Rows.CollectionChanged += rows;
+            list.Forgotten += () => vm.Rows.CollectionChanged -= rows;
+            // The user opened or closed groups: upstream's toggle remembers
+            // them, and makes its rows again.
+            list.ExpandedChanged += open =>
+            {
+                var now = open.ToHashSet();
+                var changed = Groups(ViewModels.Preferences.Instance.RepositoryNodes).Where(n => n.IsExpanded != now.Contains(n)).ToList();
+                foreach (var node in changed)
+                    vm.ToggleNodeIsExpanded(node);
+            };
             // A repository opens in a tab, a group opens or closes, as
             // upstream's double-click does.
             list.Activated += node =>
@@ -63,9 +87,12 @@ namespace SourceGit.Views
             };
             list.Moved += (nodes, drop) =>
             {
-                var to = drop.Kind == RowDropKind.End ? null : drop.Item;
-                if (to is { IsRepository: true })
-                    to = vm.FindParentGroup(to);
+                var to = drop.Kind switch
+                {
+                    RowDropKind.On => drop.Item,
+                    RowDropKind.Before => vm.FindParentGroup(drop.Item),
+                    _ => null,
+                };
                 foreach (var node in nodes)
                 {
                     if (node != to)
@@ -81,6 +108,19 @@ namespace SourceGit.Views
                 var side = new Column();
                 side.Grow = 1;
                 return side;
+            }
+        }
+
+        /// <summary>Every group, all the way down.</summary>
+        private static IEnumerable<ViewModels.RepositoryNode> Groups(IEnumerable<ViewModels.RepositoryNode> nodes)
+        {
+            foreach (var node in nodes)
+            {
+                if (node.IsRepository)
+                    continue;
+                yield return node;
+                foreach (var group in Groups(node.SubNodes))
+                    yield return group;
             }
         }
 
@@ -131,54 +171,20 @@ namespace SourceGit.Views
         }
 
         /// <summary>
-        /// Upstream's row template: 30 points high, indented a level per
-        /// group, by the platform's tree indentation; an
-        /// expander for groups in a 16-point slot; a group's folder or a
-        /// repository's bookmark in an 18-point one; the name, a repository's
-        /// path in the secondary colour (an orange error icon if it's gone);
-        /// then its status at the end.
+        /// Upstream's row template, after the platform's disclosure and
+        /// indent: 30 points high; a group's folder or a repository's
+        /// bookmark in an 18-point slot; the name, a repository's path in the
+        /// secondary colour (an orange error icon if it's gone); then its
+        /// status at the end.
         /// </summary>
         private static Node Row(ViewModels.Welcome vm, ViewModels.RepositoryNode node)
         {
             var row = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8, 0, 0) };
             row.Height = 30;
-            // A level in for each group it's in, as the platform's trees
-            // indent theirs (upstream indents 16 points a level). A moved
-            // node keeps its row, and its depth changes without notice when
-            // the view model rebuilds its rows, so follow those.
-            var indent = new Mitsuamia.Row();
-            var levels = new List<Column>();
-            void ShowDepth()
-            {
-                while (levels.Count < node.Depth)
-                {
-                    var level = new Column { Width = Spacing.Indent };
-                    levels.Add(level);
-                    indent.Add(level);
-                }
-                for (var i = 0; i < levels.Count; i++)
-                    levels[i].IsVisible = i < node.Depth;
-            }
-            ShowDepth();
-            NotifyCollectionChangedEventHandler rebuilt = (_, _) => ShowDepth();
-            vm.Rows.CollectionChanged += rebuilt;
-            row.Forgotten += () => vm.Rows.CollectionChanged -= rebuilt;
-            row.Add(indent);
             row.ContextMenu = Menu(node);
             // Folders dropped on a group go in it; on a repository, in its group.
             row.FileDrop = Drops;
             row.FilesDropped += paths => _ = AddDropped(vm, paths, node.IsRepository ? vm.FindParentGroup(node) : node);
-
-            var expander = Slot(16);
-            if (!node.IsRepository)
-            {
-                var button = new Button(node.Name) { IconOnly = true, Style = ButtonStyle.Borderless };
-                Bind.OneWay(node, nameof(node.IsExpanded), () => node.IsExpanded,
-                    open => button.Icon = open ? s_open : s_closed, owner: row);
-                button.Click += () => vm.ToggleNodeIsExpanded(node);
-                expander.Add(button);
-            }
-            row.Add(expander);
 
             var mark = Slot(18);
             if (node.IsRepository)
