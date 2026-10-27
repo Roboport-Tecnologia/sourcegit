@@ -85,24 +85,23 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Toolbar(ViewModels.Repository vm)
         {
-            // Every button and line in it is the platform's small spacing
-            // from the next, and the band as far from the window's edges.
-            // Its buttons are further apart on macOS (Metrics.ToolbarGap).
-            var buttons = Metrics.ToolbarGap;
+            // Its buttons and lines are Metrics.SpaceToolbar apart, twice
+            // the large step on macOS.
             var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = Metrics.Band, IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
 
-            var start = new Row { AlignItems = Align.Center, Gap = buttons };
+            var start = new Row { AlignItems = Align.Center };
             start.Grow = 1;
             AddMenu(start, "OpenWith", "Repository.OpenWithExternalTools", () => ToolbarMenus.OpenWith(vm));
             Add(start, "Logs", 14, "Repository.ViewLogs", () => Logs.Show(vm));
             Add(start, "Statistics", 13, "Repository.Statistics", () => Statistics.Show(vm));
+            Metrics.SpaceToolbar(start);
             band.Add(start);
 
-            var middle = new Row { AlignItems = Align.Center, Gap = buttons };
-            var sync = new Row { AlignItems = Align.Center, Gap = buttons };
+            var middle = new Row { AlignItems = Align.Center };
+            var sync = new Row { AlignItems = Align.Center };
             Add(sync, "Fetch", 14, "Fetch", () => _ = vm.FetchAsync(false));
             if (!vm.IsBare)
                 Add(sync, "Pull", 14, "Pull", () => _ = vm.PullAsync(false));
@@ -112,12 +111,13 @@ namespace SourceGit.Views
                 Add(sync, "Stashes.Add", 14, "Stash", () => _ = vm.StashAllAsync(false));
                 Add(sync, "ApplyPatch", 14, "Apply.Title", vm.ApplyPatch);
             }
+            Metrics.SpaceToolbar(sync);
             middle.Add(sync);
             // Upstream's line between syncing and the rest, 16 high.
             var line = new Separator(Orientation.Vertical);
             line.Height = 16;
             middle.Add(line);
-            var tools = new Row { AlignItems = Align.Center, Gap = buttons };
+            var tools = new Row { AlignItems = Align.Center };
             Add(tools, "Branch.Add", 14, "CreateBranch", vm.CreateNewBranch);
             if (!vm.IsBare)
             {
@@ -127,7 +127,9 @@ namespace SourceGit.Views
             }
             AddMenu(tools, "Action", "Repository.CustomActions", () => ToolbarMenus.CustomActions(vm));
             Add(tools, "Clean", 14, "Repository.Clean", () => _ = vm.CleanupAsync());
+            Metrics.SpaceToolbar(tools);
             middle.Add(tools);
+            Metrics.SpaceToolbar(middle);
             band.Add(middle);
 
             var end = new Row { AlignItems = Align.Center, Justify = Justify.End, Gap = Spacing.Sm };
@@ -147,12 +149,13 @@ namespace SourceGit.Views
             });
             // The history's own buttons, while it's the page showing, as
             // upstream's sit over the history.
-            var history = new Row { AlignItems = Align.Center, Gap = buttons };
+            var history = new Row { AlignItems = Align.Center };
             var divider = new Separator(Orientation.Vertical);
             divider.Height = 16;
             history.Add(divider);
             HistoryOptions.AddTo(history, vm.Histories);
             Bind.OneWay(vm, nameof(vm.SelectedViewIndex), () => vm.SelectedViewIndex, page => history.IsVisible = page == 0, owner: history);
+            Metrics.SpaceToolbar(history);
             end.Add(history);
             band.Add(end);
             return band;

@@ -69,7 +69,21 @@ namespace SourceGit
         /// step, or their icons nearly touch.</summary>
         public static Length ButtonGap => Mac ? Spacing.Md : Spacing.Xs;
 
-        /// <summary>As <see cref="ButtonGap"/>, in the toolbar bands.</summary>
+        /// <summary>As <see cref="ButtonGap"/>, in the toolbar bands; on
+        /// macOS <see cref="SpaceToolbar"/> doubles it.</summary>
         public static Length ToolbarGap => Mac ? Spacing.Lg : Spacing.Sm;
+
+        /// <summary>Sets a toolbar row's items apart, once they're all in:
+        /// <see cref="ToolbarGap"/>, and on macOS as much again after each
+        /// but the last, twice the large step in all. A length has no
+        /// multiple of a step, so the second is a margin.</summary>
+        public static void SpaceToolbar(Container row)
+        {
+            row.Gap = ToolbarGap;
+            if (!Mac)
+                return;
+            for (var i = 0; i < row.Children.Count - 1; i++)
+                row.Children[i].Margin = new Thickness(Spacing.None, ToolbarGap, Spacing.None, Spacing.None);
+        }
     }
 }

@@ -143,8 +143,8 @@ namespace SourceGit.Views
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
-            var start = new Row { AlignItems = Align.Center, Gap = Metrics.ToolbarGap };
-            var end = new Row { AlignItems = Align.Center, Gap = Metrics.ToolbarGap };
+            var start = new Row { AlignItems = Align.Center };
+            var end = new Row { AlignItems = Align.Center };
             band.Add(start);
             band.Add(end);
 
@@ -153,6 +153,8 @@ namespace SourceGit.Views
             Add(start, Icons.Get("Terminal", 13), "Welcome.OpenTerminal", vm.OpenTerminal);
             Add(end, Icons.Get("Folder.Add", 14, 1), "Welcome.AddRootFolder", vm.AddRootNode);
             Add(end, Icons.Get("Scan", 14), "Welcome.ScanDefaultCloneDir", vm.ScanDefaultCloneDir);
+            Metrics.SpaceToolbar(start);
+            Metrics.SpaceToolbar(end);
             return band;
 
             static void Add(Container group, VectorIcon icon, string text, Action command)
