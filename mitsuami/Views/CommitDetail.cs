@@ -229,7 +229,6 @@ namespace SourceGit.Views
         private static Node ShaRow(ViewModels.CommitDetail detail, Models.Commit commit)
         {
             var row = new Row { AlignItems = Align.Center };
-            row.Height = 24;
             row.Add(new Text(commit.SHA) { Style = TextStyle.Monospace });
             var actions = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.None) };
             row.Add(actions);
@@ -455,7 +454,6 @@ namespace SourceGit.Views
             foreach (var change in changes.Take(100))
             {
                 var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg) };
-                row.Height = 24;
                 row.ToolTip = $"{change.Path} • {change.IndexDesc}";
                 row.Add(new StatusMark(change.Index).View);
                 row.Add(new Text(change.Path) { MaxLines = 1 });

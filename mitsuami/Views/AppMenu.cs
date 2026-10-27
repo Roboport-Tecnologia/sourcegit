@@ -316,7 +316,6 @@ namespace SourceGit.Views
             var list = new ListView<Models.Commit>(c => c.SHA, c =>
             {
                 var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-                row.Height = 28;
                 row.Add(new Text(c.SHA[..10]) { Style = TextStyle.Monospace, Color = Color.SecondaryLabel });
                 var subject = new Text(c.Subject) { MaxLines = 1 };
                 subject.Shrink = 1;

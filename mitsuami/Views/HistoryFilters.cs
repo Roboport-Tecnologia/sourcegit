@@ -21,7 +21,6 @@ namespace SourceGit.Views
             var bar = new Column { AlignItems = Align.Stretch };
             bar.Shrink = 0;
             var row = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Md, Spacing.None, Spacing.Sm) };
-            row.MinHeight = 30;
             row.Add(new Background { Inset = new Thickness(0) });
             var mode = new Icon(Icons.Get("Filter")) { Size = 12, Color = Color.SecondaryLabel };
             row.Add(mode);

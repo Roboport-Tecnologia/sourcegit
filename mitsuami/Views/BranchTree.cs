@@ -169,7 +169,7 @@ namespace SourceGit.Views
         }
 
         /// <summary>Upstream's row, after the platform's disclosure and
-        /// indent: 24 points high; the node's icon in an 18-point slot (a
+        /// indent, as high as its content; the node's icon in an 18-point slot (a
         /// remote, a branch, the current branch's check in green, a
         /// worktree's branch in cyan, a folder open or closed); the name,
         /// bold for the current branch, and a folder's count in the secondary
@@ -178,7 +178,6 @@ namespace SourceGit.Views
         private Node Row(ViewModels.BranchTreeNode node)
         {
             var row = new Row { AlignItems = Align.Center };
-            row.Height = 24;
             var path = node.Path;
             row.ContextMenuOnOpen = () => Menu(path);
 

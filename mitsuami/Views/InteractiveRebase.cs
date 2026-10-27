@@ -191,7 +191,6 @@ namespace SourceGit.Views
             ViewModels.InteractiveRebaseItem item)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Sm) };
-            row.Height = 28;
 
             var order = new Text($"#{item.OriginalOrder}") { Style = TextStyle.Monospace };
             order.Width = 36;

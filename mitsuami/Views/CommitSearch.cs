@@ -125,7 +125,6 @@ namespace SourceGit.Views
         private static Node Row(Models.Commit commit)
         {
             var row = new Row { AlignItems = Align.Center };
-            row.Height = 28;
             var face = new Row { AlignItems = Align.Center, Justify = Justify.Center };
             face.Width = 24;
             var avatar = new Avatar(16, menu: false) { User = commit.Author };

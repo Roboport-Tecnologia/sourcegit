@@ -162,7 +162,6 @@ namespace SourceGit.Views
         private static Node Row(ViewModels.Workspace workspace)
         {
             var row = new Mitsuamia.Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-            row.Height = 26;
             row.Add(IconOf(workspace));
             var name = new Text { MaxLines = 1 };
             name.Grow = 1;

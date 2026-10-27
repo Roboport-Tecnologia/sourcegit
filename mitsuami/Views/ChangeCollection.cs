@@ -407,7 +407,7 @@ namespace SourceGit.Views
             return selection.Count > 0 ? Menu(selection) : [];
         }
 
-        /// <summary>Upstream's rows, 24 points high, after the platform's
+        /// <summary>Upstream's rows, as high as their content, after the platform's
         /// disclosure and indent in the tree. A change: its status mark, a
         /// conflict's marker in bold dark orange, and its path (the list), its
         /// name then its folder (the grid) or its name (the tree). A folder:
@@ -415,7 +415,6 @@ namespace SourceGit.Views
         private Node Row(Item item)
         {
             var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) };
-            row.Height = 24;
             var key = item.Key;
             row.ContextMenuOnOpen = () => MenuFor(key);
 

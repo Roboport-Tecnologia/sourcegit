@@ -60,16 +60,14 @@ namespace SourceGit.Views
             var prefs = ViewModels.Preferences.Instance;
             var column = new Column { AlignItems = Align.Stretch };
 
-            // Upstream's filter row, 36 points high: the field, discarding
+            // Upstream's filter row: the field, discarding
             // everything, and the lists' view mode.
-            var top = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-            top.Height = 36;
+            var top = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = Spacing.Xs };
             top.Shrink = 0;
             // Upstream's sidebar toggle: the repository's sidebar hides
             // while the local changes show.
             var layout = prefs.Layout;
             var sidebar = new Button(App.Text("WorkingCopy.CollapseSidebar")) { IconOnly = true, Style = ButtonStyle.Borderless };
-            sidebar.Width = 32;
             Bind.OneWay(layout, nameof(layout.IsSidebarCollapsedInLocalChanges), () => layout.IsSidebarCollapsedInLocalChanges, collapsed =>
             {
                 sidebar.Icon = Icons.Get(collapsed ? "Sidebar.Collapsed" : "Sidebar.Expanded", 15);
@@ -173,15 +171,14 @@ namespace SourceGit.Views
             }
         }
 
-        /// <summary>Upstream's 28-point toolbar over a list: the changes
+        /// <summary>Upstream's toolbar over a list: the changes
         /// icon, the list's name and count in bold, both in the secondary
         /// colour, and a spinner while it works; its buttons go in
         /// <paramref name="actions"/>, at the end.</summary>
         private static Row Bar(ViewModels.WorkingCopy vm, string title, string countProperty, Func<string> count,
             string busyProperty, Func<bool> busy, out Row actions)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Sm) };
-            bar.MinHeight = 28;
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.Xs, Spacing.Xs, Spacing.Sm) };
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get("Changes")) { Size = 14, Color = Color.SecondaryLabel });
             // One line, cut off in a narrow column so the buttons keep
@@ -325,7 +322,6 @@ namespace SourceGit.Views
             box.Add(editor);
 
             var footer = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
-            footer.MinHeight = 24;
             footer.Shrink = 0;
             var tools = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Xs) };
             var helper = new MenuButton(App.Text("WorkingCopy.CommitMessageHelper"))
@@ -471,7 +467,7 @@ namespace SourceGit.Views
         }
 
         /// <summary>
-        /// Upstream's options row, 40 points high: sign-off, no verify,
+        /// Upstream's options row: sign-off, no verify,
         /// amend (and resetting the author while amending), a spinner while
         /// committing, then Continue while an operation's in progress, else
         /// Commit, and Commit &amp; Push when there are remotes and it isn't
@@ -481,8 +477,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Options(ViewModels.WorkingCopy vm)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Md };
-            row.MinHeight = 40;
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Md, Padding = new Thickness(Spacing.Xs, Spacing.None) };
             row.Shrink = 0;
             // The checks wrap onto more lines in a narrow pane, before the
             // buttons run out of it: XAML's check boxes are at least 120

@@ -305,7 +305,6 @@ namespace SourceGit.Views
             static Node GroupRow(ViewModels.RepositoryNode node)
             {
                 var row = new Row { AlignItems = Align.Center };
-                row.Height = 30;
                 row.Add(Slot(18, new Icon(Icons.Get("Folder")) { Size = 14 }));
                 row.Add(new Text(node.Name));
                 return row;

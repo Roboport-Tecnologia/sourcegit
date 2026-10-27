@@ -77,7 +77,7 @@ namespace SourceGit.Views
         }
 
         /// <summary>
-        /// Upstream's toolbar band, 36 points high and the window's header,
+        /// Upstream's toolbar band, as high as its buttons and the window's header,
         /// as the welcome page's: the external tools, logs and statistics on
         /// the left; fetch, pull, push, stash and patch, then a new branch,
         /// Git-Flow, LFS, bisect, custom actions and cleanup in the middle;
@@ -89,8 +89,7 @@ namespace SourceGit.Views
             // from the next, and the band as far from the window's edges.
             // Its buttons are further apart on macOS (Icons.ToolbarGap).
             var buttons = Icons.ToolbarGap(Spacing.Sm);
-            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
-            band.MinHeight = 36;
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
@@ -229,7 +228,7 @@ namespace SourceGit.Views
         }
 
         /// <summary>
-        /// Upstream's rail, 49 points wide: the history (its dashboard),
+        /// Upstream's rail, as wide as its buttons: the history (its dashboard),
         /// the local changes and the stashes, one of them chosen. Here
         /// they're the platform's toggle buttons, the chosen one pressed.
         /// </summary>
@@ -242,8 +241,7 @@ namespace SourceGit.Views
             // The window's navigation, which upstream sets apart from the
             // branches beside it: on Windows, on the chosen tab's layer, as
             // the toolbar band is.
-            var rail = new Column { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.None), IsSidebarPane = true };
-            rail.Width = 49;
+            var rail = new Column { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = Spacing.Xs, IsSidebarPane = true };
             var pages = new List<(string Icon, string Text)> { ("Dashboard", "Dashboard") };
             if (!vm.IsBare)
             {
@@ -474,8 +472,7 @@ namespace SourceGit.Views
             string countProperty, Func<string> count, string expandedProperty, Func<bool> expanded, Action<bool> setExpanded,
             ListView list, Node[] buttons, Node[] withRows = null, bool branches = false)
         {
-            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
-            header.MinHeight = 28;
+            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.None) };
             header.Shrink = 0;
             var expander = new Button(App.Text(title)) { IconOnly = true, Style = ButtonStyle.Borderless };
             expander.Click += () => setExpanded(!expanded());
@@ -678,7 +675,6 @@ namespace SourceGit.Views
         private static Node TagRow(ViewModels.Repository vm, object item, Func<IReadOnlyList<MenuEntry>> menu)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Lg) };
-            row.Height = 24;
             row.ContextMenuOnOpen = menu;
             if (item is ViewModels.TagTreeNode { IsFolder: true } node)
             {
@@ -723,7 +719,6 @@ namespace SourceGit.Views
         private static Node SubmoduleRow(ViewModels.Repository vm, object item)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg) };
-            row.Height = 24;
             if (item is ViewModels.SubmoduleTreeNode { IsFolder: true } node)
             {
                 Folder(row, node, () => node.IsExpanded, node.FullPath.Split('/')[^1], node.ChildCounter);
@@ -748,7 +743,6 @@ namespace SourceGit.Views
         private static Node WorktreeRow(ViewModels.Repository vm, ViewModels.Worktree worktree)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Lg) };
-            row.Height = 24;
             row.Add(new Icon(Icons.Get("Worktree")) { Size = 12 });
             row.Add(new Text(worktree.Name));
             row.ToolTip = worktree.FullPath;
@@ -758,7 +752,7 @@ namespace SourceGit.Views
         }
 
         /// <summary>
-        /// Upstream's bar over the history while bisecting, 28 points high:
+        /// Upstream's bar over the history while bisecting:
         /// what to do next, in bold, a spinner while a command runs, and
         /// Bad, Good, Skip (while waiting for a mark) and Abort. Upstream's
         /// colour is a pale yellow in its light theme and a dark amber in
@@ -766,8 +760,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node BisectBar(ViewModels.Repository vm)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
-            bar.MinHeight = 28;
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Sm) };
             bar.Shrink = 0;
             bar.Add(new Tint { Inset = new Thickness(0) });
             var text = new Text { Weight = FontWeight.Bold, MaxLines = 1 };
@@ -830,8 +823,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node InProgressBar(ViewModels.Repository vm)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
-            bar.Height = 28;
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Sm) };
             bar.Shrink = 0;
             bar.Add(new Tint { Inset = new Thickness(0) });
             var what = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };

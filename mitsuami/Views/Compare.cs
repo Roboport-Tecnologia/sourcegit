@@ -158,7 +158,6 @@ namespace SourceGit.Views
         private static Node Row(Models.Commit commit)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-            row.Height = 28;
             row.Add(new Avatar(16, menu: false) { User = commit.Author }.View);
             var subject = new Text(commit.Subject) { MaxLines = 1 };
             subject.Grow = 1;

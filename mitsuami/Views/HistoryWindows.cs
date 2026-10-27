@@ -143,7 +143,6 @@ namespace SourceGit.Views
         private static Node Row(Models.User author, string sha, ulong time, string subject, Action navigate, Func<string> message)
         {
             var column = new Column { Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.None) };
-            column.Height = 48;
             var top = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             top.Add(new Avatar(16, menu: false) { User = author }.View);
             var name = new Text(author.Name) { MaxLines = 1 };

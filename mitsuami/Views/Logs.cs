@@ -121,7 +121,6 @@ namespace SourceGit.Views
         private static Node Row(ViewModels.ViewLogs vm, ViewModels.CommandLog log, Dictionary<ViewModels.CommandLog, Text> durations)
         {
             var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-            row.Height = 28;
             var spinner = new Spinner();
             row.Add(spinner);
             var name = new Text(log.Name) { MaxLines = 1 };

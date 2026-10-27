@@ -56,9 +56,8 @@ namespace SourceGit.Views
             column.Add(stashBar);
             column.Add(new Separator());
 
-            // Upstream's search row, 36 points high.
-            var search = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-            search.Height = 36;
+            // Upstream's search row.
+            var search = new Row { AlignItems = Align.Center, Padding = Spacing.Xs };
             search.Shrink = 0;
             var filter = new SearchInput();
             filter.Grow = 1;
@@ -86,13 +85,12 @@ namespace SourceGit.Views
             return column;
         }
 
-        /// <summary>Upstream's 28-point bar over a list: its icon, its name
+        /// <summary>Upstream's bar over a list: its icon, its name
         /// and count in bold, both in the secondary colour; its buttons go
         /// at the end.</summary>
         private static Row Bar(string icon, string title, ViewModels.StashesPage vm, string countProperty, Func<int> count)
         {
-            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.Xs, Spacing.None, Spacing.Sm) };
-            bar.MinHeight = 28;
+            var bar = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.Xs, Spacing.Xs, Spacing.Xs, Spacing.Sm) };
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get(icon)) { Size = 14, Color = Color.SecondaryLabel });
             // One line, cut off in a narrow column so the buttons keep
@@ -107,7 +105,7 @@ namespace SourceGit.Views
         }
 
         /// <summary>
-        /// Upstream's stash list, rows 50 points high: the stash's name in
+        /// Upstream's stash list, two lines a row: the stash's name in
         /// dark orange and its time, then its subject, the branch it was
         /// made on as a chip before it. Double-click or Return applies one;
         /// Delete or Backspace drops it; ⌘C copies its message.
@@ -142,7 +140,6 @@ namespace SourceGit.Views
         private static Node Row(ViewModels.Repository repo, ViewModels.StashesPage vm, Models.Stash stash)
         {
             var row = new Column { AlignItems = Align.Stretch, Justify = Justify.SpaceBetween, Padding = Spacing.Xs };
-            row.Height = 50;
             row.ToolTip = stash.Message;
             row.ContextMenuOnOpen = () => Menu(repo, vm, stash);
 

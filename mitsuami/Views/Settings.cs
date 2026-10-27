@@ -187,7 +187,6 @@ namespace SourceGit.Views
             var list = new ListView<T>(item => keys.GetValue(item, _ => (++next).ToString()), item =>
             {
                 var line = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-                line.Height = 26;
                 line.Add(new Icon(Icons.Get(icon)) { Size = 12 });
                 var text = new Text(name(item)) { MaxLines = 1 };
                 text.Shrink = 1;

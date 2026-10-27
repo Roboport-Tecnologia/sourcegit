@@ -508,7 +508,6 @@ namespace SourceGit.Views
             }, t =>
             {
                 var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm) };
-                row.Height = 26;
                 row.Add(RefLabel(t));
                 if (trackStatus && t is Models.Branch { IsTrackStatusVisible: true } branch)
                     row.Add(new Text(branch.TrackStatusDescription) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });

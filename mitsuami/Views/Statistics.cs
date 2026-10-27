@@ -142,7 +142,6 @@ namespace SourceGit.Views
         private static Node AuthorRow(Models.StatisticsAuthor author)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-            row.Height = 26;
             row.ToolTip = author.User.ToString();
             var avatar = new Avatar(16) { User = author.User };
             row.Add(avatar.View);

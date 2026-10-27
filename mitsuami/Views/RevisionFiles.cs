@@ -211,7 +211,6 @@ namespace SourceGit.Views
         private Node Row(ViewModels.RevisionFileTreeNode node)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs, Padding = new Thickness(Spacing.None, Spacing.None, Spacing.None, Spacing.Xs) };
-            row.Height = 24;
             row.ToolTip = node.Backend.Path;
             switch (node.Backend.Type)
             {

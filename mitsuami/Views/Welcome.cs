@@ -125,10 +125,10 @@ namespace SourceGit.Views
         }
 
         /// <summary>
-        /// Upstream's toolbar band (<c>WelcomeToolbar.axaml</c>), 36 points
-        /// high: clone, open and terminal on the left, a new group and a
-        /// rescan on the right, each a borderless icon button 32 points wide,
-        /// its icon sized as upstream's. A window's toolbar would be native,
+        /// Upstream's toolbar band (<c>WelcomeToolbar.axaml</c>), as high as
+        /// its buttons: clone, open and terminal on the left, a new group and a
+        /// rescan on the right, each a borderless icon button, its icon
+        /// sized as upstream's. A window's toolbar would be native,
         /// but the repository page's band has far more buttons than a
         /// toolbar holds, and both pages share the band.
         /// </summary>
@@ -139,8 +139,7 @@ namespace SourceGit.Views
             // title bar and the content in one colour; its hard edge (26.1)
             // sets the band apart, as GTK's and WinUI's shades do.
             // Spaced as the repository's toolbar band.
-            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
-            band.MinHeight = 36;
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.Xs, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
@@ -172,7 +171,7 @@ namespace SourceGit.Views
 
         /// <summary>
         /// Upstream's row template, after the platform's disclosure and
-        /// indent: 30 points high; a group's folder or a repository's
+        /// indent, as high as its content; a group's folder or a repository's
         /// bookmark in an 18-point slot; the name, a repository's path in the
         /// secondary colour (an orange error icon if it's gone); then its
         /// status at the end.
@@ -180,7 +179,6 @@ namespace SourceGit.Views
         private static Node Row(ViewModels.Welcome vm, ViewModels.RepositoryNode node)
         {
             var row = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Sm, Spacing.None, Spacing.None) };
-            row.Height = 30;
             row.ContextMenu = Menu(node);
             // Folders dropped on a group go in it; on a repository, in its group.
             row.FileDrop = Drops;

@@ -38,7 +38,6 @@ namespace SourceGit.Views
             var keys = new ListView<Models.SSHKeyPair>(k => k.PrivateKeyPath, k =>
             {
                 var line = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-                line.Height = 26;
                 line.Add(new Icon(Icons.Get("Password")) { Size = 14 });
                 var name = new Text(k.Name) { MaxLines = 1 };
                 name.Shrink = 1;
