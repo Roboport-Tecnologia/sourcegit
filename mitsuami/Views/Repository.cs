@@ -499,21 +499,19 @@ namespace SourceGit.Views
             header.Add(actions);
             sidebar.Add(header);
 
-            // As tall as its rows, as upstream's. When the open groups
-            // don't all fit, upstream's tags, submodules and worktrees give
-            // up their room first, down to 120 points each, and the branches
+            // As tall as its rows, as upstream's: a list mitsuami doesn't
+            // size is, however high the platform makes them. When the open
+            // groups don't all fit, upstream's tags, submodules and
+            // worktrees give up their room first, down to 120 points each
+            // (or, if fewer, their rows at the lists' 24-point estimate,
+            // which a row, its content and Metrics.RowInset, is never
+            // under: a floor above the rows would hold the list taller
+            // than them), and the branches
             // share what's left; each list then scrolls.
             // An open group without rows shows nothing under its header.
-            // Upstream's rows are 24 points. WinUI's tree rows with their
-            // check boxes, the branches' several at once, are 28 with 2 of
-            // margin above and below, and at 24 the lists cut off their
-            // last row.
-            var rowHeight = branches && OperatingSystem.IsWindows() ? 32 : 24;
             void Fit()
             {
-                var rows = list.ItemCount * rowHeight;
-                list.Height = rows;
-                list.MinHeight = branches ? 0 : Math.Min(120, rows);
+                list.MinHeight = branches ? 0 : Math.Min(120, list.ItemCount * 24);
                 list.Shrink = branches ? 1 : 1000;
                 list.IsVisible = expanded() && list.ItemCount > 0;
                 foreach (var button in withRows)

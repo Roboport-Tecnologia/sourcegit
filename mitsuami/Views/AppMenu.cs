@@ -328,7 +328,8 @@ namespace SourceGit.Views
                 EstimatedRowHeight = 28,
                 Items = commits,
             };
-            list.Height = Math.Min(commits.Count, 8) * 28 + 12;
+            // As tall as its rows, up to about eight; then it scrolls.
+            list.MaxHeight = 8 * 28 + 12;
             list.SelectedItems = [commits[0]];
             column.Add(list);
             var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };

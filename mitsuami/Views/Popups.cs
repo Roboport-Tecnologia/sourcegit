@@ -291,7 +291,9 @@ namespace SourceGit.Views
                 SelectedItem = vm.Selected,
             };
             groups.ExpandedItems = vm.Rows;
-            groups.Height = Math.Clamp(vm.Rows.Count * 30 + 8, 28, 400);
+            // As tall as its rows, up to 400 points; then it scrolls.
+            groups.MinHeight = 28;
+            groups.MaxHeight = 400;
             groups.SelectionChanged += selected =>
             {
                 if (selected.Count > 0)

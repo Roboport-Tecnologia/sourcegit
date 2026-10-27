@@ -518,7 +518,9 @@ namespace SourceGit.Views
                 EstimatedRowHeight = 26,
                 Items = targets,
             };
-            list.Height = Math.Clamp(targets.Count * 26 + 8, 32, most);
+            // As tall as its rows, up to `most`; then it scrolls.
+            list.MinHeight = 32;
+            list.MaxHeight = most;
             return list;
         }
 
