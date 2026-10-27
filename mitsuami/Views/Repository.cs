@@ -205,15 +205,17 @@ namespace SourceGit.Views
         }
 
         /// <summary>Upstream's badge: a count (999+ at most) on an accent
-        /// pill, white, 10 points; drawn, with the platform's text on it,
-        /// as the ref labels are. A click on it picks its page, as one
+        /// pill, 10 points; drawn, with the platform's text on it, as the
+        /// ref labels are, in the platform's colour for text on its accent
+        /// (upstream's white had too little contrast on Windows' light
+        /// accent in the dark theme). A click on it picks its page, as one
         /// beside it does.</summary>
         private static Node Badge(ViewModels.Repository vm, string property, Func<int> count, Action pick)
         {
             var badge = new Row { AlignItems = Align.Center, Padding = new Thickness(Spacing.None, Spacing.Xs), Inset = new Thickness(4, 4, Length.Auto, Length.Auto) };
             badge.Height = 14;
             badge.Add(new Pill { Inset = new Thickness(0) });
-            var text = new Text("") { Style = TextStyle.Caption, Color = Color.Rgba(255, 255, 255) };
+            var text = new Text("") { Style = TextStyle.Caption, Color = Color.OnAccent };
             badge.Add(text);
             badge.Clicked += pick;
             Bind.OneWay(vm, property, count, n =>
@@ -675,7 +677,7 @@ namespace SourceGit.Views
         /// the platform's disclosure and indent.</summary>
         private static Node TagRow(ViewModels.Repository vm, object item, Func<IReadOnlyList<MenuEntry>> menu)
         {
-            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Lg, Spacing.Xs) };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.HoverRow(Spacing.Lg, Spacing.Xs) };
             row.ContextMenuOnOpen = menu;
             if (item is ViewModels.TagTreeNode { IsFolder: true } node)
             {

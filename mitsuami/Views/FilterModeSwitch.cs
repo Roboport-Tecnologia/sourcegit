@@ -11,6 +11,11 @@ namespace SourceGit.Views
     /// only it (a filter), hides it (a closed eye) or neither (an eye), with
     /// upstream's menu to change that. Shown while the pointer is over the
     /// row or a filter is set, as upstream's.
+    /// It's centred on a slot with no height, so showing it never makes
+    /// the row taller: content-sized rows grew by the button's height over
+    /// their text's when it came (2 points on WinUI), and padding only
+    /// moved the jump. The row's <see cref="Metrics.HoverRowInset"/> leaves
+    /// it room above and below; no platform clips it to the slot.
     /// </summary>
     public static class FilterModeSwitch
     {
@@ -27,6 +32,10 @@ namespace SourceGit.Views
                 MenuOnOpen = () => Menu(mode(), set),
             };
             button.Shrink = 0;
+            var slot = new Row { AlignItems = Align.Center };
+            slot.Height = 0;
+            slot.Shrink = 0;
+            slot.Add(button);
             var over = false;
             void Show()
             {
@@ -48,7 +57,7 @@ namespace SourceGit.Views
                 Bind.OneWay(source, "FilterMode", mode, _ => Show(), owner: button);
             else
                 Show();
-            return button;
+            return slot;
         }
 
         private static IReadOnlyList<MenuEntry> Menu(Models.FilterMode current, Action<Models.FilterMode> set)

@@ -50,6 +50,19 @@ namespace SourceGit
         public static Thickness ListRow(Spacing start = Spacing.None, Spacing end = Spacing.None) =>
             new(RowInset, end, RowInset, start);
 
+        /// <summary>Above and below a row with a button that shows while
+        /// the pointer is over it (the branches' and tags' filter), and its
+        /// list's other rows: room for the button, which takes none in the
+        /// row (<see cref="Views.FilterModeSwitch"/>). On WinUI the
+        /// borderless icon pull-down is 29 points, and a line of text with
+        /// <see cref="RowInset"/> 27; with this, 35.</summary>
+        public static Length HoverRowInset => Spacing.Sm;
+
+        /// <summary>As <see cref="ListRow"/>, with <see cref="HoverRowInset"/>
+        /// above and below.</summary>
+        public static Thickness HoverRow(Spacing start = Spacing.None, Spacing end = Spacing.None) =>
+            new(HoverRowInset, end, HoverRowInset, start);
+
         /// <summary>Between what's in a list's row: its icon, its text.</summary>
         public static Length RowGap => Spacing.Sm;
 
