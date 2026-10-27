@@ -23,6 +23,7 @@ namespace SourceGit.Views
         private readonly List<ViewModels.RevisionFileTreeNode> _tree = [];
         private List<ViewModels.RevisionFileTreeNode> _search = [];
         private bool _loaded;
+        private int _loads;
 
         private RevisionFiles(ViewModels.CommitDetail vm)
         {
@@ -84,11 +85,26 @@ namespace SourceGit.Views
             left.Add(files._list);
             split.Add(left);
             split.Add(Content(vm));
-            // Upstream loads the tree once the tab is shown.
+            // Upstream loads the tree once the tab is shown, and again for
+            // another commit: now if the tab shows, else when it does.
             Bind.OneWay(vm, nameof(vm.ActiveTabIndex), () => vm.ActiveTabIndex, tab =>
             {
                 if (tab == 2 && !files._loaded)
                     _ = files.Load();
+            }, owner: split);
+            var shown = vm.Commit?.SHA;
+            Bind.OneWay(vm, nameof(vm.Commit), () => vm.Commit?.SHA, sha =>
+            {
+                if (sha == shown)
+                    return;
+                shown = sha;
+                files._loaded = false;
+                files._tree.Clear();
+                files._search = [];
+                if (vm.ActiveTabIndex == 2)
+                    _ = files.Load();
+                else
+                    files.ShowRows(files._tree);
             }, owner: split);
             return split;
         }
@@ -124,12 +140,14 @@ namespace SourceGit.Views
         {
             _loaded = true;
             _tree.Clear();
-            if (_vm.Commit != null && await _vm.GetRevisionFilesUnderFolderAsync(null) is { Count: > 0 } objects)
-            {
-                foreach (var obj in objects)
-                    _tree.Add(new ViewModels.RevisionFileTreeNode { Backend = obj });
-                Sort(_tree);
-            }
+            // A load for the commit before, finishing late, is dropped.
+            var load = ++_loads;
+            var objects = _vm.Commit != null ? await _vm.GetRevisionFilesUnderFolderAsync(null) : null;
+            if (load != _loads)
+                return;
+            foreach (var obj in objects ?? [])
+                _tree.Add(new ViewModels.RevisionFileTreeNode { Backend = obj });
+            Sort(_tree);
             ShowRows(_tree);
         }
 
