@@ -80,23 +80,23 @@ namespace SourceGit.Views
         /// </summary>
         private static Node Toolbar(ViewModels.Repository vm)
         {
-            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
-            band.Height = 36;
+            // Every button and line in it is the platform's small spacing
+            // from the next, and the band as far from the window's edges.
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
+            band.MinHeight = 36;
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
 
-            // The pull-down's icon and arrow fill its slot, so it gets
-            // room from the window's edge.
-            var start = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 0, 0, 6) };
+            var start = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             start.Grow = 1;
             AddMenu(start, "OpenWith", "Repository.OpenWithExternalTools", () => ToolbarMenus.OpenWith(vm));
             Add(start, "Logs", 14, "Repository.ViewLogs", () => Logs.Show(vm));
             Add(start, "Statistics", 13, "Repository.Statistics", () => Statistics.Show(vm));
             band.Add(start);
 
-            var middle = new Row { AlignItems = Align.Center };
-            var sync = new Row { AlignItems = Align.Center, Gap = 16 };
+            var middle = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
+            var sync = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             Add(sync, "Fetch", 14, "Fetch", () => _ = vm.FetchAsync(false));
             if (!vm.IsBare)
                 Add(sync, "Pull", 14, "Pull", () => _ = vm.PullAsync(false));
@@ -107,12 +107,11 @@ namespace SourceGit.Views
                 Add(sync, "ApplyPatch", 14, "Apply.Title", vm.ApplyPatch);
             }
             middle.Add(sync);
-            // Upstream's line between syncing and the rest: 16 high, 16
-            // after patching and 18 before a new branch.
-            var line = new Separator(Orientation.Vertical) { Margin = new Thickness(0, 18, 0, 16) };
+            // Upstream's line between syncing and the rest, 16 high.
+            var line = new Separator(Orientation.Vertical);
             line.Height = 16;
             middle.Add(line);
-            var tools = new Row { AlignItems = Align.Center, Gap = 12 };
+            var tools = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             Add(tools, "Branch.Add", 14, "CreateBranch", vm.CreateNewBranch);
             if (!vm.IsBare)
             {
@@ -125,7 +124,7 @@ namespace SourceGit.Views
             middle.Add(tools);
             band.Add(middle);
 
-            var end = new Row { AlignItems = Align.Center, Justify = Justify.End, Gap = 6 };
+            var end = new Row { AlignItems = Align.Center, Justify = Justify.End, Gap = Spacing.Sm };
             end.Grow = 1;
             end.Add(new Icon(Icons.Get("Branch")) { Size = 13 });
             var branch = new Text();
@@ -142,8 +141,8 @@ namespace SourceGit.Views
             });
             // The history's own buttons, while it's the page showing, as
             // upstream's sit over the history.
-            var history = new Row { AlignItems = Align.Center, Gap = 6 };
-            var divider = new Separator(Orientation.Vertical) { Margin = new Thickness(0, 4) };
+            var history = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
+            var divider = new Separator(Orientation.Vertical);
             divider.Height = 16;
             history.Add(divider);
             HistoryOptions.AddTo(history, vm.Histories);
@@ -162,7 +161,6 @@ namespace SourceGit.Views
                     ToolTip = App.Text(text),
                     IsEnabled = command != null,
                 };
-                button.Width = 32;
                 if (command != null)
                     button.Click += command;
                 group.Add(button);
@@ -179,7 +177,6 @@ namespace SourceGit.Views
                     ToolTip = App.Text(text),
                     MenuOnOpen = menu,
                 };
-                button.Width = 32;
                 group.Add(button);
             }
         }
@@ -255,8 +252,8 @@ namespace SourceGit.Views
                     IconOnly = true,
                     ToolTip = App.Text(pages[i].Text),
                 };
-                button.Width = 41;
-                button.Height = 42;
+                button.MinWidth = 41;
+                button.MinHeight = 42;
                 // Pressing the chosen one again keeps it chosen.
                 button.Changed += _ => vm.SelectedViewIndex = index;
                 buttons.Add(button);
@@ -294,8 +291,6 @@ namespace SourceGit.Views
                 ToolTip = App.Text("Repository.Configure"),
                 Margin = new Thickness(0, 0, 4, 0),
             };
-            settings.Width = 40;
-            settings.Height = 40;
             settings.Click += () => RepositorySettings.Show(vm);
             rail.Add(settings);
             return rail;
@@ -430,10 +425,9 @@ namespace SourceGit.Views
             ListView list, Node[] buttons, Node[] withRows = null, bool branches = false)
         {
             var header = new Row { AlignItems = Align.Center, Gap = 4 };
-            header.Height = 28;
+            header.MinHeight = 28;
             header.Shrink = 0;
             var expander = new Button(App.Text(title)) { IconOnly = true, Style = ButtonStyle.Borderless };
-            expander.Width = 16;
             expander.Click += () => setExpanded(!expanded());
             // The whole header opens and closes it, as upstream's toggle
             // button does; the expander is the keyboard's way.
@@ -491,7 +485,6 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text(text),
             };
-            button.Width = 28;
             button.Click += command;
             return button;
         }
@@ -512,7 +505,6 @@ namespace SourceGit.Views
                     new MenuItem(App.Text(dateText), () => setByName(false)) { Checked = !byName(), Radio = true },
                 ],
             };
-            button.Width = 28;
             Bind.OneWay(vm, property, byName, name => button.Icon = Icons.Get(name ? "OrderByName" : "OrderByTime", 14), owner: button);
             return button;
         }
@@ -571,7 +563,6 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text(tip),
             };
-            toggle.Width = 28;
             Bind.OneWay(vm, property, get, on => toggle.IsChecked = on, owner: toggle);
             toggle.Changed += set;
             return toggle;
@@ -636,7 +627,6 @@ namespace SourceGit.Views
         private static void Folder(Container row, System.ComponentModel.INotifyPropertyChanged node, Func<bool> open, string name, string count, Action toggle)
         {
             var button = new Button(name) { IconOnly = true, Style = ButtonStyle.Borderless };
-            button.Width = 16;
             button.Click += toggle;
             row.Add(button);
             var icon = new Icon(Icons.Get("Folder")) { Size = 12 };
@@ -710,7 +700,7 @@ namespace SourceGit.Views
         private static Node BisectBar(ViewModels.Repository vm)
         {
             var bar = new Row { AlignItems = Align.Center, Gap = 8, Padding = new Thickness(0, 8) };
-            bar.Height = 28;
+            bar.MinHeight = 28;
             bar.Shrink = 0;
             bar.Add(new Tint { Inset = new Thickness(0) });
             var text = new Text { Weight = FontWeight.Bold, MaxLines = 1 };

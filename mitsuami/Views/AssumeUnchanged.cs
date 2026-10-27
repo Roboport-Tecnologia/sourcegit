@@ -65,7 +65,7 @@ namespace SourceGit.Views
         private static Node Row(ViewModels.AssumeUnchangedManager vm, string file)
         {
             var row = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4, 0, 8) };
-            row.Height = 26;
+            row.MinHeight = 26;
             row.Add(new Icon(Icons.Get("File")) { Size = 14 });
             var path = new Text(file) { MaxLines = 1 };
             path.Grow = 1;
@@ -80,7 +80,6 @@ namespace SourceGit.Views
                 IconOnly = true,
                 Style = ButtonStyle.Borderless,
             };
-            remove.Width = 28;
             remove.Click += () => _ = vm.RemoveAsync(file);
             row.Add(remove);
             return row;

@@ -24,7 +24,6 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Repository.Search.ToolTip"),
             };
-            search.Width = 32;
             search.Changed += on => vm.IsSearchingCommits = on;
             Bind.OneWay(vm, nameof(vm.IsSearchingCommits), () => vm.IsSearchingCommits, on => search.IsChecked = on, owner: search);
             group.Add(search);
@@ -36,7 +35,6 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Histories.AdvancedOptions"),
             };
-            options.Width = 32;
             // The checks follow the settings, however they change.
             void Refresh() => options.Menu = Menu(vm);
             Refresh();

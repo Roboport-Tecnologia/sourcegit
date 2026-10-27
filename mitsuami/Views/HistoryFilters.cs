@@ -40,7 +40,6 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 Margin = new Thickness(0, 0, 0, 16),
             };
-            collapse.Width = 20;
             collapse.Click += () => vm.IsHistoryFiltersCollapsed = !vm.IsHistoryFiltersCollapsed;
             row.Add(collapse);
             var clear = new Button(App.Text("Repository.ClearAllCommitsFilter"))
@@ -50,7 +49,6 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Repository.ClearAllCommitsFilter"),
             };
-            clear.Width = 20;
             clear.Click += vm.ClearHistoryFilters;
             row.Add(clear);
             bar.Add(row);
@@ -124,9 +122,9 @@ namespace SourceGit.Views
         private static Node Chip(ViewModels.Repository vm, Models.HistoryFilter filter)
         {
             var line = new Row { AlignItems = Align.Center, Margin = new Thickness(1, 6, 1, 0) };
-            line.Height = 20;
+            line.MinHeight = 20;
             var chip = new Row { AlignItems = Align.Center, Padding = new Thickness(0, 8) };
-            chip.Height = 20;
+            chip.MinHeight = 20;
             var (r, g, b) = filter.Mode == Models.FilterMode.Excluded ? ((byte)255, (byte)0, (byte)0) : ((byte)0, (byte)128, (byte)0);
             chip.Add(new Outline(Color.Rgba(r, g, b)) { Inset = new Thickness(0) });
 
@@ -150,7 +148,6 @@ namespace SourceGit.Views
                 IconOnly = true,
                 Style = ButtonStyle.Borderless,
             };
-            remove.Width = 16;
             remove.Click += () => vm.RemoveHistoryFilter(filter);
             chip.Add(remove);
             line.Add(chip);

@@ -98,7 +98,6 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("WorkingCopy.IncludeUntracked"),
             };
-            untracked.Width = 28;
             Bind.OneWay(vm, nameof(vm.IncludeUntracked), () => vm.IncludeUntracked, on =>
             {
                 untracked.IsChecked = on;
@@ -175,7 +174,7 @@ namespace SourceGit.Views
             string busyProperty, Func<bool> busy)
         {
             var bar = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4, 0, 8) };
-            bar.Height = 28;
+            bar.MinHeight = 28;
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get("Changes")) { Size = 14, Color = Color.SecondaryLabel });
             var text = new Text { Weight = FontWeight.Bold, Color = Color.SecondaryLabel };
@@ -315,7 +314,7 @@ namespace SourceGit.Views
             box.Add(editor);
 
             var footer = new Row { AlignItems = Align.Center, Gap = 4 };
-            footer.Height = 24;
+            footer.MinHeight = 24;
             footer.Shrink = 0;
             var helper = new MenuButton(App.Text("WorkingCopy.CommitMessageHelper"))
             {
@@ -324,7 +323,6 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("WorkingCopy.CommitMessageHelper"),
             };
-            helper.Width = 28;
             footer.Add(helper);
             // Upstream builds it as it opens; a menu button's menu is set
             // ahead, so it's built again whenever what's in it can change:
@@ -552,7 +550,6 @@ namespace SourceGit.Views
                 ToolTip = key is { } k ? $"{App.Text(text)}  {Hotkeys.Format(k)}" : App.Text(text),
                 IsEnabled = command != null,
             };
-            button.Width = 28;
             if (command != null)
                 button.Click += command;
             return button;

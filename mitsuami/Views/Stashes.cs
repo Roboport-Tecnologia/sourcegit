@@ -48,7 +48,6 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Repository.ClearStashes"),
             };
-            clear.Width = 28;
             clear.Click += vm.ClearStashes;
             stashBar.Add(clear);
             column.Add(stashBar);
@@ -90,7 +89,7 @@ namespace SourceGit.Views
         private static Row Bar(string icon, string title, ViewModels.StashesPage vm, string countProperty, Func<int> count)
         {
             var bar = new Row { AlignItems = Align.Center, Gap = 4, Padding = new Thickness(0, 4, 0, 8) };
-            bar.Height = 28;
+            bar.MinHeight = 28;
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get(icon)) { Size = 14, Color = Color.SecondaryLabel });
             var text = new Text { Weight = FontWeight.Bold, Color = Color.SecondaryLabel };

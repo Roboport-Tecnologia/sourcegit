@@ -98,13 +98,14 @@ namespace SourceGit.Views
             // with no line between them, as Safari's bars are. macOS draws the
             // title bar and the content in one colour; its hard edge (26.1)
             // sets the band apart, as GTK's and WinUI's shades do.
-            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Padding = new Thickness(0, 4), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
-            band.Height = 36;
+            // Spaced as the repository's toolbar band.
+            var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
+            band.MinHeight = 36;
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
-            var start = new Row { AlignItems = Align.Center };
-            var end = new Row { AlignItems = Align.Center };
+            var start = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
+            var end = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             band.Add(start);
             band.Add(end);
 
@@ -124,7 +125,6 @@ namespace SourceGit.Views
                     Style = ButtonStyle.Borderless,
                     ToolTip = App.Text(text),
                 };
-                button.Width = 32;
                 button.Click += command;
                 group.Add(button);
             }
