@@ -127,7 +127,7 @@ namespace SourceGit.Views
         /// in dark orange, and its subject.</summary>
         private static Row StashLabel(Models.Stash stash)
         {
-            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.IconGap, AlignItems = Align.Center };
             row.Add(new Icon(Icons.Get("Stashes")) { Size = 12 });
             row.Add(new Text(stash.Name) { Color = s_sha });
             var subject = new Text(stash.Subject) { MaxLines = 1 };

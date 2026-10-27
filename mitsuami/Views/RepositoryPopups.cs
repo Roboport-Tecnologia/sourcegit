@@ -407,7 +407,7 @@ namespace SourceGit.Views
         private static Node DeleteBranchForm(ViewModels.DeleteBranch vm)
         {
             var target = vm.Target;
-            var branch = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var branch = new Row { Gap = Metrics.IconGap, AlignItems = Align.Center };
             branch.Add(RefLabel(target));
             if (target.IsTrackStatusVisible)
                 branch.Add(new Text(target.TrackStatusDescription) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
@@ -477,7 +477,7 @@ namespace SourceGit.Views
 
         private static Row IconLabel(string icon, string text)
         {
-            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.IconGap, AlignItems = Align.Center };
             row.Add(new Icon(Icons.Get(icon)) { Size = 14 });
             row.Add(new Text(text) { MaxLines = 1 });
             return row;
@@ -485,7 +485,7 @@ namespace SourceGit.Views
 
         private static Row CommitLabel(Models.Commit commit)
         {
-            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.IconGap, AlignItems = Align.Center };
             row.Add(new Icon(Icons.Get("Commit")) { Size = 14 });
             row.Add(new Text(ShortSha(commit.SHA)) { Style = TextStyle.Monospace, Color = s_sha });
             var subject = new Text(commit.Subject) { MaxLines = 1 };
@@ -597,7 +597,7 @@ namespace SourceGit.Views
         /// the platform's warning colour.</summary>
         private static Row Warning(string text)
         {
-            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Start };
+            var row = new Row { Gap = Metrics.IconGap, AlignItems = Align.Start };
             row.Add(new Icon(Icons.Get("Error")) { Size = 14, Color = Color.Warning });
             var message = new Text(text) { Color = Color.Warning };
             message.Shrink = 1;
@@ -611,7 +611,7 @@ namespace SourceGit.Views
         /// opens: a spinner while it runs, then whether it conflicts.</summary>
         private static Row Testing(INotifyPropertyChanged vm, string property, Func<(Tested State, string Text)> get)
         {
-            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.IconGap, AlignItems = Align.Center };
             var spinner = new Spinner();
             var fine = new Icon(Icons.Get("CheckCircled")) { Size = 14, Color = Color.Success };
             var conflicts = new Icon(Icons.Get("Error")) { Size = 14, Color = Color.Warning };

@@ -33,6 +33,10 @@ namespace SourceGit
         /// button, a check and its number, a slider and its value.</summary>
         public static Length ControlGap => Spacing.Sm;
 
+        /// <summary>Between a label's icon (or spinner) and its text, and
+        /// the labels in a line: a branch, a commit, a stash, a warning.</summary>
+        public static Length IconGap => Spacing.Sm;
+
         /// <summary>Between a sheet's push buttons (Cancel, OK).</summary>
         public static Length DialogButtonGap => Spacing.Sm;
 

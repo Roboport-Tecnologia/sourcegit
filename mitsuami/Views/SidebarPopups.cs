@@ -142,7 +142,7 @@ namespace SourceGit.Views
         /// local branch.</summary>
         private static Node FetchIntoForm(ViewModels.FetchInto vm)
         {
-            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center, Justify = Justify.Center };
+            var row = new Row { Gap = Metrics.IconGap, AlignItems = Align.Center, Justify = Justify.Center };
             row.Add(IconLabel("Branch", vm.Upstream.FriendlyName));
             row.Add(new Text("→"));
             row.Add(IconLabel("Branch", vm.Local.Name));
@@ -205,7 +205,7 @@ namespace SourceGit.Views
         /// colour, as upstream's runs.</summary>
         private static Node RemoveWorktreeForm(ViewModels.RemoveWorktree vm)
         {
-            var target = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var target = new Row { Gap = Metrics.IconGap, AlignItems = Align.Center };
             target.Add(new Icon(Icons.Get("Worktree")) { Size = 12 });
             // The path gives way, not the name.
             var name = new Text(vm.Target.Name) { MaxLines = 1 };

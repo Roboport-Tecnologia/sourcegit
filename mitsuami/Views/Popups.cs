@@ -89,7 +89,7 @@ namespace SourceGit.Views
             column.Add(form(sheet));
 
             // Upstream's progress: git's last line while the popup runs.
-            var progress = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var progress = new Row { Gap = Metrics.IconGap, AlignItems = Align.Center };
             var progressText = new Text { Style = TextStyle.Caption };
             progressText.Grow = 1;
             progress.Add(new Spinner());
@@ -258,10 +258,10 @@ namespace SourceGit.Views
         private static Node MoveForm(ViewModels.MoveRepositoryNode vm)
         {
             // Upstream's: the label, then the name, in a row of their own.
-            var target = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var target = new Row { Gap = Metrics.FieldGap, AlignItems = Align.Center };
             target.Add(new Text(App.Text("MoveRepositoryNode.Target")));
             target.Add(new Text(vm.Target.Name));
-            var form = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
+            var form = new Column { Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             form.Add(target);
 
             // Upstream's framed tree of the groups, ROOT first, each open,
