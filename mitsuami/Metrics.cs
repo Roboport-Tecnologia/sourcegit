@@ -57,8 +57,12 @@ namespace SourceGit
         /// operation in progress).</summary>
         public static Thickness Bar => new(Spacing.Xs, Spacing.Sm);
 
-        /// <summary>The toolbar bands at the top of the windows.</summary>
-        public static Thickness Band => new(Spacing.Xs, Spacing.Sm);
+        /// <summary>The toolbar bands at the top of the windows. On macOS
+        /// the borderless buttons' icons sat close to the band's bottom
+        /// line, so there they have more room under them.</summary>
+        public static Thickness Band => Mac
+            ? new(Spacing.Xs, Spacing.Sm, Spacing.Md, Spacing.Sm)
+            : new(Spacing.Xs, Spacing.Sm);
 
         /// <summary>Between icon-only borderless buttons side by side.
         /// AppKit's have no padding of their own, so there it's the medium
