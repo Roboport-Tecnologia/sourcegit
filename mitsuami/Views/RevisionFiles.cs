@@ -206,8 +206,8 @@ namespace SourceGit.Views
         }
 
         /// <summary>Upstream's row, after the platform's disclosure and
-        /// indent: its icon (a folder in goldenrod, open or closed as it is,
-        /// a submodule, a file) and name.</summary>
+        /// indent: its icon (the platform's for a folder and a file's type,
+        /// upstream's for a submodule) and name.</summary>
         private Node Row(ViewModels.RevisionFileTreeNode node)
         {
             var row = new Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Xs) };
@@ -215,16 +215,13 @@ namespace SourceGit.Views
             switch (node.Backend.Type)
             {
                 case Models.ObjectType.Blob:
-                    row.Add(new Icon(Icons.Get("File")) { Size = 14 });
+                    row.Add(FileIcons.File(node.Backend.Path));
                     break;
                 case Models.ObjectType.Commit:
                     row.Add(new Icon(Icons.Get("Submodule")) { Size = 14 });
                     break;
                 default:
-                    var icon = new Icon(Icons.Get("Folder")) { Size = 14, Color = s_folder };
-                    Bind.OneWay(node, nameof(node.IsExpanded), () => node.IsExpanded,
-                        open => icon.Vector = Icons.Get(open ? "Folder.Open" : "Folder"), owner: row);
-                    row.Add(icon);
+                    row.Add(FileIcons.Folder());
                     break;
             }
             var name = new Text(node.Name) { MaxLines = 1 };
@@ -439,7 +436,5 @@ namespace SourceGit.Views
                 < 1024L * 1024 * 1024 => $"{bytes / 1024.0 / 1024:F2} MB",
                 _ => $"{bytes / 1024.0 / 1024 / 1024:F2} GB",
             };
-
-        private static readonly Color s_folder = Color.Rgba(218, 165, 32);
     }
 }

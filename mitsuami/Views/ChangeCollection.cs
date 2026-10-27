@@ -411,7 +411,7 @@ namespace SourceGit.Views
         /// disclosure and indent in the tree. A change: its status mark, a
         /// conflict's marker in bold dark orange, and its path (the list), its
         /// name then its folder (the grid) or its name (the tree). A folder:
-        /// its icon in goldenrod, open or closed as it is.</summary>
+        /// the platform's folder icon.</summary>
         private Node Row(Item item)
         {
             var row = new Mitsuamia.Row { AlignItems = Align.Center, Gap = Metrics.RowGap, Padding = Metrics.ListRow(Spacing.Xs) };
@@ -447,10 +447,7 @@ namespace SourceGit.Views
             }
             else if (item.Node is { } folder)
             {
-                var icon = new Icon(Icons.Get("Folder")) { Size = 14, Color = s_folder };
-                Bind.OneWay(folder, nameof(folder.IsExpanded), () => folder.IsExpanded,
-                    open => icon.Vector = Icons.Get(open ? "Folder.Open" : "Folder"), owner: row);
-                row.Add(icon);
+                row.Add(FileIcons.Folder());
                 row.Add(new Text(folder.DisplayName) { MaxLines = 1 });
                 row.ToolTip = folder.FullPath;
             }
@@ -458,6 +455,5 @@ namespace SourceGit.Views
         }
 
         private static readonly Color s_conflict = Color.Rgba(255, 140, 0);
-        private static readonly Color s_folder = Color.Rgba(218, 165, 32);
     }
 }
