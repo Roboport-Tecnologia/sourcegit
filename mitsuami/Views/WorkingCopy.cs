@@ -469,14 +469,21 @@ namespace SourceGit.Views
         private static Node Options(ViewModels.WorkingCopy vm)
         {
             var row = new Row { AlignItems = Align.Center, Gap = 12 };
-            row.Height = 40;
+            row.MinHeight = 40;
             row.Shrink = 0;
-            row.Add(Check(vm, nameof(vm.EnableSignOff), "WorkingCopy.SignOff", "--signoff", () => vm.EnableSignOff, v => vm.EnableSignOff = v));
-            row.Add(Check(vm, nameof(vm.NoVerifyOnCommit), "WorkingCopy.NoVerify", "--no-verify", () => vm.NoVerifyOnCommit, v => vm.NoVerifyOnCommit = v));
-            row.Add(Check(vm, nameof(vm.UseAmend), "WorkingCopy.Amend", "--amend", () => vm.UseAmend, v => vm.UseAmend = v));
+            // The checks wrap onto more lines in a narrow pane, before the
+            // buttons run out of it: XAML's check boxes are at least 120
+            // wide, and three of them and the buttons passed the pane at a
+            // 1280-wide window.
+            var checks = new Row { AlignItems = Align.Center, Gap = 12, Wrap = true };
+            checks.Shrink = 1;
+            checks.Add(Check(vm, nameof(vm.EnableSignOff), "WorkingCopy.SignOff", "--signoff", () => vm.EnableSignOff, v => vm.EnableSignOff = v));
+            checks.Add(Check(vm, nameof(vm.NoVerifyOnCommit), "WorkingCopy.NoVerify", "--no-verify", () => vm.NoVerifyOnCommit, v => vm.NoVerifyOnCommit = v));
+            checks.Add(Check(vm, nameof(vm.UseAmend), "WorkingCopy.Amend", "--amend", () => vm.UseAmend, v => vm.UseAmend = v));
             var resetAuthor = Check(vm, nameof(vm.ResetAuthor), "WorkingCopy.ResetAuthor", "--reset-author", () => vm.ResetAuthor, v => vm.ResetAuthor = v);
             Bind.OneWay(vm, nameof(vm.UseAmend), () => vm.UseAmend, v => resetAuthor.IsVisible = v, owner: resetAuthor);
-            row.Add(resetAuthor);
+            checks.Add(resetAuthor);
+            row.Add(checks);
 
             var space = new Column();
             space.Grow = 1;
