@@ -324,7 +324,7 @@ namespace SourceGit.Views
             message.AccessibleName = App.Text("CodeEditor");
             column.Add(editor);
 
-            var buttons = new Row { Gap = Spacing.Sm, Justify = Justify.End };
+            var buttons = new Row { Gap = Metrics.DialogButtonGap, Justify = Justify.End };
             var cancel = new Button(Popups.ButtonText("Cancel")) { Role = ButtonRole.Cancel };
             cancel.Click += sheet.Destroy;
             var sure = new Button(Popups.ButtonText("Sure")) { Role = ButtonRole.Default };

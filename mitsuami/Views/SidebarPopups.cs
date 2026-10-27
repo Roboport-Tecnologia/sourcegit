@@ -231,7 +231,7 @@ namespace SourceGit.Views
         private static Row UrlField(Window sheet, INotifyPropertyChanged vm, string property, Func<string> get, Action<string> set,
             string placeholder)
         {
-            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.ControlGap, AlignItems = Align.Center };
             var input = TextField(sheet, vm, property, get, set, placeholder);
             input.Grow = 1;
             row.Add(input);

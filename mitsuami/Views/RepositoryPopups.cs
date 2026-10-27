@@ -331,7 +331,7 @@ namespace SourceGit.Views
         {
             // Upstream's remote branch picker, and a button beside it that
             // asks for a new branch's name.
-            var to = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
+            var to = new Row { Gap = Metrics.ControlGap, AlignItems = Align.Center };
             var remoteBranch = Choice(App.Text("Push.To"), vm, nameof(vm.RemoteBranches), () => vm.RemoteBranches,
                 nameof(vm.SelectedRemoteBranch), b => b.Name, () => vm.SelectedRemoteBranch, b => vm.SelectedRemoteBranch = b);
             remoteBranch.Grow = 1;
@@ -371,7 +371,7 @@ namespace SourceGit.Views
             column.Add(new Text(App.Text("PushToNewBranch")) { Style = TextStyle.Headline });
             column.Add(new Text(App.Text("PushToNewBranch.Title")));
             // Upstream shows the remote inside the field, before the name.
-            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.ControlGap, AlignItems = Align.Center };
             var remote = new Text($"{vm.Remote}/") { Color = Color.SecondaryLabel };
             remote.Shrink = 0;
             row.Add(remote);
@@ -382,7 +382,7 @@ namespace SourceGit.Views
             var errors = new Text { Style = TextStyle.Caption, IsVisible = false };
             column.Add(errors);
 
-            var buttons = new Row { Gap = Spacing.Sm, Justify = Justify.End };
+            var buttons = new Row { Gap = Metrics.DialogButtonGap, Justify = Justify.End };
             var cancel = new Button(ButtonText("Cancel")) { Role = ButtonRole.Cancel };
             cancel.Click += sheet.Destroy;
             var sure = new Button(ButtonText("Sure")) { Role = ButtonRole.Default };
@@ -437,7 +437,7 @@ namespace SourceGit.Views
 
         private static Column Rows(params (string Label, Node Control)[] rows)
         {
-            var column = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             foreach (var (label, control) in rows)
                 column.Add(Field(label, control));
             return column;
@@ -636,7 +636,7 @@ namespace SourceGit.Views
         private static Row SaveField(Window sheet, INotifyPropertyChanged vm, string property, Func<string> get, Action<string> set,
             string placeholder)
         {
-            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.ControlGap, AlignItems = Align.Center };
             var input = TextField(sheet, vm, property, get, set, placeholder);
             input.Grow = 1;
             var browse = new Button("…");

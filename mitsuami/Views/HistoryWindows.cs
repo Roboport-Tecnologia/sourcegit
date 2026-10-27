@@ -206,7 +206,7 @@ namespace SourceGit.Views
                 (vm.IsDiffMode ? change : content).Add(shown);
             }, owner: tabs);
             column.Add(tabs);
-            var buttons = new Row { Justify = Justify.End };
+            var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
             var reset = new Button(App.Text("ChangeCM.CheckoutThisRevision"));
             // Upstream's alert once it's done.
             reset.Click += async () =>

@@ -174,7 +174,7 @@ namespace SourceGit.Views
 
             var errors = new Text { Color = Color.Error, IsVisible = false };
             column.Add(errors);
-            var buttons = new Row { Justify = Justify.End, Gap = Spacing.Sm };
+            var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
             var cancel = new Button(Popups.ButtonText("Cancel"));
             cancel.Click += sheet.Destroy;
             var start = new Button(Popups.ButtonText("SSHKeyHelper.Generator.Start")) { Role = ButtonRole.Default };

@@ -26,7 +26,7 @@ namespace SourceGit.Views
 
         public static Column Page()
         {
-            var page = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
+            var page = new Column { Padding = Metrics.Panel, Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             page.Grow = 1;
             return page;
         }
@@ -36,7 +36,7 @@ namespace SourceGit.Views
         /// a tall control (<paramref name="top"/>), at its top.</summary>
         public static Row Field(string label, Node control, bool top = false)
         {
-            var row = new Row { Gap = Spacing.Md, AlignItems = top ? Align.Start : Align.Center };
+            var row = new Row { Gap = Metrics.FieldGap, AlignItems = top ? Align.Start : Align.Center };
             var side = new Row { Justify = Justify.End };
             side.Width = LabelWidth;
             side.Shrink = 0;
@@ -94,7 +94,7 @@ namespace SourceGit.Views
         public static Row Path(Func<Window> window, string value, Action<string> set, string placeholder = "",
             Pick pick = Pick.File, string title = "")
         {
-            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.ControlGap, AlignItems = Align.Center };
             var input = TextValue(value, set, placeholder);
             input.Grow = 1;
             input.MinWidth = 0;
@@ -118,7 +118,7 @@ namespace SourceGit.Views
         /// tooltip says what the field takes.</summary>
         public static Row WithTip(Node control, string tip)
         {
-            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.ControlGap, AlignItems = Align.Center };
             control.Grow = 1;
             control.MinWidth = 0;
             row.Add(control);
@@ -142,7 +142,7 @@ namespace SourceGit.Views
         /// <summary>A label over its control, as upstream's item forms are.</summary>
         public static Column Stacked(string label, Node control)
         {
-            var column = new Column { Gap = Spacing.Xs, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Metrics.LabelGap, AlignItems = Align.Stretch };
             column.Add(new Text(label.Trim()));
             column.Add(control);
             return column;

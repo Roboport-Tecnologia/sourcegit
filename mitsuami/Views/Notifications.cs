@@ -66,7 +66,7 @@ namespace SourceGit.Views
             scroll.Content.Add(new Text(message) { Style = TextStyle.Monospace, Selectable = true });
             column.Add(scroll);
 
-            var buttons = new Row { Justify = Justify.End };
+            var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
             var sure = new Button(Popups.ButtonText("Sure")) { Role = ButtonRole.Default };
             buttons.Add(sure);
             column.Add(buttons);

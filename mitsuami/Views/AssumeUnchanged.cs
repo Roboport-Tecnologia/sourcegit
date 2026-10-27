@@ -52,7 +52,7 @@ namespace SourceGit.Views
             Count();
             vm.Files.CollectionChanged += (_, _) => Count();
 
-            var buttons = new Row { Justify = Justify.End };
+            var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
             var close = new Button(Popups.ButtonText("Close")) { Role = ButtonRole.Default };
             close.Click += sheet.Destroy;
             buttons.Add(close);

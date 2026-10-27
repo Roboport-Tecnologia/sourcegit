@@ -40,7 +40,7 @@ namespace SourceGit.Views
                     Move = controls.Move,
                 });
             column.Add(list);
-            var buttons = new Row { Justify = Justify.End };
+            var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
             var close = new Button(Popups.ButtonText("Close")) { Role = ButtonRole.Default };
             close.Click += sheet.Destroy;
             buttons.Add(close);
@@ -52,14 +52,14 @@ namespace SourceGit.Views
         /// then what its type takes.</summary>
         private static Node Control(Models.CustomActionControl control)
         {
-            var column = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             column.Add(Stacked(App.Text("ConfigureCustomActionControls.Label"), TextValue(control.Label, v => control.Label = v)));
             string[] types = ["TextBox", "Path Selector", "CheckBox", "ComboBox", "Local Branch Selector", "Remote Branch Selector"];
             column.Add(Stacked(App.Text("ConfigureCustomActionControls.Type"), Choice(App.Text("ConfigureCustomActionControls.Type"),
                 types, (int)control.Type, i => control.Type = (Models.CustomActionControlType)i)));
             column.Add(Stacked(App.Text("ConfigureCustomActionControls.Description"),
                 TextValue(control.Description, v => control.Description = v)));
-            var typed = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var typed = new Column { Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             column.Add(typed);
             Node shown = null;
             void Show()
@@ -85,7 +85,7 @@ namespace SourceGit.Views
         private static Node Typed(Models.CustomActionControl control)
         {
             var type = control.Type;
-            var column = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             var valueLabel = type switch
             {
                 Models.CustomActionControlType.CheckBox => "ConfigureCustomActionControls.CheckedValue",

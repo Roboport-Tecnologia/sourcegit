@@ -331,7 +331,7 @@ namespace SourceGit.Views
             list.Height = Math.Min(commits.Count, 8) * 28 + 12;
             list.SelectedItems = [commits[0]];
             column.Add(list);
-            var buttons = new Row { Justify = Justify.End, Gap = Spacing.Sm };
+            var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
             var cancel = new Button(Popups.ButtonText("Cancel"));
             var ok = new Button(Popups.ButtonText("Sure")) { Role = ButtonRole.Default };
             buttons.Add(cancel);

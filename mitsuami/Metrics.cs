@@ -20,6 +20,22 @@ namespace SourceGit
         /// <summary>Between the sections of a sheet or a window.</summary>
         public static Length PanelGap => Spacing.Md;
 
+        /// <summary>Between a form's fields.</summary>
+        public static Length FormGap => Spacing.Sm;
+
+        /// <summary>Between a field's label and its control beside it.</summary>
+        public static Length FieldGap => Spacing.Md;
+
+        /// <summary>Between a field's label and its control under it.</summary>
+        public static Length LabelGap => Spacing.Xs;
+
+        /// <summary>Between the controls of one field: a path and its
+        /// button, a check and its number, a slider and its value.</summary>
+        public static Length ControlGap => Spacing.Sm;
+
+        /// <summary>Between a sheet's push buttons (Cancel, OK).</summary>
+        public static Length DialogButtonGap => Spacing.Sm;
+
         /// <summary>Above and below a list's row: the platform's lists
         /// make a row at least their own height, and content-sized rows
         /// with nothing around them crowd each other.</summary>

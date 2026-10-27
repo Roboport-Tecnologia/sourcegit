@@ -49,7 +49,7 @@ namespace SourceGit.Views
 
             var errors = new Text { Color = Color.Error, IsVisible = false };
             column.Add(errors);
-            var buttons = new Row { Justify = Justify.End, Gap = Spacing.Sm };
+            var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
             var cancel = new Button(Popups.ButtonText("Cancel"));
             cancel.Click += sheet.Destroy;
             buttons.Add(cancel);

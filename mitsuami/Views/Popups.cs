@@ -102,7 +102,7 @@ namespace SourceGit.Views
             var errors = new Text { Style = TextStyle.Caption, IsVisible = false };
             column.Add(errors);
 
-            var buttons = new Row { Gap = Spacing.Sm, Justify = Justify.End };
+            var buttons = new Row { Gap = Metrics.DialogButtonGap, Justify = Justify.End };
             var cancel = new Button(ButtonText("Cancel")) { Role = ButtonRole.Cancel };
             cancel.Click += page.CancelPopup;
             var sure = new Button(ButtonText("Sure")) { Role = ButtonRole.Default, IsEnabled = ported };
@@ -347,7 +347,7 @@ namespace SourceGit.Views
 
         private static Column Fields(Window sheet, params (string Label, Node Control)[] rows)
         {
-            var column = new Column { Gap = Spacing.Sm, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             foreach (var (label, control) in rows)
                 column.Add(Field(label, control));
             return column;
@@ -369,7 +369,7 @@ namespace SourceGit.Views
             side.Add(new Text(label));
             var line = new Text(" ") { Style = TextStyle.Caption, IsVisible = false };
             side.Add(line);
-            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.FieldGap, AlignItems = Align.Center };
             row.Add(side);
             withError.Grow = 1;
             row.Add(withError);
@@ -393,7 +393,7 @@ namespace SourceGit.Views
 
         private static Row FieldRow(string label, Node control)
         {
-            var row = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.FieldGap, AlignItems = Align.Center };
             var text = new Text(label);
             text.Width = LabelWidth;
             // The control gives way, a commit's subject truncating, not
@@ -457,7 +457,7 @@ namespace SourceGit.Views
         private static Row PathField(Window sheet, INotifyPropertyChanged vm, string property, Func<string> get,
             Action<string> set, string placeholder, bool folders)
         {
-            var row = new Row { Gap = Spacing.Xs, AlignItems = Align.Center };
+            var row = new Row { Gap = Metrics.ControlGap, AlignItems = Align.Center };
             var input = TextField(sheet, vm, property, get, set, placeholder);
             input.Grow = 1;
             var browse = new Button("…");

@@ -82,7 +82,7 @@ namespace SourceGit.Views
                         Move = vm.CustomActions.Move,
                     })),
                 ("Configure.OpenAI", Ai(vm))));
-            var buttons = new Row { Justify = Justify.End };
+            var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
             var close = new Button(Popups.ButtonText("Close")) { Role = ButtonRole.Default };
             close.Click += () =>
             {
@@ -121,7 +121,7 @@ namespace SourceGit.Views
         /// upstream edits in its commit message box.</summary>
         private static Node Template(Models.CommitTemplate template)
         {
-            var column = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             column.Add(Stacked(App.Text("Configure.CommitMessageTemplate.Name"), TextValue(template.Name, v => template.Name = v)));
             column.Add(Stacked(App.Text("Configure.CommitMessageTemplate.Content"),
                 WithTip(TextBlock(template.Content, 10, v => template.Content = v), App.Text("Configure.CommitMessageTemplate.BuiltinVars"))));
@@ -133,9 +133,9 @@ namespace SourceGit.Views
         /// whether it's shared through the repository's files.</summary>
         private static Node Tracker(Models.IssueTracker tracker)
         {
-            var column = new Column { Gap = Spacing.Md, AlignItems = Align.Stretch };
+            var column = new Column { Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             column.Add(Stacked(App.Text("Configure.IssueTracker.RuleName"), TextValue(tracker.Name, v => tracker.Name = v)));
-            var regex = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var regex = new Row { Gap = Metrics.ControlGap, AlignItems = Align.Center };
             var input = TextValue(tracker.RegexString, v => tracker.RegexString = v);
             input.Grow = 1;
             regex.Add(input);

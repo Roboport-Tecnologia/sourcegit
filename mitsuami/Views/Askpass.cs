@@ -23,7 +23,7 @@ namespace SourceGit.Views
             var field = new PasswordInput { AccessibleName = prompt };
             column.Add(field);
 
-            var buttons = new Row { Gap = Spacing.Sm, Justify = Justify.End };
+            var buttons = new Row { Gap = Metrics.DialogButtonGap, Justify = Justify.End };
             var cancel = new Button(Popups.ButtonText("Cancel")) { Role = ButtonRole.Cancel };
             var sure = new Button(Popups.ButtonText("Sure")) { Role = ButtonRole.Default };
             buttons.Add(cancel);
