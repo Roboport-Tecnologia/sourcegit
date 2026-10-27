@@ -27,11 +27,12 @@ namespace SourceGit.Views
 
             // Upstream's sidebar width is a preference, 250 points until
             // the user drags it; it's at least 200, and the page 100. On
-            // Windows it opens at least 320 wide: WinUI's buttons are wider
+            // Windows the default opens 320 wide: WinUI's buttons are wider
             // than upstream's, and at 250 the headers' titles were cut down
-            // to make room for their buttons.
+            // to make room for their buttons. A width the user dragged to
+            // is kept.
             var layout = ViewModels.Preferences.Instance.Layout;
-            var sidebarWidth = OperatingSystem.IsWindows() ? Math.Max(layout.RepositorySidebarWidth, 320) : layout.RepositorySidebarWidth;
+            var sidebarWidth = OperatingSystem.IsWindows() && layout.RepositorySidebarWidth == 250 ? 320 : layout.RepositorySidebarWidth;
             var split = new Split { Position = sidebarWidth };
             split.Grow = 1;
             split.Changed += width => layout.RepositorySidebarWidth = width;
