@@ -20,9 +20,12 @@ namespace SourceGit.Views
         {
             var vm = repo.StashesPage;
             // Upstream's left column is a preference, and both sides are at
-            // least 300 points.
+            // least 300 points. On Windows the default (300) opens 350
+            // wide, for WinUI's wider buttons; a width the user dragged to
+            // is kept.
             var layout = ViewModels.Preferences.Instance.Layout;
-            var split = new Split { Position = layout.StashesLeftWidth.Value };
+            var leftWidth = layout.StashesLeftWidth.Value;
+            var split = new Split { Position = OperatingSystem.IsWindows() && leftWidth == 300 ? 350 : leftWidth };
             split.Grow = 1;
             split.Changed += width => layout.StashesLeftWidth = new Avalonia.Controls.GridLength(width);
             var left = Left(repo, vm);
@@ -92,7 +95,9 @@ namespace SourceGit.Views
             bar.MinHeight = 28;
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get(icon)) { Size = 14, Color = Color.SecondaryLabel });
-            var text = new Text { Weight = FontWeight.Bold, Color = Color.SecondaryLabel };
+            // One line, cut off in a narrow column so the buttons keep
+            // their room.
+            var text = new Text { Weight = FontWeight.Bold, Color = Color.SecondaryLabel, MaxLines = 1 };
             Bind.OneWay(vm, countProperty, count, c => text.Value = $"{App.Text(title)} ({c})", owner: bar);
             bar.Add(text);
             var space = new Column();

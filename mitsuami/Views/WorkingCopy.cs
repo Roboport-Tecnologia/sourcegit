@@ -18,9 +18,13 @@ namespace SourceGit.Views
         public static Node Create(ViewModels.WorkingCopy vm)
         {
             // Upstream's left column is a preference, 300 points until the
-            // user drags it, and at least 300; the right at least 470.
+            // user drags it, and at least 300; the right at least 470. On
+            // Windows the default opens 370 wide: WinUI's buttons are wider
+            // than upstream's, and at 300 the lists' headers clipped theirs.
+            // A width the user dragged to is kept.
             var layout = ViewModels.Preferences.Instance.Layout;
-            var split = new Split { Position = layout.WorkingCopyLeftWidth.Value };
+            var leftWidth = layout.WorkingCopyLeftWidth.Value;
+            var split = new Split { Position = OperatingSystem.IsWindows() && leftWidth == 300 ? 370 : leftWidth };
             split.Grow = 1;
             split.Changed += width => layout.WorkingCopyLeftWidth = new Avalonia.Controls.GridLength(width);
             var left = Left(vm);
@@ -177,7 +181,9 @@ namespace SourceGit.Views
             bar.MinHeight = 28;
             bar.Shrink = 0;
             bar.Add(new Icon(Icons.Get("Changes")) { Size = 14, Color = Color.SecondaryLabel });
-            var text = new Text { Weight = FontWeight.Bold, Color = Color.SecondaryLabel };
+            // One line, cut off in a narrow column so the buttons keep
+            // their room.
+            var text = new Text { Weight = FontWeight.Bold, Color = Color.SecondaryLabel, MaxLines = 1 };
             Bind.OneWay(vm, countProperty, count, c => text.Value = $"{App.Text(title)} {c}", owner: bar);
             bar.Add(text);
             var spinner = new Spinner();
@@ -490,6 +496,7 @@ namespace SourceGit.Views
             row.Add(space);
             var spinner = new Spinner();
             Bind.OneWay(vm, nameof(vm.IsCommitting), () => vm.IsCommitting, v => spinner.IsVisible = v, owner: spinner);
+            spinner.AlignSelf = Align.End;
             row.Add(spinner);
 
             var buttons = new Row { AlignItems = Align.Center, Gap = 8 };
@@ -510,6 +517,9 @@ namespace SourceGit.Views
             var commitAndPush = new Button(Popups.ButtonText("WorkingCopy.CommitAndPush")) { ToolTip = $"{primary}⌥↵" };
             commitAndPush.Click += () => Commit(vm, false, true);
             buttons.Add(commitAndPush);
+            // At the bottom, in the window's corner, when the checks wrap,
+            // with the spinner beside them.
+            buttons.AlignSelf = Align.End;
             row.Add(buttons);
 
             void Show()
