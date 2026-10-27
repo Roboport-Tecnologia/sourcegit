@@ -144,8 +144,8 @@ namespace SourceGit.Views
             // Its height stays when the page below is taller than the
             // window (a long list in the sidebar) and shrinks to fit.
             band.Shrink = 0;
-            var start = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Sm) };
-            var end = new Row { AlignItems = Align.Center, Gap = Icons.ButtonGap(Spacing.Sm) };
+            var start = new Row { AlignItems = Align.Center, Gap = Icons.ToolbarGap(Spacing.Sm) };
+            var end = new Row { AlignItems = Align.Center, Gap = Icons.ToolbarGap(Spacing.Sm) };
             band.Add(start);
             band.Add(end);
 

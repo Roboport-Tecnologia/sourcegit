@@ -87,8 +87,8 @@ namespace SourceGit.Views
         {
             // Every button and line in it is the platform's small spacing
             // from the next, and the band as far from the window's edges.
-            // Its buttons are further apart on macOS (Icons.ButtonGap).
-            var buttons = Icons.ButtonGap(Spacing.Sm);
+            // Its buttons are further apart on macOS (Icons.ToolbarGap).
+            var buttons = Icons.ToolbarGap(Spacing.Sm);
             var band = new Row { Justify = Justify.SpaceBetween, AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Sm), IsHeader = true, HeaderEdge = HeaderEdge.Hard };
             band.MinHeight = 36;
             // Its height stays when the page below is taller than the
