@@ -228,7 +228,7 @@ namespace SourceGit.Views
         /// </summary>
         private static Node ShaRow(ViewModels.CommitDetail detail, Models.Commit commit)
         {
-            var row = new Row { AlignItems = Align.Center };
+            var row = new Row { AlignItems = Align.Center, Gap = Metrics.IconGap };
             row.Add(new Text(commit.SHA) { Style = TextStyle.Monospace });
             var actions = new Row { AlignItems = Align.Center, Gap = Metrics.ButtonGap };
             row.Add(actions);
