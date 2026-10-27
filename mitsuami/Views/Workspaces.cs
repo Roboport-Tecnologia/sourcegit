@@ -189,18 +189,14 @@ namespace SourceGit.Views
             });
             form.Add(Settings.Stacked(App.Text("ConfigureWorkspace.Name"), name));
 
-            var folder = new Mitsuamia.Row { Gap = Spacing.Xs, AlignItems = Align.Center };
+            var folder = new Mitsuamia.Row { Gap = Metrics.ControlGap, AlignItems = Align.Center };
             var path = new TextInput();
             path.Grow = 1;
             path.MinWidth = 0;
             Bind.Value(path, workspace, nameof(workspace.DefaultCloneDir), () => workspace.DefaultCloneDir, v => workspace.DefaultCloneDir = v);
             folder.Add(path);
-            var browse = new Button(App.Text("Preferences.Git.DefaultCloneDir"))
-            {
-                Icon = Icons.Get("Folder.Open", 14),
-                IconOnly = true,
-                Style = ButtonStyle.Borderless,
-            };
+            // As the other path fields' buttons.
+            var browse = new Button("…") { ToolTip = App.Text("Preferences.Git.DefaultCloneDir") };
             browse.Click += async () =>
             {
                 if (await Dialogs.OpenFolder(sheet, startFolder: workspace.DefaultCloneDir ?? "") is { } picked)
