@@ -322,9 +322,22 @@ namespace SourceGit.Views
             Bind.Search(filter, vm, nameof(vm.Filter), () => vm.Filter, v => vm.Filter = v, owner: sidebar);
             sidebar.Add(filter);
 
+            // The local and remote branches, as upstream shares them: as tall
+            // as their rows while they fit, and when they don't, a list
+            // whose rows fit in half keeps them and the other takes the
+            // rest, or each takes half. A grid whose rows grow from their
+            // least (a header's own height, a list's nothing) up to what's
+            // in them does that, as tall as both while they fit, and gives
+            // up its room after the groups below. Shrunk in proportion to
+            // their rows instead, the local branches had all but vanished
+            // under many remote ones. Its children space themselves
+            // (Group): a hidden list's room and gap go with it.
+            var branchGroups = new Container { AlignItems = Align.Stretch };
+            var share = new Track(Length.Auto, Length.MaxContent);
+            branchGroups.Rows = [share, share, share, share];
             var local = new BranchTree(vm);
             Bind.OneWay(vm, nameof(vm.LocalBranchTrees), () => vm.LocalBranchTrees, trees => local.Nodes = trees, owner: sidebar);
-            Group(sidebar, vm, "Local", "Repository.LocalBranches", nameof(vm.LocalBranchesCount), () => $"({vm.LocalBranchesCount})",
+            Group(branchGroups, vm, "Local", "Repository.LocalBranches", nameof(vm.LocalBranchesCount), () => $"({vm.LocalBranchesCount})",
                 nameof(vm.IsLocalBranchGroupExpanded), () => vm.IsLocalBranchGroupExpanded, v => vm.IsLocalBranchGroupExpanded = v,
                 local.View, [SortButton(vm, nameof(vm.IsSortingLocalBranchByName), () => vm.IsSortingLocalBranchByName,
                     v => vm.IsSortingLocalBranchByName = v, "Repository.BranchSort",
@@ -332,12 +345,13 @@ namespace SourceGit.Views
 
             var remotes = new BranchTree(vm);
             Bind.OneWay(vm, nameof(vm.RemoteBranchTrees), () => vm.RemoteBranchTrees, trees => remotes.Nodes = trees, owner: sidebar);
-            Group(sidebar, vm, "Remotes", "Repository.Remotes", nameof(vm.Remotes), () => $"({vm.Remotes?.Count ?? 0})",
+            Group(branchGroups, vm, "Remotes", "Repository.Remotes", nameof(vm.Remotes), () => $"({vm.Remotes?.Count ?? 0})",
                 nameof(vm.IsRemoteGroupExpanded), () => vm.IsRemoteGroupExpanded, v => vm.IsRemoteGroupExpanded = v,
                 remotes.View, [SortButton(vm, nameof(vm.IsSortingRemoteBranchByName), () => vm.IsSortingRemoteBranchByName,
                     v => vm.IsSortingRemoteBranchByName = v, "Repository.BranchSort",
                     "Repository.BranchSort.ByName", "Repository.BranchSort.ByCommitterDate"),
                     HeaderButton("Remote.Add", "Repository.Remotes.Add", vm.AddRemote)], branches: true);
+            sidebar.Add(branchGroups);
 
             // Several at once, as upstream's: deleting them. Upstream's
             // visible tags (the filter applied), as a list or the platform's
@@ -502,6 +516,10 @@ namespace SourceGit.Views
             foreach (var button in buttons)
                 actions.Add(button);
             header.Add(actions);
+            // The branches' grid has no gap: each of its own spaces itself,
+            // after the first header.
+            if (branches && sidebar.Any())
+                header.Margin = new Thickness(Spacing.Xs, Spacing.None, Spacing.None, Spacing.None);
             sidebar.Add(header);
 
             // As tall as its rows, as upstream's: a list mitsuami doesn't
@@ -511,8 +529,8 @@ namespace SourceGit.Views
             // (or, if fewer, their rows at the lists' 24-point estimate,
             // which a row, its content and Metrics.RowInset, is never
             // under: a floor above the rows would hold the list taller
-            // than them), and the branches
-            // share what's left; each list then scrolls.
+            // than them), and the branches share what's left (Sidebar);
+            // each list then scrolls.
             // An open group without rows shows nothing under its header.
             void Fit()
             {
@@ -529,6 +547,8 @@ namespace SourceGit.Views
                 expander.Icon = open ? Welcome.s_open : Welcome.s_closed;
                 Fit();
             }, owner: header);
+            if (branches)
+                list.Margin = new Thickness(Spacing.Xs, Spacing.None, Spacing.None, Spacing.None);
             sidebar.Add(list);
         }
 
