@@ -36,8 +36,8 @@ namespace SourceGit.Views
 
             var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
             column.Grow = 1;
-            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Md };
-            header.Add(Side(vm, nameof(vm.BaseHead), () => vm.BaseHead, () => vm.BaseName));
+            var header = new Row { AlignItems = Align.Stretch, Gap = Spacing.Md };
+            header.Add(Side(vm, nameof(vm.BaseHead), () => vm.BaseHead, () => vm.BaseName, Color.Error));
             var swap = new Button(App.Text("Diff.SwapCommits"))
             {
                 Icon = Icons.Get("Compare", 16),
@@ -45,13 +45,14 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Diff.SwapCommits"),
             };
+            swap.AlignSelf = Align.Center;
             swap.Click += vm.Swap;
             Bind.OneWay(vm, nameof(vm.IsLoadingChanges), () => !vm.IsLoadingChanges && !vm.IsLoadingPickableCommits,
                 ready => swap.IsEnabled = ready, owner: swap);
             Bind.OneWay(vm, nameof(vm.IsLoadingPickableCommits), () => !vm.IsLoadingChanges && !vm.IsLoadingPickableCommits,
                 ready => swap.IsEnabled = ready, owner: swap);
             header.Add(swap);
-            header.Add(Side(vm, nameof(vm.ToHead), () => vm.ToHead, () => vm.ToName));
+            header.Add(Side(vm, nameof(vm.ToHead), () => vm.ToHead, () => vm.ToName, Color.Success));
             column.Add(header);
 
             var tabs = new Tabs();
@@ -75,12 +76,11 @@ namespace SourceGit.Views
         }
 
         /// <summary>A side's head: its author's avatar and name, the branch
-        /// or tag's name, its SHA (a click goes to it), time and subject.</summary>
-        private static Node Side(ViewModels.Compare vm, string property, Func<Models.Commit> head, Func<string> name)
+        /// or tag's name, its SHA (a click goes to it), time and subject, in
+        /// upstream's red or green card.</summary>
+        private static Node Side(ViewModels.Compare vm, string property, Func<Models.Commit> head, Func<string> name, Color color)
         {
             var holder = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
-            holder.Grow = 1;
-            holder.MinWidth = 0;
             Bind.OneWay(vm, property, head, commit =>
             {
                 foreach (var child in holder.Children.ToArray())
@@ -103,7 +103,7 @@ namespace SourceGit.Views
                 holder.Add(top);
                 holder.Add(new Text(commit.Subject) { MaxLines = 1 });
             }, owner: holder);
-            return holder;
+            return RevisionCompare.Card(color, holder);
         }
 
         /// <summary>Upstream's commits page: the commits only the left side

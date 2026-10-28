@@ -11,7 +11,9 @@ namespace SourceGit.Views
     /// in place of the details when two are selected: each side (a commit's
     /// author, HEAD mark, SHA to go to, time and subject, or the worktree),
     /// the button that swaps them, saving the difference as a patch, and the
-    /// changes between them beside their diff.
+    /// changes between them beside their diff. Each side is a card, red for
+    /// the start and green for the end as upstream's are, and the two share
+    /// the row evenly, so swapping or a long subject doesn't move the button.
     /// </summary>
     public static class RevisionCompare
     {
@@ -21,8 +23,8 @@ namespace SourceGit.Views
             column.Grow = 1;
             column.MinHeight = 0;
 
-            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
-            var start = Side(vm, nameof(vm.StartPoint), () => vm.StartPoint);
+            var header = new Row { AlignItems = Align.Stretch, Gap = Spacing.Sm, Padding = new Thickness(Spacing.None, Spacing.Xs) };
+            var start = Side(vm, nameof(vm.StartPoint), () => vm.StartPoint, Color.Error);
             header.Add(start);
             var swap = new Button(App.Text("Diff.SwapCommits"))
             {
@@ -31,9 +33,10 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Diff.SwapCommits"),
             };
+            swap.AlignSelf = Align.Center;
             swap.Click += vm.Swap;
             header.Add(swap);
-            header.Add(Side(vm, nameof(vm.EndPoint), () => vm.EndPoint));
+            header.Add(Side(vm, nameof(vm.EndPoint), () => vm.EndPoint, Color.Success));
             var patch = new Button(App.Text("Diff.SaveAsPatch"))
             {
                 Icon = Icons.Get("Save", 16),
@@ -46,6 +49,7 @@ namespace SourceGit.Views
                 if (await Dialogs.SaveFile(App.MainWindow, App.Text("FileCM.SaveAsPatch"), "changes.patch") is { } file)
                     await vm.SaveChangesAsPatchAsync(null, file);
             };
+            patch.AlignSelf = Align.Center;
             Bind.OneWay(vm, nameof(vm.CanSaveAsPatch), () => vm.CanSaveAsPatch, can => patch.IsVisible = can, owner: patch);
             header.Add(patch);
             column.Add(header);
@@ -61,25 +65,39 @@ namespace SourceGit.Views
             return column;
         }
 
+        /// <summary>A compared side's card, outlined in
+        /// <paramref name="color"/>, around <paramref name="content"/>. It
+        /// starts from no width, so both sides get half the room whatever
+        /// they hold. Put the sides in a row that stretches its items, so
+        /// they're one height too.</summary>
+        public static Node Card(Color color, Node content)
+        {
+            var card = new Column { AlignItems = Align.Stretch, Justify = Justify.Center, Padding = new Thickness(Spacing.Xs, Spacing.Sm) };
+            card.Grow = 1;
+            card.Basis = 0;
+            card.MinWidth = 0;
+            card.Add(new Outline(color) { Inset = new Thickness(0) });
+            content.MinWidth = 0;
+            card.Add(content);
+            return card;
+        }
+
         /// <summary>One side: a commit, or upstream's worktree chip.</summary>
-        private static Node Side(ViewModels.RevisionCompare vm, string property, System.Func<object> point)
+        private static Node Side(ViewModels.RevisionCompare vm, string property, System.Func<object> point, Color color)
         {
             var holder = new Column { AlignItems = Align.Stretch };
-            holder.Grow = 1;
-            holder.MinWidth = 0;
-            holder.Shrink = 1;
             Bind.OneWay(vm, property, point, value =>
             {
                 foreach (var child in holder.Children.ToArray())
                     child.Destroy();
                 holder.Add(value is Models.Commit commit ? Commit(vm, commit) : Worktree());
             }, owner: holder);
-            return holder;
+            return Card(color, holder);
         }
 
         private static Node Worktree()
         {
-            var row = new Row { AlignItems = Align.Center };
+            var row = new Row { AlignItems = Align.Center, Justify = Justify.Center };
             row.Add(new Text(App.Text("Worktree")) { Weight = FontWeight.Bold });
             return row;
         }
@@ -87,6 +105,7 @@ namespace SourceGit.Views
         private static Node Commit(ViewModels.RevisionCompare vm, Models.Commit commit)
         {
             var column = new Column { Gap = Spacing.Xs };
+            column.MinWidth = 0;
             var top = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
             var avatar = new Avatar(16, menu: false) { User = commit.Author };
             top.Add(avatar.View);
@@ -105,6 +124,17 @@ namespace SourceGit.Views
             column.Add(top);
             column.Add(new Text(commit.Subject) { MaxLines = 1 });
             return column;
+        }
+
+        /// <summary>A card's fill and its side's outline, upstream's 4pt
+        /// corners.</summary>
+        private sealed class Outline(Color color) : DrawnWidget("CompareSide", 0, 0)
+        {
+            protected override void Draw(Canvas canvas)
+            {
+                canvas.FillRect(0, 0, canvas.Width, canvas.Height, Color.ControlBackground, 4);
+                canvas.StrokeRect(0.5f, 0.5f, canvas.Width - 1, canvas.Height - 1, color, 1, 4);
+            }
         }
 
         /// <summary>Upstream's menus: saving as a patch; for one change or

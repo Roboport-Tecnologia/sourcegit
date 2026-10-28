@@ -254,7 +254,7 @@ namespace SourceGit.Views
         {
             var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Sm };
             column.Grow = 1;
-            var header = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
+            var header = new Row { AlignItems = Align.Stretch, Gap = Spacing.Sm };
             header.Add(Side(vm, nameof(vm.StartPoint), () => vm.StartPoint));
             var swap = new Button(App.Text("Diff.SwapCommits"))
             {
@@ -263,6 +263,7 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("Diff.SwapCommits"),
             };
+            swap.AlignSelf = Align.Center;
             swap.Click += vm.Swap;
             header.Add(swap);
             header.Add(Side(vm, nameof(vm.EndPoint), () => vm.EndPoint));
@@ -278,17 +279,17 @@ namespace SourceGit.Views
                 if (await Dialogs.SaveFile(App.MainWindow, App.Text("FileCM.SaveAsPatch"), "changes.patch") is { } file)
                     await vm.SaveAsPatch(file);
             };
+            patch.AlignSelf = Align.Center;
             header.Add(patch);
             column.Add(header);
             column.Add(DiffView.Create(vm, nameof(vm.ViewContent), () => vm.ViewContent));
             return column;
         }
 
+        /// <summary>A side's card, both in upstream's border colour.</summary>
         private static Node Side(ViewModels.FileHistoriesCompareRevisions vm, string property, Func<Models.FileVersion> point)
         {
             var holder = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
-            holder.Grow = 1;
-            holder.MinWidth = 0;
             Bind.OneWay(vm, property, point, version =>
             {
                 foreach (var child in holder.Children.ToArray())
@@ -297,13 +298,16 @@ namespace SourceGit.Views
                     return;
                 var top = new Row { AlignItems = Align.Center, Gap = Spacing.Sm };
                 top.Add(new Avatar(16, menu: false) { User = version.Author }.View);
-                top.Add(new Text(version.Author.Name) { MaxLines = 1 });
+                var author = new Text(version.Author.Name) { MaxLines = 1 };
+                author.Shrink = 1;
+                author.MinWidth = 0;
+                top.Add(author);
                 top.Add(new Text(version.SHA[..10]) { Style = TextStyle.Monospace, Color = Color.Rgba(255, 140, 0) });
                 top.Add(new Text(Models.DateTimeFormat.Format(version.AuthorTime)) { Color = Color.SecondaryLabel });
                 holder.Add(top);
                 holder.Add(new Text(version.Subject) { MaxLines = 1 });
             }, owner: holder);
-            return holder;
+            return RevisionCompare.Card(Color.Separator, holder);
         }
 
         /// <summary>Upstream's empty side: its history icon.</summary>
