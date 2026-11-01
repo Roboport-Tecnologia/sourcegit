@@ -144,6 +144,9 @@ namespace SourceGit
                 pref.SetCanModify();
                 PortSettings.CanSave = true;
             }
+            // The code view's diff needs both versions whole, which this makes git send, and
+            // shows as few of its lines as asked (PortSettings) with no call to git.
+            pref.UseFullTextDiff = true;
             App.SetLocale(pref.Locale);
             // Upstream's theme sets the graph's colours; the platform's
             // appearance is the theme here, so they're upstream's defaults.

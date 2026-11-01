@@ -1,0 +1,95 @@
+{
+"path": "src/wide.rs",
+"lines": [
+{
+"kind": "normal",
+"text": "// line 1",
+"old": 1,
+"new": 1
+},
+{
+"kind": "normal",
+"text": "// line 2",
+"old": 2,
+"new": 2
+},
+{
+"kind": "normal",
+"text": "// line 3",
+"old": 3,
+"new": 3
+},
+{
+"kind": "normal",
+"text": "// line 4",
+"old": 4,
+"new": 4
+},
+{
+"kind": "normal",
+"text": "// line 5",
+"old": 5,
+"new": 5
+},
+{
+"kind": "deleted",
+"text": "old let table = [\"entry number 1\", \"entry number 2\", \"entry number 3\", \"entry number 4\", \"entry number 5\", \"entry number 6\", \"entry number 7\", \"entry number 8\", \"entry number 9\", \"entry number 10\", \"entry number 11\", \"entry number 12\", \"entry number 13\", \"entry number 14\", \"entry number 15\", \"entry number 16\", \"entry number 17\", \"entry number 18\", \"entry number 19\", \"entry number 20\", \"entry number 21\", \"entry number 22\", \"entry number 23\", \"entry number 24\", \"entry number 25\", \"entry number 26\", \"entry number 27\", \"entry number 28\", \"entry number 29\", \"entry number 30\", \"entry number 31\", \"entry number 32\", \"entry number 33\", \"entry number 34\", \"entry number 35\", \"entry number 36\", \"entry number 37\", \"entry number 38\", \"entry number 39\"];",
+"old": 6,
+"new": 0,
+"spans": [
+[
+0,
+3
+]
+]
+},
+{
+"kind": "added",
+"text": "new let table = [\"entry number 1\", \"entry number 2\", \"entry number 3\", \"entry number 4\", \"entry number 5\", \"entry number 6\", \"entry number 7\", \"entry number 8\", \"entry number 9\", \"entry number 10\", \"entry number 11\", \"entry number 12\", \"entry number 13\", \"entry number 14\", \"entry number 15\", \"entry number 16\", \"entry number 17\", \"entry number 18\", \"entry number 19\", \"entry number 20\", \"entry number 21\", \"entry number 22\", \"entry number 23\", \"entry number 24\", \"entry number 25\", \"entry number 26\", \"entry number 27\", \"entry number 28\", \"entry number 29\", \"entry number 30\", \"entry number 31\", \"entry number 32\", \"entry number 33\", \"entry number 34\", \"entry number 35\", \"entry number 36\", \"entry number 37\", \"entry number 38\", \"entry number 39\"];",
+"old": 0,
+"new": 6,
+"spans": [
+[
+0,
+3
+]
+]
+},
+{
+"kind": "normal",
+"text": "let table = [\"entry number 1\", \"entry number 2\", \"entry number 3\", \"entry number 4\", \"entry number 5\", \"entry number 6\", \"entry number 7\", \"entry number 8\", \"entry number 9\", \"entry number 10\", \"entry number 11\", \"entry number 12\", \"entry number 13\", \"entry number 14\", \"entry number 15\", \"entry number 16\", \"entry number 17\", \"entry number 18\", \"entry number 19\", \"entry number 20\", \"entry number 21\", \"entry number 22\", \"entry number 23\", \"entry number 24\", \"entry number 25\", \"entry number 26\", \"entry number 27\", \"entry number 28\", \"entry number 29\", \"entry number 30\", \"entry number 31\", \"entry number 32\", \"entry number 33\", \"entry number 34\", \"entry number 35\", \"entry number 36\", \"entry number 37\", \"entry number 38\", \"entry number 39\"];",
+"old": 7,
+"new": 7
+},
+{
+"kind": "normal",
+"text": "// line 7",
+"old": 8,
+"new": 8
+},
+{
+"kind": "normal",
+"text": "// line 8",
+"old": 9,
+"new": 9
+},
+{
+"kind": "normal",
+"text": "// line 9",
+"old": 10,
+"new": 10
+},
+{
+"kind": "normal",
+"text": "// line 10",
+"old": 11,
+"new": 11
+},
+{
+"kind": "normal",
+"text": "// line 11",
+"old": 12,
+"new": 12
+}
+]
+}

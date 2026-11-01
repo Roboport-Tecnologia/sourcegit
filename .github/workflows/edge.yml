@@ -117,17 +117,23 @@ jobs:
           repository: Roboport-Tecnologia/mitsuami
           ref: ${{ needs.refs.outputs.mitsuami }}
           path: mitsuami
+      # The code view's editor; `mitsuami/codeview` takes it by path.
+      - &checkout-bemtvi
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: bemtvi/bemtvi
+          path: nxvim
       - &setup-dotnet
         uses: actions/setup-dotnet@v6.0.0
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Build mitsuami-extras' library
-        working-directory: mitsuami-extras
+      - name: Build the code view's library, which has mitsuami's and extras' in it
+        working-directory: sourcegit/mitsuami/codeview
         run: |
           rustup toolchain install
           rustup target add ${{ matrix.rust }}
-          cargo build --release -p mitsuami-extras-ffi --target ${{ matrix.rust }}
+          cargo build --release --lib --target ${{ matrix.rust }}
 
       # The library goes beside the app under mitsuami's name, where .NET
       # finds it without MITSUAMI_FFI. `setsid` is upstream's
@@ -135,7 +141,7 @@ jobs:
       - name: Publish
         run: |
           dotnet publish "$PROJECT" -c Release -r ${{ matrix.runtime }} --self-contained -o publish
-          cp mitsuami-extras/target/${{ matrix.rust }}/release/libmitsuami_extras_ffi.dylib publish/libmitsuami_ffi.dylib
+          cp sourcegit/mitsuami/codeview/target/${{ matrix.rust }}/release/libsourcegit_codeview.dylib publish/libmitsuami_ffi.dylib
           clang -arch ${{ matrix.arch }} sourcegit/tools/setsid-macos/setsid.c -o publish/setsid \
             -mmacosx-version-min="$MACOSX_DEPLOYMENT_TARGET"
           rm -f publish/*.pdb
@@ -212,19 +218,20 @@ jobs:
       - *checkout-mitsuamia
       - *checkout-extras
       - *checkout-mitsuami
+      - *checkout-bemtvi
       - *setup-dotnet
 
-      - name: Build mitsuami-extras' library
-        working-directory: mitsuami-extras
+      - name: Build the code view's library, which has mitsuami's and extras' in it
+        working-directory: sourcegit/mitsuami/codeview
         run: |
           rustup toolchain install
-          cargo build --release -p mitsuami-extras-ffi
+          cargo build --release --lib
 
       - name: Publish and package
         run: |
           out=SourceGit-mitsuami-windows-x86_64
           dotnet publish "$PROJECT" -c Release -r win-x64 --self-contained -o "$out"
-          cp mitsuami-extras/target/release/mitsuami_extras_ffi.dll "$out/mitsuami_ffi.dll"
+          cp sourcegit/mitsuami/codeview/target/release/sourcegit_codeview.dll "$out/mitsuami_ffi.dll"
           rm -f "$out"/*.pdb
           7z a "$out.zip" "$out"
 
@@ -274,20 +281,21 @@ jobs:
       - *checkout-mitsuamia
       - *checkout-extras
       - *checkout-mitsuami
+      - *checkout-bemtvi
       - *setup-dotnet
 
-      - name: Build mitsuami-extras' library
-        working-directory: mitsuami-extras
+      - name: Build the code view's library, which has mitsuami's and extras' in it
+        working-directory: sourcegit/mitsuami/codeview
         run: |
           curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           "$HOME/.cargo/bin/rustup" toolchain install
-          "$HOME/.cargo/bin/cargo" build --release -p mitsuami-extras-ffi ${{ matrix.features }}
+          "$HOME/.cargo/bin/cargo" build --release --lib ${{ matrix.features }}
 
       - name: Publish
         run: |
           dotnet publish "$PROJECT" -c Release -r linux-x64 --self-contained -o publish
-          cp mitsuami-extras/target/release/libmitsuami_extras_ffi.so publish/libmitsuami_ffi.so
+          cp sourcegit/mitsuami/codeview/target/release/libsourcegit_codeview.so publish/libmitsuami_ffi.so
           # .NET's LTTng tracing, which it loads only where LTTng is
           # installed: linuxdeploy can't find what it links.
           rm -f publish/*.pdb publish/libcoreclrtraceptprovider.so

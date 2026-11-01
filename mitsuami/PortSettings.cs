@@ -15,6 +15,28 @@ namespace SourceGit
         /// conflicts): any it has, its own or Neovim's.</summary>
         public string EditorColorscheme { get; set; } = "bemtvi";
 
+        /// <summary>How the code views edit: what people who don't use vim
+        /// expect, unless they say otherwise.</summary>
+        public string EditorMode { get; set; } = "modeless";
+
+        public static readonly string[] EditorModes = ["modeless", "vim", "helix"];
+
+        /// <summary>Relative line numbers in the code views, for counts.</summary>
+        public bool EditorRelativeNumbers { get; set; }
+
+        /// <summary>Whether a language with no grammar gets one, which downloads
+        /// and builds code: off until asked for.</summary>
+        public bool EditorInstallGrammars { get; set; }
+
+        /// <summary>Lines of context around a diff's changes; upstream's
+        /// starting number, which it goes no lower than.</summary>
+        public int EditorDiffContext { get; set; } = MinDiffContext;
+
+        public const int MinDiffContext = 4;
+
+        /// <summary>Every line of a diff, not only those around its changes.</summary>
+        public bool EditorDiffAllLines { get; set; }
+
         /// <summary>bemtvi's own, then Neovim's bundled ones; a colorscheme
         /// from a plugin is kept if it's set.</summary>
         public static readonly string[] Colorschemes =

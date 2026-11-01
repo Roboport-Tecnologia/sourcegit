@@ -1,0 +1,1535 @@
+{
+"path": "src/app.rs",
+"lines": [
+{
+"kind": "indicator",
+"text": "@@ -1,250 +1,251 @@",
+"old": 0,
+"new": 0
+},
+{
+"kind": "normal",
+"text": "// A small module, changed in three places.",
+"old": 1,
+"new": 1
+},
+{
+"kind": "normal",
+"text": "use std::fmt;",
+"old": 2,
+"new": 2
+},
+{
+"kind": "normal",
+"text": "",
+"old": 3,
+"new": 3
+},
+{
+"kind": "normal",
+"text": "fn main() {",
+"old": 4,
+"new": 4
+},
+{
+"kind": "deleted",
+"text": "    println!(\"{}\", compute());",
+"old": 5,
+"new": 0,
+"spans": [
+[
+4,
+11
+]
+]
+},
+{
+"kind": "added",
+"text": "    eprintln!(\"{}\", compute());",
+"old": 0,
+"new": 5,
+"spans": [
+[
+4,
+12
+]
+]
+},
+{
+"kind": "added",
+"text": "    log::info!(\"done\");",
+"old": 0,
+"new": 6
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 6,
+"new": 7
+},
+{
+"kind": "normal",
+"text": "",
+"old": 7,
+"new": 8
+},
+{
+"kind": "normal",
+"text": "fn helper_1(x: u32) -> u32 {",
+"old": 8,
+"new": 9
+},
+{
+"kind": "normal",
+"text": "    x + 1",
+"old": 9,
+"new": 10
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 10,
+"new": 11
+},
+{
+"kind": "normal",
+"text": "",
+"old": 11,
+"new": 12
+},
+{
+"kind": "normal",
+"text": "fn helper_2(x: u32) -> u32 {",
+"old": 12,
+"new": 13
+},
+{
+"kind": "normal",
+"text": "    x + 2",
+"old": 13,
+"new": 14
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 14,
+"new": 15
+},
+{
+"kind": "normal",
+"text": "",
+"old": 15,
+"new": 16
+},
+{
+"kind": "normal",
+"text": "fn helper_3(x: u32) -> u32 {",
+"old": 16,
+"new": 17
+},
+{
+"kind": "normal",
+"text": "    x + 3",
+"old": 17,
+"new": 18
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 18,
+"new": 19
+},
+{
+"kind": "normal",
+"text": "",
+"old": 19,
+"new": 20
+},
+{
+"kind": "normal",
+"text": "fn helper_4(x: u32) -> u32 {",
+"old": 20,
+"new": 21
+},
+{
+"kind": "normal",
+"text": "    x + 4",
+"old": 21,
+"new": 22
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 22,
+"new": 23
+},
+{
+"kind": "normal",
+"text": "",
+"old": 23,
+"new": 24
+},
+{
+"kind": "normal",
+"text": "fn helper_5(x: u32) -> u32 {",
+"old": 24,
+"new": 25
+},
+{
+"kind": "normal",
+"text": "    x + 5",
+"old": 25,
+"new": 26
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 26,
+"new": 27
+},
+{
+"kind": "normal",
+"text": "",
+"old": 27,
+"new": 28
+},
+{
+"kind": "normal",
+"text": "fn helper_6(x: u32) -> u32 {",
+"old": 28,
+"new": 29
+},
+{
+"kind": "normal",
+"text": "    x + 6",
+"old": 29,
+"new": 30
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 30,
+"new": 31
+},
+{
+"kind": "normal",
+"text": "",
+"old": 31,
+"new": 32
+},
+{
+"kind": "normal",
+"text": "fn helper_7(x: u32) -> u32 {",
+"old": 32,
+"new": 33
+},
+{
+"kind": "normal",
+"text": "    x + 7",
+"old": 33,
+"new": 34
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 34,
+"new": 35
+},
+{
+"kind": "normal",
+"text": "",
+"old": 35,
+"new": 36
+},
+{
+"kind": "normal",
+"text": "fn helper_8(x: u32) -> u32 {",
+"old": 36,
+"new": 37
+},
+{
+"kind": "normal",
+"text": "    x + 8",
+"old": 37,
+"new": 38
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 38,
+"new": 39
+},
+{
+"kind": "normal",
+"text": "",
+"old": 39,
+"new": 40
+},
+{
+"kind": "normal",
+"text": "fn helper_9(x: u32) -> u32 {",
+"old": 40,
+"new": 41
+},
+{
+"kind": "normal",
+"text": "    x + 9",
+"old": 41,
+"new": 42
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 42,
+"new": 43
+},
+{
+"kind": "normal",
+"text": "",
+"old": 43,
+"new": 44
+},
+{
+"kind": "normal",
+"text": "fn helper_10(x: u32) -> u32 {",
+"old": 44,
+"new": 45
+},
+{
+"kind": "normal",
+"text": "    x + 10",
+"old": 45,
+"new": 46
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 46,
+"new": 47
+},
+{
+"kind": "normal",
+"text": "",
+"old": 47,
+"new": 48
+},
+{
+"kind": "normal",
+"text": "fn helper_11(x: u32) -> u32 {",
+"old": 48,
+"new": 49
+},
+{
+"kind": "normal",
+"text": "    x + 11",
+"old": 49,
+"new": 50
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 50,
+"new": 51
+},
+{
+"kind": "normal",
+"text": "",
+"old": 51,
+"new": 52
+},
+{
+"kind": "normal",
+"text": "fn helper_12(x: u32) -> u32 {",
+"old": 52,
+"new": 53
+},
+{
+"kind": "normal",
+"text": "    x + 12",
+"old": 53,
+"new": 54
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 54,
+"new": 55
+},
+{
+"kind": "normal",
+"text": "",
+"old": 55,
+"new": 56
+},
+{
+"kind": "normal",
+"text": "fn helper_13(x: u32) -> u32 {",
+"old": 56,
+"new": 57
+},
+{
+"kind": "normal",
+"text": "    x + 13",
+"old": 57,
+"new": 58
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 58,
+"new": 59
+},
+{
+"kind": "normal",
+"text": "",
+"old": 59,
+"new": 60
+},
+{
+"kind": "normal",
+"text": "fn helper_14(x: u32) -> u32 {",
+"old": 60,
+"new": 61
+},
+{
+"kind": "normal",
+"text": "    x + 14",
+"old": 61,
+"new": 62
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 62,
+"new": 63
+},
+{
+"kind": "normal",
+"text": "",
+"old": 63,
+"new": 64
+},
+{
+"kind": "normal",
+"text": "fn helper_15(x: u32) -> u32 {",
+"old": 64,
+"new": 65
+},
+{
+"kind": "normal",
+"text": "    x + 15",
+"old": 65,
+"new": 66
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 66,
+"new": 67
+},
+{
+"kind": "normal",
+"text": "",
+"old": 67,
+"new": 68
+},
+{
+"kind": "normal",
+"text": "fn helper_16(x: u32) -> u32 {",
+"old": 68,
+"new": 69
+},
+{
+"kind": "normal",
+"text": "    x + 16",
+"old": 69,
+"new": 70
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 70,
+"new": 71
+},
+{
+"kind": "normal",
+"text": "",
+"old": 71,
+"new": 72
+},
+{
+"kind": "normal",
+"text": "fn helper_17(x: u32) -> u32 {",
+"old": 72,
+"new": 73
+},
+{
+"kind": "normal",
+"text": "    x + 17",
+"old": 73,
+"new": 74
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 74,
+"new": 75
+},
+{
+"kind": "normal",
+"text": "",
+"old": 75,
+"new": 76
+},
+{
+"kind": "normal",
+"text": "fn helper_18(x: u32) -> u32 {",
+"old": 76,
+"new": 77
+},
+{
+"kind": "normal",
+"text": "    x + 18",
+"old": 77,
+"new": 78
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 78,
+"new": 79
+},
+{
+"kind": "normal",
+"text": "",
+"old": 79,
+"new": 80
+},
+{
+"kind": "normal",
+"text": "fn helper_19(x: u32) -> u32 {",
+"old": 80,
+"new": 81
+},
+{
+"kind": "normal",
+"text": "    x + 19",
+"old": 81,
+"new": 82
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 82,
+"new": 83
+},
+{
+"kind": "normal",
+"text": "",
+"old": 83,
+"new": 84
+},
+{
+"kind": "normal",
+"text": "fn helper_20(x: u32) -> u32 {",
+"old": 84,
+"new": 85
+},
+{
+"kind": "normal",
+"text": "    x + 20",
+"old": 85,
+"new": 86
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 86,
+"new": 87
+},
+{
+"kind": "normal",
+"text": "",
+"old": 87,
+"new": 88
+},
+{
+"kind": "normal",
+"text": "fn helper_21(x: u32) -> u32 {",
+"old": 88,
+"new": 89
+},
+{
+"kind": "normal",
+"text": "    x + 21",
+"old": 89,
+"new": 90
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 90,
+"new": 91
+},
+{
+"kind": "normal",
+"text": "",
+"old": 91,
+"new": 92
+},
+{
+"kind": "normal",
+"text": "fn helper_22(x: u32) -> u32 {",
+"old": 92,
+"new": 93
+},
+{
+"kind": "normal",
+"text": "    x + 22",
+"old": 93,
+"new": 94
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 94,
+"new": 95
+},
+{
+"kind": "normal",
+"text": "",
+"old": 95,
+"new": 96
+},
+{
+"kind": "normal",
+"text": "fn helper_23(x: u32) -> u32 {",
+"old": 96,
+"new": 97
+},
+{
+"kind": "normal",
+"text": "    x + 23",
+"old": 97,
+"new": 98
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 98,
+"new": 99
+},
+{
+"kind": "normal",
+"text": "",
+"old": 99,
+"new": 100
+},
+{
+"kind": "normal",
+"text": "fn helper_24(x: u32) -> u32 {",
+"old": 100,
+"new": 101
+},
+{
+"kind": "normal",
+"text": "    x + 24",
+"old": 101,
+"new": 102
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 102,
+"new": 103
+},
+{
+"kind": "normal",
+"text": "",
+"old": 103,
+"new": 104
+},
+{
+"kind": "normal",
+"text": "fn helper_25(x: u32) -> u32 {",
+"old": 104,
+"new": 105
+},
+{
+"kind": "normal",
+"text": "    x + 25",
+"old": 105,
+"new": 106
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 106,
+"new": 107
+},
+{
+"kind": "normal",
+"text": "",
+"old": 107,
+"new": 108
+},
+{
+"kind": "normal",
+"text": "fn helper_26(x: u32) -> u32 {",
+"old": 108,
+"new": 109
+},
+{
+"kind": "normal",
+"text": "    x + 26",
+"old": 109,
+"new": 110
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 110,
+"new": 111
+},
+{
+"kind": "normal",
+"text": "",
+"old": 111,
+"new": 112
+},
+{
+"kind": "normal",
+"text": "fn helper_27(x: u32) -> u32 {",
+"old": 112,
+"new": 113
+},
+{
+"kind": "normal",
+"text": "    x + 27",
+"old": 113,
+"new": 114
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 114,
+"new": 115
+},
+{
+"kind": "normal",
+"text": "",
+"old": 115,
+"new": 116
+},
+{
+"kind": "normal",
+"text": "fn helper_28(x: u32) -> u32 {",
+"old": 116,
+"new": 117
+},
+{
+"kind": "normal",
+"text": "    x + 28",
+"old": 117,
+"new": 118
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 118,
+"new": 119
+},
+{
+"kind": "normal",
+"text": "",
+"old": 119,
+"new": 120
+},
+{
+"kind": "normal",
+"text": "fn helper_29(x: u32) -> u32 {",
+"old": 120,
+"new": 121
+},
+{
+"kind": "normal",
+"text": "    x + 29",
+"old": 121,
+"new": 122
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 122,
+"new": 123
+},
+{
+"kind": "normal",
+"text": "",
+"old": 123,
+"new": 124
+},
+{
+"kind": "normal",
+"text": "fn helper_30(x: u32) -> u32 {",
+"old": 124,
+"new": 125
+},
+{
+"kind": "normal",
+"text": "    x + 30",
+"old": 125,
+"new": 126
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 126,
+"new": 127
+},
+{
+"kind": "normal",
+"text": "",
+"old": 127,
+"new": 128
+},
+{
+"kind": "deleted",
+"text": "// olá, removed with no line to replace it",
+"old": 128,
+"new": 0
+},
+{
+"kind": "normal",
+"text": "fn helper_31(x: u32) -> u32 {",
+"old": 129,
+"new": 129
+},
+{
+"kind": "normal",
+"text": "    x + 31",
+"old": 130,
+"new": 130
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 131,
+"new": 131
+},
+{
+"kind": "normal",
+"text": "",
+"old": 132,
+"new": 132
+},
+{
+"kind": "normal",
+"text": "fn helper_32(x: u32) -> u32 {",
+"old": 133,
+"new": 133
+},
+{
+"kind": "normal",
+"text": "    x + 32",
+"old": 134,
+"new": 134
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 135,
+"new": 135
+},
+{
+"kind": "normal",
+"text": "",
+"old": 136,
+"new": 136
+},
+{
+"kind": "normal",
+"text": "fn helper_33(x: u32) -> u32 {",
+"old": 137,
+"new": 137
+},
+{
+"kind": "normal",
+"text": "    x + 33",
+"old": 138,
+"new": 138
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 139,
+"new": 139
+},
+{
+"kind": "normal",
+"text": "",
+"old": 140,
+"new": 140
+},
+{
+"kind": "normal",
+"text": "fn helper_34(x: u32) -> u32 {",
+"old": 141,
+"new": 141
+},
+{
+"kind": "normal",
+"text": "    x + 34",
+"old": 142,
+"new": 142
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 143,
+"new": 143
+},
+{
+"kind": "normal",
+"text": "",
+"old": 144,
+"new": 144
+},
+{
+"kind": "normal",
+"text": "fn helper_35(x: u32) -> u32 {",
+"old": 145,
+"new": 145
+},
+{
+"kind": "normal",
+"text": "    x + 35",
+"old": 146,
+"new": 146
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 147,
+"new": 147
+},
+{
+"kind": "normal",
+"text": "",
+"old": 148,
+"new": 148
+},
+{
+"kind": "normal",
+"text": "fn helper_36(x: u32) -> u32 {",
+"old": 149,
+"new": 149
+},
+{
+"kind": "normal",
+"text": "    x + 36",
+"old": 150,
+"new": 150
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 151,
+"new": 151
+},
+{
+"kind": "normal",
+"text": "",
+"old": 152,
+"new": 152
+},
+{
+"kind": "normal",
+"text": "fn helper_37(x: u32) -> u32 {",
+"old": 153,
+"new": 153
+},
+{
+"kind": "normal",
+"text": "    x + 37",
+"old": 154,
+"new": 154
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 155,
+"new": 155
+},
+{
+"kind": "normal",
+"text": "",
+"old": 156,
+"new": 156
+},
+{
+"kind": "normal",
+"text": "fn helper_38(x: u32) -> u32 {",
+"old": 157,
+"new": 157
+},
+{
+"kind": "normal",
+"text": "    x + 38",
+"old": 158,
+"new": 158
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 159,
+"new": 159
+},
+{
+"kind": "normal",
+"text": "",
+"old": 160,
+"new": 160
+},
+{
+"kind": "normal",
+"text": "fn helper_39(x: u32) -> u32 {",
+"old": 161,
+"new": 161
+},
+{
+"kind": "normal",
+"text": "    x + 39",
+"old": 162,
+"new": 162
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 163,
+"new": 163
+},
+{
+"kind": "normal",
+"text": "",
+"old": 164,
+"new": 164
+},
+{
+"kind": "normal",
+"text": "fn helper_40(x: u32) -> u32 {",
+"old": 165,
+"new": 165
+},
+{
+"kind": "normal",
+"text": "    x + 40",
+"old": 166,
+"new": 166
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 167,
+"new": 167
+},
+{
+"kind": "normal",
+"text": "",
+"old": 168,
+"new": 168
+},
+{
+"kind": "normal",
+"text": "fn helper_41(x: u32) -> u32 {",
+"old": 169,
+"new": 169
+},
+{
+"kind": "normal",
+"text": "    x + 41",
+"old": 170,
+"new": 170
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 171,
+"new": 171
+},
+{
+"kind": "normal",
+"text": "",
+"old": 172,
+"new": 172
+},
+{
+"kind": "normal",
+"text": "fn helper_42(x: u32) -> u32 {",
+"old": 173,
+"new": 173
+},
+{
+"kind": "normal",
+"text": "    x + 42",
+"old": 174,
+"new": 174
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 175,
+"new": 175
+},
+{
+"kind": "normal",
+"text": "",
+"old": 176,
+"new": 176
+},
+{
+"kind": "normal",
+"text": "fn helper_43(x: u32) -> u32 {",
+"old": 177,
+"new": 177
+},
+{
+"kind": "normal",
+"text": "    x + 43",
+"old": 178,
+"new": 178
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 179,
+"new": 179
+},
+{
+"kind": "normal",
+"text": "",
+"old": 180,
+"new": 180
+},
+{
+"kind": "normal",
+"text": "fn helper_44(x: u32) -> u32 {",
+"old": 181,
+"new": 181
+},
+{
+"kind": "normal",
+"text": "    x + 44",
+"old": 182,
+"new": 182
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 183,
+"new": 183
+},
+{
+"kind": "normal",
+"text": "",
+"old": 184,
+"new": 184
+},
+{
+"kind": "normal",
+"text": "fn helper_45(x: u32) -> u32 {",
+"old": 185,
+"new": 185
+},
+{
+"kind": "normal",
+"text": "    x + 45",
+"old": 186,
+"new": 186
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 187,
+"new": 187
+},
+{
+"kind": "normal",
+"text": "",
+"old": 188,
+"new": 188
+},
+{
+"kind": "normal",
+"text": "fn helper_46(x: u32) -> u32 {",
+"old": 189,
+"new": 189
+},
+{
+"kind": "normal",
+"text": "    x + 46",
+"old": 190,
+"new": 190
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 191,
+"new": 191
+},
+{
+"kind": "normal",
+"text": "",
+"old": 192,
+"new": 192
+},
+{
+"kind": "normal",
+"text": "fn helper_47(x: u32) -> u32 {",
+"old": 193,
+"new": 193
+},
+{
+"kind": "normal",
+"text": "    x + 47",
+"old": 194,
+"new": 194
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 195,
+"new": 195
+},
+{
+"kind": "normal",
+"text": "",
+"old": 196,
+"new": 196
+},
+{
+"kind": "normal",
+"text": "fn helper_48(x: u32) -> u32 {",
+"old": 197,
+"new": 197
+},
+{
+"kind": "normal",
+"text": "    x + 48",
+"old": 198,
+"new": 198
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 199,
+"new": 199
+},
+{
+"kind": "normal",
+"text": "",
+"old": 200,
+"new": 200
+},
+{
+"kind": "normal",
+"text": "fn helper_49(x: u32) -> u32 {",
+"old": 201,
+"new": 201
+},
+{
+"kind": "normal",
+"text": "    x + 49",
+"old": 202,
+"new": 202
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 203,
+"new": 203
+},
+{
+"kind": "normal",
+"text": "",
+"old": 204,
+"new": 204
+},
+{
+"kind": "normal",
+"text": "fn helper_50(x: u32) -> u32 {",
+"old": 205,
+"new": 205
+},
+{
+"kind": "normal",
+"text": "    x + 50",
+"old": 206,
+"new": 206
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 207,
+"new": 207
+},
+{
+"kind": "normal",
+"text": "",
+"old": 208,
+"new": 208
+},
+{
+"kind": "normal",
+"text": "fn helper_51(x: u32) -> u32 {",
+"old": 209,
+"new": 209
+},
+{
+"kind": "normal",
+"text": "    x + 51",
+"old": 210,
+"new": 210
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 211,
+"new": 211
+},
+{
+"kind": "normal",
+"text": "",
+"old": 212,
+"new": 212
+},
+{
+"kind": "normal",
+"text": "fn helper_52(x: u32) -> u32 {",
+"old": 213,
+"new": 213
+},
+{
+"kind": "normal",
+"text": "    x + 52",
+"old": 214,
+"new": 214
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 215,
+"new": 215
+},
+{
+"kind": "normal",
+"text": "",
+"old": 216,
+"new": 216
+},
+{
+"kind": "normal",
+"text": "fn helper_53(x: u32) -> u32 {",
+"old": 217,
+"new": 217
+},
+{
+"kind": "normal",
+"text": "    x + 53",
+"old": 218,
+"new": 218
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 219,
+"new": 219
+},
+{
+"kind": "normal",
+"text": "",
+"old": 220,
+"new": 220
+},
+{
+"kind": "normal",
+"text": "fn helper_54(x: u32) -> u32 {",
+"old": 221,
+"new": 221
+},
+{
+"kind": "normal",
+"text": "    x + 54",
+"old": 222,
+"new": 222
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 223,
+"new": 223
+},
+{
+"kind": "normal",
+"text": "",
+"old": 224,
+"new": 224
+},
+{
+"kind": "normal",
+"text": "fn helper_55(x: u32) -> u32 {",
+"old": 225,
+"new": 225
+},
+{
+"kind": "normal",
+"text": "    x + 55",
+"old": 226,
+"new": 226
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 227,
+"new": 227
+},
+{
+"kind": "normal",
+"text": "",
+"old": 228,
+"new": 228
+},
+{
+"kind": "normal",
+"text": "fn helper_56(x: u32) -> u32 {",
+"old": 229,
+"new": 229
+},
+{
+"kind": "normal",
+"text": "    x + 56",
+"old": 230,
+"new": 230
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 231,
+"new": 231
+},
+{
+"kind": "normal",
+"text": "",
+"old": 232,
+"new": 232
+},
+{
+"kind": "normal",
+"text": "fn helper_57(x: u32) -> u32 {",
+"old": 233,
+"new": 233
+},
+{
+"kind": "normal",
+"text": "    x + 57",
+"old": 234,
+"new": 234
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 235,
+"new": 235
+},
+{
+"kind": "normal",
+"text": "",
+"old": 236,
+"new": 236
+},
+{
+"kind": "normal",
+"text": "fn helper_58(x: u32) -> u32 {",
+"old": 237,
+"new": 237
+},
+{
+"kind": "normal",
+"text": "    x + 58",
+"old": 238,
+"new": 238
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 239,
+"new": 239
+},
+{
+"kind": "normal",
+"text": "",
+"old": 240,
+"new": 240
+},
+{
+"kind": "normal",
+"text": "fn helper_59(x: u32) -> u32 {",
+"old": 241,
+"new": 241
+},
+{
+"kind": "normal",
+"text": "    x + 59",
+"old": 242,
+"new": 242
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 243,
+"new": 243
+},
+{
+"kind": "normal",
+"text": "",
+"old": 244,
+"new": 244
+},
+{
+"kind": "normal",
+"text": "fn helper_60(x: u32) -> u32 {",
+"old": 245,
+"new": 245
+},
+{
+"kind": "normal",
+"text": "    x + 60",
+"old": 246,
+"new": 246
+},
+{
+"kind": "normal",
+"text": "}",
+"old": 247,
+"new": 247
+},
+{
+"kind": "normal",
+"text": "",
+"old": 248,
+"new": 248
+},
+{
+"kind": "added",
+"text": "// 日本語, added with no line it replaces",
+"old": 0,
+"new": 249
+},
+{
+"kind": "normal",
+"text": "fn last() {}",
+"old": 249,
+"new": 250
+}
+]
+}

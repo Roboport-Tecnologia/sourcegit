@@ -36,7 +36,7 @@ namespace SourceGit.Views
             };
             var tabs = Tabs(
                 ("Preferences.General", General(pref)),
-                ("Preferences.Appearance", Appearance(pref)),
+                ("Preferences.CodeView", CodeViewPage(pref)),
                 ("Preferences.Git", Git(pref, git)),
                 ("Preferences.GPG", Gpg(git)),
                 ("Preferences.Integration", Integration(pref)),
@@ -169,6 +169,9 @@ namespace SourceGit.Views
                 ("Preferences.General.Check4UpdatesOnStartup", pref.Check4UpdatesOnStartup, v => pref.Check4UpdatesOnStartup = v),
             })
                 page.Add(Field("", Check(App.Text(key), value, set)));
+            // Upstream's appearance page had it; it's about the window, not the code views.
+            if (OperatingSystem.IsLinux())
+                page.Add(Field("", Check(App.Text("Preferences.Appearance.UseNativeWindowFrame"), pref.UseSystemWindowFrame, v => pref.UseSystemWindowFrame = v)));
             return page;
         }
 
@@ -196,31 +199,74 @@ namespace SourceGit.Views
             return row;
         }
 
-        /// <summary>Upstream's appearance, less what the platform decides
-        /// here (the theme, the UI's font and size, scroll bars, tab widths):
-        /// what the code views (bemtvi) take, and their colorscheme.</summary>
-        private static Node Appearance(ViewModels.Preferences pref)
+        /// <summary>What upstream's appearance page has for its text views,
+        /// less what the platform decides for the rest of the app (the theme,
+        /// the UI's font and size, scroll bars, tab widths), and how they edit.
+        /// It all goes to bemtvi as it changes.</summary>
+        private static Node CodeViewPage(ViewModels.Preferences pref)
         {
             var page = Page();
-            page.Add(Field(App.Text("Preferences.Appearance.MonospaceFont"), TextValue(pref.MonospaceFontFamily, v => pref.MonospaceFontFamily = v)));
+            var port = PortSettings.Instance;
+            var modes = PortSettings.EditorModes.ToList();
+            var modeNames = new[] { "Modeless", "Vim", "Helix" };
+            // Those who don't use vim won't know these words: what the chosen one means.
+            var modeNotes = new[]
+            {
+                "Edits like most text editors: you type and the text goes in, and the usual shortcuts copy, paste and undo.",
+                "Keys are commands until you press i to type. Esc goes back to commands. For people who use Vim.",
+                "Keys are commands until you press i to type, and you select text first, then act on it. For people who use Helix.",
+            };
+            var mode = Math.Max(modes.IndexOf(port.EditorMode), 0);
+            var modeNote = new Text(modeNotes[mode]) { Style = TextStyle.Caption, Color = Color.SecondaryLabel };
+            page.Add(Field("Mode", Leading(Choice("Mode", modeNames, mode, i =>
+            {
+                port.EditorMode = modes[i];
+                modeNote.Value = modeNotes[i];
+                CodeView.SettingsChanged();
+            }))));
+            page.Add(Field("", modeNote));
+            page.Add(Field("Font", TextValue(pref.MonospaceFontFamily, v =>
+            {
+                pref.MonospaceFontFamily = v;
+                CodeView.SettingsChanged();
+            })));
             // Upstream's sizes go in halves, which a platform's number field
             // doesn't: a drop-down of them, as font size pickers have.
             var sizes = Enumerable.Range(0, 17).Select(i => 10 + i * 0.5).ToList();
-            var size = Choice("Editor Font Size", sizes.Select(s => s.ToString()), sizes.IndexOf(pref.EditorFontSize), i => pref.EditorFontSize = sizes[i]);
-            page.Add(Field("Editor Font Size", Leading(size)));
-            var tabWidth = new NumberInput(App.Text("Preferences.Appearance.EditorTabWidth"));
-            tabWidth.SetRange(1, 16);
-            tabWidth.Value = pref.EditorTabWidth;
-            tabWidth.Changed += v => pref.EditorTabWidth = v;
-            page.Add(Field(App.Text("Preferences.Appearance.EditorTabWidth"), Leading(tabWidth)));
-            var port = PortSettings.Instance;
+            var size = Choice("Font Size", sizes.Select(s => s.ToString()), sizes.IndexOf(pref.EditorFontSize), i =>
+            {
+                pref.EditorFontSize = sizes[i];
+                CodeView.SettingsChanged();
+            });
+            page.Add(Field("Font Size", Leading(size)));
             var schemes = PortSettings.Colorschemes.ToList();
             if (!schemes.Contains(port.EditorColorscheme))
                 schemes.Add(port.EditorColorscheme);
-            page.Add(Field("Editor Colorscheme", Leading(Choice("Editor Colorscheme", schemes, schemes.IndexOf(port.EditorColorscheme),
-                i => port.EditorColorscheme = schemes[i]))));
-            if (OperatingSystem.IsLinux())
-                page.Add(Field("", Check(App.Text("Preferences.Appearance.UseNativeWindowFrame"), pref.UseSystemWindowFrame, v => pref.UseSystemWindowFrame = v)));
+            page.Add(Field("Colorscheme", Leading(Choice("Colorscheme", schemes, schemes.IndexOf(port.EditorColorscheme), i =>
+            {
+                port.EditorColorscheme = schemes[i];
+                CodeView.SettingsChanged();
+            }))));
+            var tabWidth = new NumberInput("Tab Width");
+            tabWidth.SetRange(1, 16);
+            tabWidth.Value = pref.EditorTabWidth;
+            tabWidth.Changed += v =>
+            {
+                pref.EditorTabWidth = v;
+                CodeView.SettingsChanged();
+            };
+            page.Add(Field("Tab Width", Leading(tabWidth)));
+            page.Add(Field("", Check("Relative line numbers", port.EditorRelativeNumbers, v =>
+            {
+                port.EditorRelativeNumbers = v;
+                CodeView.SettingsChanged();
+            })));
+            page.Add(Field("", Check("Fetch and build syntax highlighting", port.EditorInstallGrammars, v =>
+            {
+                port.EditorInstallGrammars = v;
+                CodeView.SettingsChanged();
+            })));
+            page.Add(Field("", new Text("Downloads a language's grammar and builds it the first time a file in it shows, and a compiler the first time of all. Languages you already have keep their colors with this off.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel }));
             return page;
         }
 

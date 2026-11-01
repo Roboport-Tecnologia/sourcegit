@@ -11,8 +11,8 @@ namespace SourceGit.Views
     /// the file's title, then its diff. Images show side by side, old and
     /// new with their sizes; binaries and LFS objects their old and new
     /// sizes; submodules their old and new commits; no change says so.
-    /// Text waits for the code view (bemtvi), and so do upstream's swipe,
-    /// blend and difference modes for images, which composite pixels.
+    /// Text shows in the code view (bemtvi). Upstream's swipe,
+    /// blend and difference modes for images wait for it, as they composite pixels.
     /// Until a file is picked, upstream's welcome.
     /// </summary>
     public static class DiffView
@@ -68,6 +68,9 @@ namespace SourceGit.Views
                 ToolTip = App.Text("Diff.UseMerger"),
             };
             merger.Click += context.OpenExternalMergeTool;
+            var layout = LayoutButtons();
+            Bind.OneWay(context, nameof(context.IsTextDiff), () => context.IsTextDiff, text => layout.IsVisible = text, owner: layout);
+            header.Add(layout);
             header.Add(merger);
             column.Add(header);
 
@@ -79,13 +82,77 @@ namespace SourceGit.Views
             Bind.OneWay(context, nameof(context.Content), () => context.Content, content =>
             {
                 shown?.Destroy();
-                shown = Content(content);
+                shown = Content(context.Title.Split(" → ")[^1], content);
                 body.Add(shown);
             }, owner: body);
             return column;
         }
 
-        private static Node Content(object content)
+        /// <summary>Upstream's toolbar for a text diff: more or fewer lines around
+        /// its changes, all of them, side by side. They rebuild what's showing.</summary>
+        private static Row LayoutButtons()
+        {
+            var port = PortSettings.Instance;
+            var pref = ViewModels.Preferences.Instance;
+            var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
+            var more = IconButton("Diff.VisualLines.Incr", "Lines.Incr");
+            var fewer = IconButton("Diff.VisualLines.Decr", "Lines.Decr");
+            void Enable()
+            {
+                more.IsEnabled = !port.EditorDiffAllLines;
+                fewer.IsEnabled = !port.EditorDiffAllLines && port.EditorDiffContext > PortSettings.MinDiffContext;
+            }
+            more.Click += () =>
+            {
+                port.EditorDiffContext++;
+                Enable();
+                CodeView.SettingsChanged();
+            };
+            fewer.Click += () =>
+            {
+                port.EditorDiffContext = Math.Max(PortSettings.MinDiffContext, port.EditorDiffContext - 1);
+                Enable();
+                CodeView.SettingsChanged();
+            };
+            var all = IconToggle("Diff.VisualLines.All", "Lines.All", port.EditorDiffAllLines);
+            all.Changed += on =>
+            {
+                port.EditorDiffAllLines = on;
+                Enable();
+                CodeView.SettingsChanged();
+            };
+            var sides = IconToggle("Diff.SideBySide", "Layout", pref.UseSideBySideDiff);
+            sides.Changed += on =>
+            {
+                pref.UseSideBySideDiff = on;
+                CodeView.SettingsChanged();
+            };
+            Enable();
+            row.Add(more);
+            row.Add(fewer);
+            row.Add(all);
+            row.Add(sides);
+            return row;
+        }
+
+        private static Button IconButton(string text, string icon) => new(App.Text(text))
+        {
+            Icon = Icons.Get(icon, 12),
+            IconOnly = true,
+            Style = ButtonStyle.Borderless,
+            ToolTip = App.Text(text),
+        };
+
+        private static ToggleButton IconToggle(string text, string icon, bool on) => new(App.Text(text))
+        {
+            Icon = Icons.Get(icon, 12),
+            IconOnly = true,
+            Style = ButtonStyle.Borderless,
+            ToolTip = App.Text(text),
+            IsChecked = on,
+        };
+
+        private static Node Content(string path, object content)
         {
             var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = Spacing.Md };
             column.Grow = 1;
@@ -123,9 +190,25 @@ namespace SourceGit.Views
                 case null:
                     column.Add(new Spinner());
                     break;
+                // Upstream's model wraps text by its unified or side by side preference.
+                // The plugin lays out the same lines either way (the toolbar).
+                case ViewModels.TextDiffContext text:
+                    var code = new CodeView();
+                    code.ShowDiff(path, text.Data);
+                    return code.Node;
+                case Models.EmptyFile:
+                    column.Add(new Icon(Icons.Get("File.Empty")) { Size = 64, Color = Color.SecondaryLabel });
+                    column.Add(new Text(App.Text("Diff.EmptyFile")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
+                    break;
+                // Its sizes; upstream's tab with the images waits.
+                case ViewModels.LFSImageDiff lfsImage:
+                    column.Add(new Text(App.Text("Diff.LFS")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });
+                    column.Add(new Icon(Icons.Get("LFS")) { Size = 64, Color = Color.SecondaryLabel });
+                    column.Add(Sizes(lfsImage.LFS.Old.Size, lfsImage.LFS.New.Size));
+                    break;
                 default:
-                    column.Add(new Icon(Icons.Get("Diff")) { Size = 64, Color = Color.SecondaryLabel });
-                    column.Add(new Text("Text diffs aren't ported to mitsuami yet: they need the code view.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
+                    // On screen: thrown, it left the pane empty.
+                    column.Add(new Text($"No view for a diff's {content.GetType().Name}") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
                     break;
             }
             return column;

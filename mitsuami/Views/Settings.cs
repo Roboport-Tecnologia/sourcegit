@@ -338,7 +338,7 @@ namespace SourceGit.Views
             var tabs = new Tabs();
             tabs.Grow = 1;
             foreach (var (key, page) in pages)
-                tabs.Add(Popups.ButtonText(key), page);
+                tabs.Add(key == "Preferences.CodeView" ? "Code View" : Popups.ButtonText(key), page);
             return tabs;
         }
     }

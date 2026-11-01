@@ -26,7 +26,7 @@
     <Compile Include="../src/Native/**/*.cs" />
     <Compile Include="../src/App.JsonCodeGen.cs" />
     <Compile Include="../src/App.Extensions.cs" />
-    <Compile Include="**/*.cs" Exclude="bin/**;obj/**" />
+    <Compile Include="**/*.cs" Exclude="bin/**;obj/**;codeview/**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +34,8 @@
          where Avalonia embeds them (App.Text, AssetLoader). -->
     <None Include="../src/Resources/Locales/*.axaml" Link="Locales/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../src/Resources/Icons.axaml" Link="Icons.axaml" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The code view's editor config, plugins but not their tests. -->
+    <None Include="codeview/editor/**/*" Exclude="codeview/editor/**/test/**" Link="codeview-editor/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../src/App.ico" Link="App.ico" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../src/Resources/Images/**/*" Link="Resources/Images/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
