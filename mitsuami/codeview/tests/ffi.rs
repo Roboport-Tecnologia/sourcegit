@@ -280,6 +280,22 @@ async fn one_editor_shows_one_thing_after_another(app: TestApp) {
     assert!(mitsuami_destroy(id));
 }
 
+/// Where the cursor is among the changes reaches the app, for the toolbar's `2/5`.
+#[mitsuami_test::test]
+async fn the_toolbar_hears_where_the_cursor_is(app: TestApp) {
+    let id = mounted(&app).await;
+    call(&app, id, "sourcegit-diff", "show", FIXTURE).await;
+    until(&app, "the position", || event("change_position").is_some()).await;
+    let position = |json: String| serde_json::from_str::<serde_json::Value>(&json).unwrap();
+    assert_eq!(position(event("change_position").unwrap()), serde_json::json!({ "at": 1, "total": 3 }));
+    EVENTS.with(|e| e.borrow_mut().clear());
+    let (ok, result) = call(&app, id, "sourcegit-diff", "go_to", r#"{"where":"last"}"#).await;
+    assert!(ok, "{result}");
+    until(&app, "the last change", || event("change_position").is_some()).await;
+    assert_eq!(position(event("change_position").unwrap()), serde_json::json!({ "at": 3, "total": 3 }));
+    assert!(mitsuami_destroy(id));
+}
+
 #[mitsuami_test::test]
 async fn destroyed_it_is_gone(app: TestApp) {
     let id = mounted(&app).await;

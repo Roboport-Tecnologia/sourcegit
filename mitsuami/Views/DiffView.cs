@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.Json.Nodes;
 
 using Mitsuamia;
 
@@ -74,9 +75,10 @@ namespace SourceGit.Views
                 ToolTip = App.Text("Diff.UseMerger"),
             };
             merger.Click += context.OpenExternalMergeTool;
-            var layout = LayoutButtons();
+            var layout = Toolbar(pane);
             Bind.OneWay(context, nameof(context.IsTextDiff), () => context.IsTextDiff, text => layout.IsVisible = text, owner: layout);
             header.Add(layout);
+            header.Add(IgnoreWhitespace(context));
             header.Add(merger);
             column.Add(header);
 
@@ -109,13 +111,38 @@ namespace SourceGit.Views
             return column;
         }
 
-        /// <summary>Upstream's toolbar for a text diff: more or fewer lines around
-        /// its changes, all of them, side by side. They rebuild what's showing.</summary>
-        private static Row LayoutButtons()
+        /// <summary>Upstream's toolbar for a text diff, none of which asks git again:
+        /// going through its changes, with where the cursor is among them, more or fewer lines
+        /// around them or all of them, syntax, word wrap with one pane, hidden symbols, side
+        /// by side.</summary>
+        private static Row Toolbar(CodePane pane)
         {
             var port = PortSettings.Instance;
             var pref = ViewModels.Preferences.Instance;
             var row = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
+
+            Button Go(string text, string icon, string where)
+            {
+                var button = IconButton(text, icon);
+                button.Click += () => pane.Showing?.GoToChange(where);
+                return button;
+            }
+            var position = new Text("-/-") { Style = TextStyle.Caption, MaxLines = 1 };
+            void Heard(string name, string json)
+            {
+                if (name != "change_position" || JsonNode.Parse(json) is not { } at)
+                    return;
+                var index = at["at"]?.GetValue<int>() ?? 0;
+                position.Value = $"{(index == 0 ? "-" : index.ToString())}/{at["total"]?.GetValue<int>() ?? 0}";
+            }
+            pane.PluginEvent += Heard;
+            row.Forgotten += () => pane.PluginEvent -= Heard;
+            row.Add(Go("Diff.First", "Top", "first"));
+            row.Add(Go("Diff.Prev", "Up", "prev"));
+            row.Add(position);
+            row.Add(Go("Diff.Next", "Down", "next"));
+            row.Add(Go("Diff.Last", "Bottom", "last"));
+
             var more = IconButton("Diff.VisualLines.Incr", "Lines.Incr");
             var fewer = IconButton("Diff.VisualLines.Decr", "Lines.Decr");
             void Enable()
@@ -142,18 +169,48 @@ namespace SourceGit.Views
                 Enable();
                 CodeView.SettingsChanged();
             };
-            var sides = IconToggle("Diff.SideBySide", "Layout", pref.UseSideBySideDiff);
-            sides.Changed += on =>
-            {
-                pref.UseSideBySideDiff = on;
-                CodeView.SettingsChanged();
-            };
             Enable();
             row.Add(more);
             row.Add(fewer);
             row.Add(all);
-            row.Add(sides);
+
+            ToggleButton Pref(string text, string icon, bool on, Action<bool> set)
+            {
+                var toggle = IconToggle(text, icon, on);
+                toggle.Changed += value =>
+                {
+                    set(value);
+                    CodeView.SettingsChanged();
+                };
+                return toggle;
+            }
+            row.Add(Pref("Diff.SyntaxHighlight", "SyntaxHighlight", pref.UseSyntaxHighlighting, v => pref.UseSyntaxHighlighting = v));
+            var wrap = Pref("Diff.ToggleWordWrap", "WordWrap", pref.EnableDiffViewWordWrap, v => pref.EnableDiffViewWordWrap = v);
+            wrap.IsVisible = !pref.UseSideBySideDiff;
+            row.Add(wrap);
+            row.Add(Pref("Diff.ShowHiddenSymbols", "HiddenSymbol", pref.ShowHiddenSymbolsInDiffView, v => pref.ShowHiddenSymbolsInDiffView = v));
+            row.Add(Pref("Diff.SideBySide", "Layout", pref.UseSideBySideDiff, v =>
+            {
+                pref.UseSideBySideDiff = v;
+                wrap.IsVisible = !v;
+            }));
             return row;
+        }
+
+        /// <summary>Upstream's: it changes what git sends, so the diff is read again. It
+        /// shows where whitespace can matter, as upstream's model says.</summary>
+        private static ToggleButton IgnoreWhitespace(ViewModels.DiffContext context)
+        {
+            var pref = ViewModels.Preferences.Instance;
+            var toggle = IconToggle("Diff.IgnoreWhitespace", "Whitespace", pref.IgnoreWhitespaceChangesInDiff);
+            toggle.Changed += on =>
+            {
+                pref.IgnoreWhitespaceChangesInDiff = on;
+                context.CheckSettings();
+            };
+            Bind.OneWay(context, nameof(context.IsIgnoreWhitespaceVisible), () => context.IsIgnoreWhitespaceVisible,
+                visible => toggle.IsVisible = visible, owner: toggle);
+            return toggle;
         }
 
         private static Button IconButton(string text, string icon) => new(App.Text(text))

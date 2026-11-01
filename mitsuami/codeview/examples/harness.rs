@@ -64,7 +64,7 @@ fn window(editor: EditorHandle, session: bemtvi_mitsuami::Session, first: Option
             });
         }
     };
-    Window::new("Code view").size(Size::new(1000.0, 650.0)).open(open).content(move || {
+    Window::new("Code view").size(Size::new(1200.0, 700.0)).bind(open).content(move || {
         let session = session.take().expect("the window's content is built once");
         let buttons: Vec<Button> = fixtures()
             .into_iter()
@@ -74,12 +74,63 @@ fn window(editor: EditorHandle, session: bemtvi_mitsuami::Session, first: Option
                 Button::new(name).on_click(move || send(&path))
             })
             .collect();
+        // A button calling a plugin as the app does, saying what came of it below.
+        let plugin_button = |label: &'static str, module: &'static str, function: &'static str, json: &'static str| {
+            let editor = editor.clone();
+            Button::new(label).on_click(move || {
+                let editor = editor.clone();
+                spawn_local(async move {
+                    match call(&editor, module, function, json).await {
+                        Ok(_) => log.set(format!("{function}: {json}")),
+                        Err(e) => log.set(format!("raised: {e:#}")),
+                    }
+                });
+            })
+        };
+        let layout = |label, json| plugin_button(label, "sourcegit-diff", "layout", json);
+        let settings = |label, json| plugin_button(label, "sourcegit-settings", "apply", json);
+        // The diff view's toolbar.
+        let toolbar = vec![
+            plugin_button("first", "sourcegit-diff", "go_to", r#"{"where":"first"}"#),
+            plugin_button("prev", "sourcegit-diff", "go_to", r#"{"where":"prev"}"#),
+            plugin_button("next", "sourcegit-diff", "go_to", r#"{"where":"next"}"#),
+            plugin_button("last", "sourcegit-diff", "go_to", r#"{"where":"last"}"#),
+            layout("context 1", r#"{"context":1,"all":false}"#),
+            layout("context 4", r#"{"context":4,"all":false}"#),
+            layout("context 12", r#"{"context":12,"all":false}"#),
+            layout("all lines", r#"{"all":true}"#),
+            layout("unified", r#"{"side_by_side":false}"#),
+            layout("side by side", r#"{"side_by_side":true}"#),
+            layout("wrap", r#"{"wrap":true}"#),
+            layout("no wrap", r#"{"wrap":false}"#),
+            layout("colours", r#"{"syntax":true}"#),
+            layout("no colours", r#"{"syntax":false}"#),
+            layout("symbols", r#"{"hidden_symbols":true}"#),
+            layout("no symbols", r#"{"hidden_symbols":false}"#),
+        ];
+        // The Code View preferences.
+        let preferences = vec![
+            settings("vim", r#"{"mode":"vim"}"#),
+            settings("helix", r#"{"mode":"helix"}"#),
+            settings("modeless", r#"{"mode":"modeless"}"#),
+            settings("small", r#"{"font_size":11}"#),
+            settings("large", r#"{"font_size":18}"#),
+            settings("tabs 2", r#"{"tab_width":2}"#),
+            settings("tabs 8", r#"{"tab_width":8}"#),
+            settings("relative", r#"{"relative_numbers":true}"#),
+            settings("absolute", r#"{"relative_numbers":false}"#),
+            settings("habamax", r#"{"colorscheme":"habamax"}"#),
+            settings("bemtvi", r#"{"colorscheme":"bemtvi"}"#),
+            plugin_button("install grammars", "sourcegit-grammars", "configure", r#"{"enabled":true}"#),
+        ];
         // A task, so the editor below is mounted when it runs.
         if let Some(path) = first.clone().or_else(|| fixtures().into_iter().next()) {
             send(&path);
         }
         Column::new().size(100.pct(), 100.pct()).children((
             Row::new().padding(8.px()).gap(Spacing::Sm).children(buttons),
+            Row::new().padding(8.px()).gap(Spacing::Sm).children(toolbar),
+            Row::new().padding(8.px()).gap(Spacing::Sm).children(preferences),
             Editor::new(session, move || open.set(false))
                 .handle(editor.clone())
                 .native_dialogs(false)

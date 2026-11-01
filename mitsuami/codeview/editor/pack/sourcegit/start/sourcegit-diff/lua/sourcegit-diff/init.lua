@@ -23,17 +23,25 @@ M.filler = "╌"
 M.on_language = function(_) end
 
 local ns = btv.ns.create("sourcegit-diff")
+M.namespace = ns
 local ns_syntax = btv.ns.create("sourcegit-diff-syntax")
 
 local KINDS = {
   normal = {},
   indicator = {},
-  added = { line = "DiffAdd", sign = "+" },
-  deleted = { line = "DiffDelete", sign = "-" },
+  added = { line = "DiffAdd", sign = "+", sign_group = "Added" },
+  deleted = { line = "DiffDelete", sign = "-", sign_group = "Removed" },
 }
 
 local state = {
-  layout = { context = 4, all = false, side_by_side = false },
+  layout = {
+    context = 4,
+    all = false,
+    side_by_side = false,
+    wrap = false,
+    syntax = true,
+    hidden_symbols = false,
+  },
   -- The diff showing.
   spec = nil,
   lines = nil,
@@ -46,10 +54,23 @@ local state = {
   hunks = {},
   -- Which show this is, so what's late for an earlier one goes.
   generation = 0,
+  moved = nil,
+  -- The change last told to the app, so it hears only as it changes.
+  position = nil,
   sync = {},
   syncing = false,
   echoes = {},
 }
+
+-- A sign with no colour draws in the client's default, red. Colorschemes usually have these
+-- two; for those that don't, they follow the scheme's palette, and switching schemes.
+local function sign_colours()
+  local palette = btv.hl.palette()
+  btv.hl.fallback("Added", { fg = palette.green })
+  btv.hl.fallback("Removed", { fg = palette.red })
+end
+
+local sign_colours_listening = false
 
 -- Tells the app, or nobody in a plain terminal.
 local function send(name, payload)
@@ -128,7 +149,13 @@ local function pane_marks(pane, pane_index, side_by_side, width)
       }
       if kind.line then
         out[#out + 1] = { line = line, col = 0, line_hl_group = kind.line, priority = 100 }
-        out[#out + 1] = { line = line, col = 0, sign_text = kind.sign, priority = 100 }
+        out[#out + 1] = {
+          line = line,
+          col = 0,
+          sign_text = kind.sign,
+          sign_hl_group = kind.sign_group,
+          priority = 100,
+        }
       end
       for _, span in ipairs(row.spans or {}) do
         out[#out + 1] = {
@@ -148,7 +175,7 @@ end
 -- The version's colours on the rows showing it. A deleted line takes the old version's, and
 -- the rest the new one's; an unchanged line reads the same in both.
 local function syntax_marks(pane)
-  if not state.syntax then
+  if not state.syntax or not state.layout.syntax then
     return {}
   end
   local out = {}
@@ -273,19 +300,71 @@ local function start_sync()
   })
 end
 
-local function jump(step)
+-- Which change the cursor is at or past, 0 before the first.
+local function change_at(row)
+  local at = 0
+  for i, start in ipairs(state.hunks) do
+    if start > row then
+      break
+    end
+    at = i
+  end
+  return at
+end
+
+-- Tells the app where the cursor is among the changes, for the toolbar's `2/5`. `row` is
+-- where it's on its way to: a move is queued, and reading it now would say where it was.
+local function report_position(row)
+  local win = btv.win.current()
+  local ours = false
+  for _, view in ipairs(state.views) do
+    ours = ours or view:winid() == win
+  end
+  if not ours then
+    return
+  end
+  local at = change_at(row or cursor_row(win))
+  if at ~= state.position then
+    state.position = at
+    send("change_position", { at = at, total = #state.hunks })
+  end
+end
+
+-- Moves to a change: "first", "prev", "next" or "last". Past either end it stays.
+function M.go(where)
   local win = btv.win.current()
   local at = cursor_row(win)
-  local first, last, by = 1, #state.hunks, 1
-  if step < 0 then
-    first, last, by = #state.hunks, 1, -1
-  end
-  for i = first, last, by do
-    if (state.hunks[i] - at) * step > 0 then
-      btv.win.set_cursor(win, state.hunks[i], 0)
-      return
+  local target
+  if where == "first" then
+    target = state.hunks[1]
+  elseif where == "last" then
+    target = state.hunks[#state.hunks]
+  elseif where == "next" then
+    for _, start in ipairs(state.hunks) do
+      if start > at then
+        target = start
+        break
+      end
     end
+  elseif where == "prev" then
+    for i = #state.hunks, 1, -1 do
+      if state.hunks[i] < at then
+        target = state.hunks[i]
+        break
+      end
+    end
+  else
+    error("sourcegit-diff: can't go to: " .. tostring(where))
   end
+  if target then
+    btv.win.set_cursor(win, target, 0)
+  end
+end
+
+-- The app's call for the toolbar: { where }.
+function M.go_to(spec)
+  assert(type(spec) == "table", "sourcegit-diff: go_to takes a table")
+  M.go(spec.where)
 end
 
 -- A diff in panes is one thing to close: `:q` in one is leaving, as in the one-pane view.
@@ -373,7 +452,9 @@ local function render(keep_cursor)
       for i, view in ipairs(views) do
         local win, buf = view:winid(), view:bufnr()
         view:set_decor(ns, pane_marks(panes[i], i, side_by_side, width))
-        btv.wo[win].wrap = false
+        -- Panes line up row for row, which a wrapped line in one would undo.
+        btv.wo[win].wrap = state.layout.wrap and not side_by_side
+        btv.wo[win].list = state.layout.hidden_symbols
         btv.wo[win].number = false
         -- The gutter's numbers are the file's. Relative ones are for counts (`5j`), so
         -- they go beside them, as the preference says.
@@ -384,10 +465,10 @@ local function render(keep_cursor)
         -- Helix's modes have a keymap bucket of their own.
         for _, mode in ipairs({ "n", "helix" }) do
           btv.keymap.set(mode, "]c", function()
-            jump(1)
+            M.go("next")
           end, { buffer = buf, desc = "sourcegit-diff: next hunk" })
           btv.keymap.set(mode, "[c", function()
-            jump(-1)
+            M.go("prev")
           end, { buffer = buf, desc = "sourcegit-diff: previous hunk" })
         end
       end
@@ -401,6 +482,8 @@ local function render(keep_cursor)
         btv.win.set_cursor(view:winid(), row, 0)
       end
       send("shown", { path = state.spec.path, lines = #panes[1], hunks = #state.hunks })
+      state.position = nil
+      report_position(row)
     end)
     :catch(function(e)
       send("error", { message = tostring(e) })
@@ -412,7 +495,7 @@ end
 local function colour()
   local generation = state.generation
   local language = state.language
-  if not language then
+  if not language or not state.layout.syntax then
     return
   end
   local old, new = model.versions(state.lines)
@@ -456,15 +539,27 @@ function M.show(spec)
   state.lines = model.lines(spec)
   state.syntax = nil
   state.language = btv.filetype.match(spec.path)
+  if not sign_colours_listening then
+    sign_colours_listening = true
+    sign_colours()
+    btv.on("ColorScheme", sign_colours)
+  end
+  if not state.moved then
+    state.moved = btv.autocmd.create("CursorMoved", {
+      callback = function()
+        report_position()
+      end,
+    })
+  end
   render(false)
-  if state.language then
+  if state.language and state.layout.syntax then
     M.on_language(state.language)
   end
   colour()
 end
 
--- How the diff shows: { context = lines around each change, all = every line,
--- side_by_side }. Only what `spec` has changes. It takes effect at once, staying where the
+-- How the diff shows: { context = lines around each change, all = every line, side_by_side,
+-- wrap, syntax, hidden_symbols }. Only what `spec` has changes. It takes effect at once, staying where the
 -- cursor is, with what's already here: no call to git.
 function M.layout(spec)
   assert(type(spec) == "table", "sourcegit-diff: the layout isn't a table")
@@ -479,15 +574,27 @@ function M.layout(spec)
     assert(type(spec.all) == "boolean", "sourcegit-diff: bad all: " .. tostring(spec.all))
     state.layout.all = spec.all
   end
-  if spec.side_by_side ~= nil then
-    assert(
-      type(spec.side_by_side) == "boolean",
-      "sourcegit-diff: bad side_by_side: " .. tostring(spec.side_by_side)
-    )
-    state.layout.side_by_side = spec.side_by_side
+  local was_syntax = state.layout.syntax
+  for _, name in ipairs({ "side_by_side", "wrap", "syntax", "hidden_symbols" }) do
+    if spec[name] ~= nil then
+      assert(
+        type(spec[name]) == "boolean",
+        "sourcegit-diff: bad " .. name .. ": " .. tostring(spec[name])
+      )
+      state.layout[name] = spec[name]
+    end
   end
   if state.lines then
     render(true)
+    -- Turned on, what's showing may never have been parsed.
+    if state.layout.syntax and not was_syntax then
+      if state.language then
+        M.on_language(state.language)
+      end
+      if not state.syntax then
+        colour()
+      end
+    end
   end
 end
 
@@ -501,6 +608,10 @@ end
 -- Takes the diff off the screen.
 function M.close()
   stop_sync()
+  if state.moved then
+    btv.autocmd.del(state.moved)
+    state.moved = nil
+  end
   state.generation = state.generation + 1
   for _, view in ipairs(state.views) do
     view:close()

@@ -18,6 +18,12 @@ namespace SourceGit.Views
         /// <summary>Whether the editor is what shows.</summary>
         public bool ShowsCode { get; private set; }
 
+        /// <summary>What a plugin in its editor said (its name and JSON).</summary>
+        public event System.Action<string, string> PluginEvent;
+
+        /// <summary>The editor, if it has started and shows.</summary>
+        public CodeView Showing => ShowsCode ? _code : null;
+
         private CodeView _code;
 
         public CodePane()
@@ -38,6 +44,7 @@ namespace SourceGit.Views
             if (_code == null)
             {
                 _code = new CodeView();
+                _code.PluginEvent += (name, json) => PluginEvent?.Invoke(name, json);
                 Node.Add(_code.Node);
             }
             _code.Node.IsVisible = true;

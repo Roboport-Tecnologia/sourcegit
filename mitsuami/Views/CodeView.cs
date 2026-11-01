@@ -95,6 +95,10 @@ namespace SourceGit.Views
             Send();
         }
 
+        /// <summary>The diff's cursor to a change: first, prev, next or last.</summary>
+        public void GoToChange(string where) =>
+            CallPlugin("sourcegit-diff", "go_to", new JsonObject { ["where"] = where }.ToJsonString());
+
         /// <summary>What a plugin said (its name and JSON), on the UI thread.</summary>
         public event Action<string, string> PluginEvent;
 
@@ -206,6 +210,9 @@ namespace SourceGit.Views
                 ["context"] = port.EditorDiffContext,
                 ["all"] = port.EditorDiffAllLines,
                 ["side_by_side"] = ViewModels.Preferences.Instance.UseSideBySideDiff,
+                ["wrap"] = ViewModels.Preferences.Instance.EnableDiffViewWordWrap,
+                ["syntax"] = ViewModels.Preferences.Instance.UseSyntaxHighlighting,
+                ["hidden_symbols"] = ViewModels.Preferences.Instance.ShowHiddenSymbolsInDiffView,
             }.ToJsonString();
         }
 

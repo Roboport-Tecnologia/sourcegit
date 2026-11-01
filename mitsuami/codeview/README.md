@@ -51,7 +51,10 @@ agrees with git's whitespace and CRLF options:
   paints one group per cell.
 - **Scroll lock:** panes have the same rows, with filler where one side has fewer.
 
-The diff view's toolbar sets context, all lines and side by side.
+The diff view's toolbar is upstream's: first, previous, next and last change with where
+the cursor is among them, context, all lines, syntax, word wrap (with one pane), hidden
+symbols, side by side, ignoring whitespace and the merge tool. Only ignoring whitespace asks
+git again. Upstream's shortcuts for them (Ctrl+Alt+Up…) aren't ported.
 
 ## Preferences
 

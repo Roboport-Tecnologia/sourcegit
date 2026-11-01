@@ -45,7 +45,14 @@ btv.test.describe("sourcegit-diff", function()
   -- Not an after_each: a test that fails part-way never reaches it.
   btv.test.before_each(function(t)
     diff.close()
-    diff.layout({ context = 4, all = false, side_by_side = false })
+    diff.layout({
+      context = 4,
+      all = false,
+      side_by_side = false,
+      wrap = false,
+      syntax = true,
+      hidden_symbols = false,
+    })
     btv.helix.disable()
     btv.o.modeless = false
     btv.o.relativenumber = false
@@ -91,6 +98,23 @@ btv.test.describe("sourcegit-diff", function()
       expect(has(t:highlights(5), "DiffText", 4, 11)).to_be(true)
       expect(has(t:highlights(6), "DiffText", 4, 12)).to_be(true)
       expect(has(t:highlights(4), "DiffText")).to_be(false)
+    end)
+
+    btv.test.it("colours each sign for what it means", function(t)
+      shown(t)
+      local marks = vim.api.nvim_buf_get_extmarks(0, diff.namespace, 0, -1, { details = true })
+      local groups = {}
+      for _, mark in ipairs(marks) do
+        local details = mark[4]
+        if details.sign_text then
+          groups[vim.trim(details.sign_text)] = details.sign_hl_group or "none"
+        end
+      end
+      expect(groups["+"]).to_equal("Added")
+      expect(groups["-"]).to_equal("Removed")
+      -- The colorscheme's, or ours where it has none: a sign with no colour draws red.
+      expect(btv.hl.exists("Added")).to_be(true)
+      expect(btv.hl.exists("Removed")).to_be(true)
     end)
 
     btv.test.it("is read-only", function(t)
@@ -169,6 +193,72 @@ btv.test.describe("sourcegit-diff", function()
       t:cmd("close")
       shown(t)
       expect(t:lines()[1]).to_equal("// A small module, changed in three places.")
+    end)
+  end)
+
+  btv.test.describe("the toolbar", function()
+    btv.test.it("goes to the first, previous, next and last change", function(t)
+      shown(t)
+      local old = "// olá, removed with no line to replace it"
+      local new = "// 日本語, added with no line it replaces"
+      local text = function()
+        return t:lines()[t:cursor()[1]]
+      end
+      local go = function(where, want)
+        diff.go_to({ where = where })
+        t:wait_for(function()
+          return text() == want
+        end, { message = where .. " went elsewhere: " .. tostring(text()) })
+      end
+      local first = '    println!("{}", compute());'
+      go("last", new)
+      go("prev", old)
+      go("first", first)
+      go("next", old)
+      go("next", new)
+      -- Stays at the ends.
+      go("next", new)
+      go("first", first)
+      go("prev", first)
+    end)
+
+    btv.test.it("refuses a place it doesn't know", function()
+      expect(function()
+        diff.go_to({ where = "middle" })
+      end).to_error("can't go to: middle")
+    end)
+
+    btv.test.it("wraps only with one pane", function(t)
+      shown(t)
+      diff.layout({ wrap = true })
+      t:wait_for(function()
+        return btv.wo[0].wrap
+      end, { message = "no wrap" })
+      diff.layout({ side_by_side = true })
+      t:wait_for(function()
+        return #btv.win.list() == 2
+          and not btv.wo[btv.win.list()[1]].wrap
+          and not btv.wo[btv.win.list()[2]].wrap
+      end, { message = "panes wrap" })
+    end)
+
+    btv.test.it("shows hidden symbols when asked", function(t)
+      shown(t)
+      expect(btv.wo[0].list).to_be(false)
+      diff.layout({ hidden_symbols = true })
+      t:wait_for(function()
+        return btv.wo[0].list
+      end, { message = "no list" })
+      diff.layout({ hidden_symbols = false })
+      t:wait_for(function()
+        return not btv.wo[0].list
+      end)
+    end)
+
+    btv.test.it("refuses a bad toggle, naming it", function()
+      expect(function()
+        diff.layout({ wrap = "yes" })
+      end).to_error("bad wrap")
     end)
   end)
 
@@ -571,6 +661,41 @@ btv.test.describe("sourcegit-diff", function()
       answer({ { line = 0, col_start = 0, col_end = 4, group = "fixture" } })
       t:sleep(30)
       expect(fixture_at(t:highlights(1), 0, 4)).to_be(false)
+    end)
+
+    btv.test.it("turned off, takes them away and doesn't parse", function(t)
+      shown(t)
+      colored(t)
+      diff.layout({ syntax = false })
+      t:wait_for(function()
+        return not fixture_at(t:highlights(4), 0, 2)
+      end, { message = "the colours stayed" })
+      diff.close()
+      asked = {}
+      shown(t)
+      t:sleep(30)
+      expect(#asked).to_be(0)
+    end)
+
+    btv.test.it("turned on, parses what never was, and asks for its grammar", function(t)
+      local told = {}
+      diff.on_language = function(lang)
+        told[#told + 1] = lang
+      end
+      diff.layout({ syntax = false })
+      shown(t)
+      t:sleep(20)
+      expect(#asked).to_be(0)
+      expect(told).to_equal({})
+      diff.layout({ syntax = true })
+      colored(t)
+      expect(#asked).to_be(2)
+      expect(told).to_equal({ "rust" })
+      -- Off and on again has them already.
+      diff.layout({ syntax = false })
+      diff.layout({ syntax = true })
+      t:sleep(30)
+      expect(#asked).to_be(2)
     end)
 
     btv.test.it("doesn't parse past the size limit, and still shows", function(t)
