@@ -8,9 +8,13 @@
 -- The preferences' default, where the editor's own is on.
 btv.o.relativenumber = false
 local diff = require("sourcegit-diff")
+local file = require("sourcegit-file")
+local blame = require("sourcegit-blame")
 local grammars = require("sourcegit-grammars")
 diff.setup()
 grammars.setup()
 -- Plugins are tested alone, so they meet here.
 diff.on_language = grammars.ensure
+file.on_language = grammars.ensure
+blame.on_language = grammars.ensure
 grammars.on_ready = diff.recolor

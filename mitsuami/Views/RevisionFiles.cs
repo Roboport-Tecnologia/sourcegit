@@ -14,7 +14,7 @@ namespace SourceGit.Views
     /// commit's files as a tree whose folders load as they open, a search
     /// with the field's suggestions that shows the file found in its folders,
     /// and beside them the picked file: an image, a binary's size, an LFS
-    /// object, a submodule's commit. Text waits for the code view (bemtvi).
+    /// object, a submodule's commit, or its text in the code view (bemtvi).
     /// </summary>
     public sealed class RevisionFiles
     {
@@ -292,7 +292,7 @@ namespace SourceGit.Views
             menu.Add(new MenuItem(App.Text("RevealFile"), () => Native.OS.OpenInFileManager(full)) { Enabled = File.Exists(full) || Directory.Exists(full) });
             menu.Add(MenuSeparator.Instance);
             menu.Add(new MenuItem(App.Text("FileHistory"), () => HistoryWindows.ShowFile(repo, obj.Path, commit.SHA)));
-            menu.Add(CommitMenu.NotPorted(App.Text("Blame"), "Blame"));
+            menu.Add(new MenuItem(App.Text("Blame"), () => Blame.Show(new ViewModels.Blame(repo.FullPath, obj.Path, commit))) { Enabled = blob });
             menu.Add(MenuSeparator.Instance);
             if (!repo.IsBare)
             {
@@ -407,13 +407,17 @@ namespace SourceGit.Views
                         column.Add(new Text($"{commit.Author.Name} • {Models.DateTimeFormat.Format(commit.CommitterTime)}") { Color = Color.SecondaryLabel });
                     }
                     break;
-                case Models.RevisionTextFile:
+                case Models.RevisionTextFile text:
+                    var code = new CodeView();
+                    code.ShowFile(text.FileName, text.Content ?? "");
+                    code.Node.AlignSelf = Align.Stretch;
+                    return code.Node;
                 case ViewModels.RevisionLFSImage:
                     if (string.IsNullOrEmpty(path))
                         column.Add(new Icon(Icons.Get("File")) { Size = 64, Color = Color.SecondaryLabel });
                     else
                         column.Add(new FileIcon(path, FileLookup.FileName) { Size = 64 });
-                    column.Add(new Text("Viewing a file's text isn't ported to mitsuami yet: it needs the code view.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
+                    column.Add(new Text("Viewing an image stored in LFS isn't ported to mitsuami yet.") { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
                     break;
                 default:
                     column.Add(new Icon(Icons.Get("Folder.Open")) { Size = 64, Color = Color.SecondaryLabel });

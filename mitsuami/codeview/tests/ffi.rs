@@ -226,6 +226,42 @@ async fn quitting_side_by_side_tells_the_app(app: TestApp) {
 }
 
 #[mitsuami_test::test]
+async fn a_file_shows_as_the_port_sends_it(app: TestApp) {
+    let id = mounted(&app).await;
+    let json = serde_json::json!({ "path": "src/app.rs", "text": "fn main() {}\r\n" }).to_string();
+    let (ok, result) = call(&app, id, "sourcegit-file", "show", &json).await;
+    assert!(ok, "{result}");
+    until(&app, "shown", || event("shown").is_some()).await;
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&event("shown").unwrap()).unwrap(),
+        serde_json::json!({ "path": "src/app.rs", "language": "rust" }),
+    );
+    let (ok, result) = call(&app, id, "sourcegit-file", "show", r#"{"path":"a"}"#).await;
+    assert!(!ok);
+    assert!(result.contains("no text"), "{result}");
+    assert!(mitsuami_destroy(id));
+}
+
+/// The cursor's commit reaches the app, past a real host: the plugin's specs hear its keys.
+#[mitsuami_test::test]
+async fn blame_tells_the_app_about_its_lines(app: TestApp) {
+    let id = mounted(&app).await;
+    let (ok, result) = call(&app, id, "sourcegit-blame", "show", include_str!("../fixtures/blame-sample.json")).await;
+    assert!(ok, "{result}");
+    until(&app, "shown", || event("shown").is_some()).await;
+    until(&app, "the first line's commit", || event("blame_line").is_some()).await;
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&event("blame_line").unwrap()).unwrap(),
+        serde_json::json!({ "sha": "a1b2c3d4", "file": "src/app.rs" }),
+    );
+    EVENTS.with(|e| e.borrow_mut().clear());
+    assert!(unsafe { sourcegit_codeview_command(id, str("normal! 3G")) });
+    until(&app, "the next commit", || event("blame_line").is_some()).await;
+    assert!(event("blame_line").unwrap().contains("e5f6a7b8"), "{:?}", event("blame_line"));
+    assert!(mitsuami_destroy(id));
+}
+
+#[mitsuami_test::test]
 async fn destroyed_it_is_gone(app: TestApp) {
     let id = mounted(&app).await;
     assert!(mitsuami_destroy(id));

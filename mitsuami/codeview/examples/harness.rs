@@ -49,9 +49,16 @@ fn window(editor: EditorHandle, session: bemtvi_mitsuami::Session, first: Option
                 Ok(json) => json,
                 Err(e) => return log.set(format!("{}: {e}", path.display())),
             };
+            // `file-*.json` is a whole file, `blame-*.json` a blame, the rest are diffs.
+            let name = path.file_name().map_or_else(String::new, |n| n.to_string_lossy().into_owned());
+            let module = match name {
+                n if n.starts_with("file-") => "sourcegit-file",
+                n if n.starts_with("blame-") => "sourcegit-blame",
+                _ => "sourcegit-diff",
+            };
             let editor = editor.clone();
             spawn_local(async move {
-                if let Err(e) = call(&editor, "sourcegit-diff", "show", &json).await {
+                if let Err(e) = call(&editor, module, "show", &json).await {
                     log.set(format!("raised: {e:#}"));
                 }
             });

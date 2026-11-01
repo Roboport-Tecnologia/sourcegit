@@ -14,7 +14,7 @@ namespace SourceGit.Views
     /// shows what the selection is: a tip with none, the commit with one,
     /// how many with more. Changes lists the commit's changes
     /// (<see cref="CommitChanges"/>), Files its files
-    /// (<see cref="RevisionFiles"/>); diffs and text wait for the code view
+    /// (<see cref="RevisionFiles"/>); diffs and text show in the code view
     /// (bemtvi).
     /// </summary>
     public static class CommitDetail

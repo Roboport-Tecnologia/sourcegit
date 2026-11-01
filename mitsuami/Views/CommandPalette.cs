@@ -262,8 +262,10 @@ namespace SourceGit.Views
                         nameof(blame.VisibleFiles), () => blame.VisibleFiles, () => blame.SelectedFile, f => blame.SelectedFile = f,
                         () =>
                         {
+                            var launched = blame.Launch();
                             blame.Close();
-                            _ = Dialogs.Alert(App.MainWindow, "Blame isn't ported to mitsuami yet: it needs the code view.", "", [Popups.ButtonText("Sure")]);
+                            if (launched != null)
+                                Blame.Show(launched);
                         },
                         nameof(blame.IsLoading), () => blame.IsLoading);
                 case ViewModels.ExecuteCustomActionCommandPalette actions:

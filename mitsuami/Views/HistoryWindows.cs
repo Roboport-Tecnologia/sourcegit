@@ -12,8 +12,8 @@ namespace SourceGit.Views
     /// upstream's least size: a folder's (<c>Views/DirHistories.axaml</c>),
     /// its commits beside the picked one's details; and a file's
     /// (<c>Views/FileHistories.axaml</c>), its revisions beside the picked
-    /// one's change or content, or two compared. Diffs and text wait for
-    /// the code view (bemtvi); images, binaries and LFS objects show.
+    /// one's change or content, or two compared. Diffs and text show in
+    /// the code view (bemtvi), and images, binaries and LFS objects as themselves.
     /// </summary>
     public static class HistoryWindows
     {

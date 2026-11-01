@@ -11,7 +11,7 @@ namespace SourceGit.Views
     /// Upstream's context menus of the local changes
     /// (<c>WorkingCopy.axaml.cs</c>'s <c>CreateContextMenuForUnstagedChanges</c>
     /// and <c>CreateContextMenuForStagedChanges</c>), built as one opens for
-    /// the changes it's about. Windows not ported yet (blame, the merge
+    /// the changes it's about. Windows not ported yet (the merge
     /// editor) say so in an alert.
     /// Upstream's menu icons and the shortcuts it shows aren't ported.
     /// </summary>
@@ -120,7 +120,7 @@ namespace SourceGit.Views
                 else if (change.WorkTree is not (Models.ChangeState.Untracked or Models.ChangeState.Added))
                 {
                     menu.Add(new MenuItem(App.Text("FileHistory"), () => HistoryWindows.ShowFile(repo, change.Path)));
-                    menu.Add(CommitMenu.NotPorted(App.Text("Blame") + " (HEAD-only)", "Blame"));
+                    menu.Add(new MenuItem(App.Text("Blame") + " (HEAD-only)", () => _ = Blame.ShowAtHead(repo, change.Path)));
                     menu.Add(MenuSeparator.Instance);
                 }
 
@@ -223,7 +223,7 @@ namespace SourceGit.Views
                 else if (change.Index is not (Models.ChangeState.Added or Models.ChangeState.Renamed))
                 {
                     menu.Add(new MenuItem(App.Text("FileHistory"), () => HistoryWindows.ShowFile(repo, change.Path)));
-                    menu.Add(CommitMenu.NotPorted(App.Text("Blame") + " (HEAD-only)", "Blame"));
+                    menu.Add(new MenuItem(App.Text("Blame") + " (HEAD-only)", () => _ = Blame.ShowAtHead(repo, change.Path)));
                     menu.Add(MenuSeparator.Instance);
                 }
 

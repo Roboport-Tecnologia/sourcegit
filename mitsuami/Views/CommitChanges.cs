@@ -10,7 +10,7 @@ namespace SourceGit.Views
     /// Upstream's Changes tab of a commit (<c>Views/CommitChanges.axaml</c>):
     /// beside the diff, a search over the changes' paths with the view mode,
     /// the changes as a list, grid or tree, and their count under them. The
-    /// diff waits for the code view (bemtvi); the menus, opening files,
+    /// diff shows in the code view (bemtvi); the menus, opening files,
     /// checking them out and saving patches work.
     /// </summary>
     public static class CommitChanges
@@ -150,7 +150,7 @@ namespace SourceGit.Views
             menu.Add(new MenuItem(App.Text("RevealFile"), () => Native.OS.OpenInFileManager(path)) { Enabled = File.Exists(path) });
             menu.Add(MenuSeparator.Instance);
             menu.Add(new MenuItem(App.Text("FileHistory"), () => HistoryWindows.ShowFile(repo, change.Path, commit.SHA)));
-            menu.Add(CommitMenu.NotPorted(App.Text("Blame"), "Blame"));
+            menu.Add(new MenuItem(App.Text("Blame"), () => Blame.Show(new ViewModels.Blame(repo.FullPath, change.Path, commit))) { Enabled = change.Index != Models.ChangeState.Deleted });
             menu.Add(SaveAsPatch(vm, [change]));
             menu.Add(MenuSeparator.Instance);
             if (!repo.IsBare)

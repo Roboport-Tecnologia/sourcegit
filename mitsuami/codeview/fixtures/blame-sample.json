@@ -1,0 +1,48 @@
+{
+"path": "src/app.rs",
+"text": "use std::fmt;\n\nfn main() {\n    println!(\"hi\");\n}\n\n",
+"lines": [
+{
+"sha": "a1b2c3d4",
+"author": "Ana Souza",
+"time": "2026/01/02",
+"file": "src/app.rs",
+"first": true
+},
+{
+"sha": "a1b2c3d4",
+"author": "Ana Souza",
+"time": "2026/01/02",
+"file": "src/app.rs",
+"first": false
+},
+{
+"sha": "e5f6a7b8",
+"author": "日本語",
+"time": "2026/03/04",
+"file": "src/app.rs",
+"first": true
+},
+{
+"sha": "e5f6a7b8",
+"author": "日本語",
+"time": "2026/03/04",
+"file": "src/app.rs",
+"first": false
+},
+{
+"sha": "a1b2c3d4",
+"author": "Ana Souza",
+"time": "2026/01/02",
+"file": "src/app.rs",
+"first": true
+},
+{
+"sha": "a1b2c3d4",
+"author": "Ana Souza",
+"time": "2026/01/02",
+"file": "src/app.rs",
+"first": false
+}
+]
+}

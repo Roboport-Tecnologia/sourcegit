@@ -16,6 +16,19 @@ features are Lua plugins here, so they live and change with the port.
   takes.
 - `fixtures/` has what the app sends, for the specs, the ABI tests and the window below.
 
+## A file
+
+`sourcegit-file` shows a revision's file (the commit's Files tab, a file's history): its
+text in a view with its filetype, so the editor highlights it itself, with no copying.
+
+## Blame
+
+`sourcegit-blame` is a file's view with a hash, author and time heading each run of a
+commit's lines, in `gutter_text`. That column isn't clickable, so a click selects the
+line: every line of its commit lights up, the footer names it, and its buttons, or <CR> and
+`gb`, go to the commit or blame the file there. Upstream's click and Ctrl-click on its
+margin do those two.
+
 ## The diff
 
 The port always asks git for the whole file as context (upstream's `UseFullTextDiff`,

@@ -88,6 +88,35 @@ namespace SourceGit.Views
             Send();
         }
 
+        /// <summary>A file as a revision has it, by the <c>sourcegit-file</c> plugin.</summary>
+        public void ShowFile(string path, string text)
+        {
+            _showing = ("sourcegit-file", "show", new JsonObject { ["path"] = path, ["text"] = text }.ToJsonString());
+            Send();
+        }
+
+        /// <summary>What a plugin said (its name and JSON), on the UI thread.</summary>
+        public event Action<string, string> PluginEvent;
+
+        /// <summary>Upstream's blame, by the <c>sourcegit-blame</c> plugin.</summary>
+        public void ShowBlame(string path, Models.BlameData blame)
+        {
+            var lines = new JsonArray();
+            foreach (var line in blame.LineInfos)
+            {
+                lines.Add(new JsonObject
+                {
+                    ["sha"] = line.CommitSHA,
+                    ["author"] = line.Author,
+                    ["time"] = Models.DateTimeFormat.Format(line.Timestamp, true),
+                    ["file"] = line.File,
+                    ["first"] = line.IsFirstInGroup,
+                });
+            }
+            _showing = ("sourcegit-blame", "show", new JsonObject { ["path"] = path, ["text"] = blame.Content, ["lines"] = lines }.ToJsonString());
+            Send();
+        }
+
         /// <summary>What <c>sourcegit-diff</c> takes; <c>codeview/fixtures/</c>
         /// has examples. Its spans are 0-based, end-exclusive bytes, where
         /// upstream's are inclusive UTF-16 units.</summary>
@@ -237,6 +266,7 @@ namespace SourceGit.Views
         {
             if (_editor == null)
                 return;
+            PluginEvent?.Invoke(name, json);
             switch (name)
             {
                 case "exit":
