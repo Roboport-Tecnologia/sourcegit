@@ -247,6 +247,22 @@ btv.test.describe("sourcegit-diff", function()
       expect(new[5]).to_equal('    eprintln!("{}", compute());')
     end)
 
+    btv.test.it("has old on the left and new on the right on screen", function(t)
+      shown(t)
+      panes(t)
+      -- A click focuses what's really at that column, whichever pane was made first.
+      t:mouse("left", "press", 4, 20)
+      t:mouse("left", "release", 4, 20)
+      t:wait_for(function()
+        return t:lines()[5] == '    println!("{}", compute());'
+      end, { message = "the old version isn't on the left" })
+      t:mouse("left", "press", 4, 60)
+      t:mouse("left", "release", 4, 60)
+      t:wait_for(function()
+        return t:lines()[5] == '    eprintln!("{}", compute());'
+      end, { message = "the new version isn't on the right" })
+    end)
+
     btv.test.it("fills where one side has fewer lines", function(t)
       shown(t)
       local left, right = panes(t)
@@ -381,6 +397,29 @@ btv.test.describe("sourcegit-diff", function()
         return top(left) == top(right) and top(right) > before + 6
       end, { message = "a notch was lost: " .. top(left) .. " and " .. top(right) })
     end)
+
+    -- Further than a screen, so the focused pane's cursor is left out of its view.
+    for name, col in pairs({ left = 20, right = 60 }) do
+      btv.test.it("scrolls far together on the wheel over the " .. name .. " pane", function(t)
+        shown(t)
+        local left, right = panes(t)
+        diff.layout({ all = true })
+        t:wait_for(function()
+          return #t:lines() > 100
+        end)
+        t:feed("gg")
+        t:sleep(20)
+        local top = function(win)
+          return btv.win.call(win, btv.win.saveview).topline
+        end
+        for _ = 1, 40 do
+          t:mouse("wheel", "down", 2, col)
+        end
+        t:sleep(60)
+        expect(top(left) > 60).to_be(true)
+        expect(top(right)).to_be(top(left))
+      end)
+    end
 
     btv.test.it("goes back to one pane", function(t)
       shown(t)

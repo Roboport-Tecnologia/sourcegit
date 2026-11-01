@@ -312,9 +312,12 @@ local function ensure_views(count, path)
     state.views[1]:mount({ here = true })
   end
   if count == 2 and not state.views[2] then
-    state.views[2] = make_view(path .. " (new)")
-    state.views[2]:mount({ split = "vsplit" })
-    state.views[1]:focus()
+    -- A vertical split opens to the left, so the view that was here shows the new version,
+    -- and the new window the old one.
+    local old = make_view(path .. " (old)")
+    old:mount({ split = "vsplit" })
+    state.views = { old, state.views[1] }
+    old:focus()
     start_sync()
   elseif count == 1 and state.views[2] then
     stop_sync()
