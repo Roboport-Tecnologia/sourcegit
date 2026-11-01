@@ -94,6 +94,42 @@ btv.test.describe("sourcegit-grammars", function()
     expect(#ready).to_be(1)
   end)
 
+  btv.test.it("tells the app of its own install, not of a failed one", function(t)
+    local said = {}
+    grammars.send = function(name, payload)
+      said[#said + 1] = { name, payload }
+    end
+    grammars.on_ready = function(_) end
+    grammars.setup()
+    btv.autocmd.exec(
+      "TSInstalled",
+      { pattern = "nope", data = { lang = "nope", ok = false, error = "x" } }
+    )
+    btv.autocmd.exec("TSInstalled", { pattern = "yep", data = { lang = "yep", ok = true } })
+    t:wait_for(function()
+      return #said > 0
+    end, { message = "the app wasn't told" })
+    expect(said).to_equal({ { "grammar_ready", { lang = "yep" } } })
+  end)
+
+  btv.test.it("looks again when told of another editor's install", function()
+    local reloaded, ready = {}, {}
+    local real = btv.treesitter.reload
+    btv.treesitter.reload = function(lang)
+      reloaded[#reloaded + 1] = lang
+    end
+    grammars.on_ready = function(lang)
+      ready[#ready + 1] = lang
+    end
+    grammars.ready({ lang = "rust" })
+    btv.treesitter.reload = real
+    expect(reloaded).to_equal({ "rust" })
+    expect(ready).to_equal({ "rust" })
+    expect(function()
+      grammars.ready({})
+    end).to_error("no lang")
+  end)
+
   btv.test.it("refuses bad settings", function()
     expect(function()
       grammars.configure({})

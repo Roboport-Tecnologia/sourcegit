@@ -21,18 +21,24 @@ namespace SourceGit.Views
         /// <see cref="ViewModels.DiffContext"/>, or nothing for the welcome).</summary>
         public static Node Create(INotifyPropertyChanged source, string property, Func<object> diff)
         {
-            var holder = new Column { AlignItems = Align.Stretch };
-            holder.Grow = 1;
-            holder.MinWidth = 100;
-            holder.MinHeight = 0;
+            var pane = new CodePane();
+            pane.Node.MinWidth = 100;
             Node shown = null;
             Bind.OneWay(source, property, diff, value =>
             {
                 shown?.Destroy();
-                shown = value is ViewModels.DiffContext context ? Diff(context) : Welcome();
-                holder.Add(shown);
-            }, owner: holder);
-            return holder;
+                if (value is ViewModels.DiffContext context)
+                {
+                    shown = Diff(context, pane);
+                }
+                else
+                {
+                    pane.HideCode();
+                    shown = Welcome();
+                }
+                pane.Top.Add(shown);
+            }, owner: pane.Node);
+            return pane.Node;
         }
 
         private static Node Welcome()
@@ -44,7 +50,7 @@ namespace SourceGit.Views
             return column;
         }
 
-        private static Node Diff(ViewModels.DiffContext context)
+        private static Node Diff(ViewModels.DiffContext context, CodePane pane)
         {
             var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             column.Grow = 1;
@@ -81,8 +87,23 @@ namespace SourceGit.Views
             Node shown = null;
             Bind.OneWay(context, nameof(context.Content), () => context.Content, content =>
             {
+                // Upstream's model wraps text by its unified or side by side preference.
+                // The plugin lays out the same lines either way (the toolbar).
+                if (content is ViewModels.TextDiffContext text)
+                {
+                    shown?.Destroy();
+                    shown = null;
+                    body.IsVisible = false;
+                    pane.Code().ShowDiff(context.Title.Split(" → ")[^1], text.Data);
+                    return;
+                }
+                // Loading: what's showing stays until the next is here, with no flash.
+                if (content == null && pane.ShowsCode)
+                    return;
+                pane.HideCode();
+                body.IsVisible = true;
                 shown?.Destroy();
-                shown = Content(context.Title.Split(" → ")[^1], content);
+                shown = Content(content);
                 body.Add(shown);
             }, owner: body);
             return column;
@@ -152,7 +173,7 @@ namespace SourceGit.Views
             IsChecked = on,
         };
 
-        private static Node Content(string path, object content)
+        private static Node Content(object content)
         {
             var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = Spacing.Md };
             column.Grow = 1;
@@ -190,12 +211,6 @@ namespace SourceGit.Views
                 case null:
                     column.Add(new Spinner());
                     break;
-                // Upstream's model wraps text by its unified or side by side preference.
-                // The plugin lays out the same lines either way (the toolbar).
-                case ViewModels.TextDiffContext text:
-                    var code = new CodeView();
-                    code.ShowDiff(path, text.Data);
-                    return code.Node;
                 case Models.EmptyFile:
                     column.Add(new Icon(Icons.Get("File.Empty")) { Size = 64, Color = Color.SecondaryLabel });
                     column.Add(new Text(App.Text("Diff.EmptyFile")) { Style = TextStyle.Title, Weight = FontWeight.Bold, Color = Color.SecondaryLabel });

@@ -193,17 +193,30 @@ namespace SourceGit.Views
             tabs.Add(Popups.ButtonText("FileHistory.FileContent"), content);
             tabs.SelectedIndex = vm.IsDiffMode ? 0 : 1;
             tabs.Changed += index => vm.IsDiffMode = index == 0;
+            // Each tab keeps its editor from one revision to the next.
+            var filePane = new CodePane();
+            content.Add(filePane.Node);
+            var diffPane = DiffView.Create(vm, nameof(vm.ViewContent), () => vm.ViewContent as ViewModels.DiffContext);
+            change.Add(diffPane);
             Node shown = null;
             Bind.OneWay(vm, nameof(vm.ViewContent), () => vm.ViewContent, value =>
             {
                 shown?.Destroy();
-                shown = value switch
+                shown = null;
+                if (value is ViewModels.FileHistoriesRevisionFile file)
                 {
-                    ViewModels.FileHistoriesRevisionFile file => File(vm, file),
-                    ViewModels.DiffContext => DiffView.Create(vm, nameof(vm.ViewContent), () => vm.ViewContent),
-                    _ => Empty(),
-                };
-                (vm.IsDiffMode ? change : content).Add(shown);
+                    shown = File(vm, file, filePane);
+                    filePane.Top.Add(shown);
+                }
+                else
+                {
+                    filePane.HideCode();
+                    if (value is not ViewModels.DiffContext)
+                    {
+                        shown = Empty();
+                        filePane.Top.Add(shown);
+                    }
+                }
             }, owner: tabs);
             column.Add(tabs);
             var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
@@ -221,7 +234,7 @@ namespace SourceGit.Views
 
         /// <summary>The file at that revision: its path with the open button
         /// over it, as the Files tab shows one.</summary>
-        private static Node File(ViewModels.FileHistoriesSingleRevision vm, ViewModels.FileHistoriesRevisionFile file)
+        private static Node File(ViewModels.FileHistoriesSingleRevision vm, ViewModels.FileHistoriesRevisionFile file, CodePane pane)
         {
             var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             column.Grow = 1;
@@ -244,7 +257,13 @@ namespace SourceGit.Views
                 header.Add(open);
             }
             column.Add(header);
-            column.Add(RevisionFiles.Shown(file.Content, file.Path));
+            if (file.Content is Models.RevisionTextFile text)
+                pane.Code().ShowFile(text.FileName, text.Content ?? "");
+            else
+            {
+                pane.HideCode();
+                column.Add(RevisionFiles.Shown(file.Content, file.Path));
+            }
             return column;
         }
 

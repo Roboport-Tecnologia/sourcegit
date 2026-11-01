@@ -192,6 +192,8 @@ async fn the_grammar_preference_reaches_the_plugin(app: TestApp) {
     let id = mounted(&app).await;
     let (ok, result) = call(&app, id, "sourcegit-grammars", "configure", r#"{"enabled":false,"tried":["rust"]}"#).await;
     assert!(ok, "{result}");
+    let (ok, result) = call(&app, id, "sourcegit-grammars", "ready", r#"{"lang":"rust"}"#).await;
+    assert!(ok, "{result}");
     let (ok, result) = call(&app, id, "sourcegit-grammars", "configure", "{}").await;
     assert!(!ok);
     assert!(result.contains("bad enabled"), "{result}");
@@ -258,6 +260,23 @@ async fn blame_tells_the_app_about_its_lines(app: TestApp) {
     assert!(unsafe { sourcegit_codeview_command(id, str("normal! 3G")) });
     until(&app, "the next commit", || event("blame_line").is_some()).await;
     assert!(event("blame_line").unwrap().contains("e5f6a7b8"), "{:?}", event("blame_line"));
+    assert!(mitsuami_destroy(id));
+}
+
+/// A pane keeps its editor from one thing to the next, so one editor shows another file's
+/// diff, then its blame, in the same view.
+#[mitsuami_test::test]
+async fn one_editor_shows_one_thing_after_another(app: TestApp) {
+    let id = mounted(&app).await;
+    let (ok, result) = call(&app, id, "sourcegit-diff", "show", FIXTURE).await;
+    assert!(ok, "{result}");
+    until(&app, "shown", || event("shown").is_some()).await;
+    EVENTS.with(|e| e.borrow_mut().clear());
+    let next = FIXTURE.replace("src/app.rs", "src/other.rs");
+    let (ok, result) = call(&app, id, "sourcegit-diff", "show", &next).await;
+    assert!(ok, "{result}");
+    until(&app, "the next file", || event("shown").is_some_and(|s| s.contains("other.rs"))).await;
+    assert!(event("exit").is_none());
     assert!(mitsuami_destroy(id));
 }
 

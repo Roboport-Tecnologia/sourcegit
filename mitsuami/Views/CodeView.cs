@@ -274,6 +274,14 @@ namespace SourceGit.Views
                     _editor = null;
                     Start();
                     break;
+                // The others remember this language had no grammar.
+                case "grammar_ready":
+                    foreach (var other in s_live)
+                    {
+                        if (other != this)
+                            other.CallPlugin("sourcegit-grammars", "ready", json);
+                    }
+                    break;
                 case "grammar_install":
                     if (JsonNode.Parse(json)?["lang"]?.GetValue<string>() is { } lang)
                         s_triedGrammars.Add(lang);

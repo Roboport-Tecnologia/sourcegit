@@ -359,18 +359,32 @@ namespace SourceGit.Views
             body.Grow = 1;
             body.MinHeight = 0;
             column.Add(body);
+            var pane = new CodePane();
+            pane.Node.MinWidth = 100;
+            column.Grow = 1;
+            column.MinHeight = 0;
+            pane.Top.Add(column);
             Node shown = null;
             Bind.OneWay(vm, nameof(vm.ViewRevisionFileContent), () => vm.ViewRevisionFileContent, content =>
             {
                 shown?.Destroy();
+                shown = null;
+                if (content is Models.RevisionTextFile text)
+                {
+                    body.IsVisible = false;
+                    pane.Code().ShowFile(text.FileName, text.Content ?? "");
+                    return;
+                }
+                pane.HideCode();
+                body.IsVisible = true;
                 shown = Shown(content, vm.ViewRevisionFilePath);
                 body.Add(shown);
             }, owner: body);
-            return column;
+            return pane.Node;
         }
 
-        /// <summary>What a revision's file holds; <paramref name="path"/>,
-        /// if given, for its type's icon.</summary>
+        /// <summary>What a revision's file holds, but text, which its pane's editor
+        /// shows; <paramref name="path"/>, if given, for its type's icon.</summary>
         internal static Node Shown(object content, string path = null)
         {
             var column = new Column { AlignItems = Align.Center, Justify = Justify.Center, Gap = Spacing.Sm };
@@ -407,11 +421,6 @@ namespace SourceGit.Views
                         column.Add(new Text($"{commit.Author.Name} • {Models.DateTimeFormat.Format(commit.CommitterTime)}") { Color = Color.SecondaryLabel });
                     }
                     break;
-                case Models.RevisionTextFile text:
-                    var code = new CodeView();
-                    code.ShowFile(text.FileName, text.Content ?? "");
-                    code.Node.AlignSelf = Align.Stretch;
-                    return code.Node;
                 case ViewModels.RevisionLFSImage:
                     if (string.IsNullOrEmpty(path))
                         column.Add(new Icon(Icons.Get("File")) { Size = 64, Color = Color.SecondaryLabel });

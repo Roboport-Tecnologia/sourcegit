@@ -16,6 +16,13 @@ features are Lua plugins here, so they live and change with the port.
   takes.
 - `fixtures/` has what the app sends, for the specs, the ABI tests and the window below.
 
+## One editor per pane
+
+A pane (`CodePane`) keeps its editor from one file to the next, and hides it for what isn't
+text (an image, a binary), so switching files doesn't start an editor each time. Windows
+each have their own. An editor only hears of its own grammar installs, so `CodeView` passes
+`grammar_ready` on to the others (`sourcegit-grammars`' `ready`).
+
 ## A file
 
 `sourcegit-file` shows a revision's file (the commit's Files tab, a file's history): its
