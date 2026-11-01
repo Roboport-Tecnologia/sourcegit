@@ -40,3 +40,19 @@ mitsuami-test = { path = "../../../mitsuami/crates/mitsuami-test" }
 [patch."https://github.com/Roboport-Tecnologia/mitsuami"]
 mitsuami = { path = "../../../mitsuami/crates/mitsuami" }
 mitsuami-test = { path = "../../../mitsuami/crates/mitsuami-test" }
+
+# bemtvi and its renderer are far too slow unoptimized to judge how the editor feels, so
+# everything but this crate is optimized in the build the harness and `run-port.sh` use.
+[profile.dev]
+debug = "line-tables-only"
+split-debuginfo = "unpacked"
+
+[profile.dev.package."*"]
+opt-level = 3
+debug = false
+
+# As bemtvi's, for what's packaged: this workspace's profiles are the ones that count.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
