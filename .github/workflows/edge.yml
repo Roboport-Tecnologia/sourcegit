@@ -3,18 +3,19 @@
 # (`gh workflow run edge.yml --ref mitsuami`). Upstream's workflows build
 # its Avalonia app and stay as they are.
 #
-# The port builds against the heads of three sibling repositories, checked
+# The port builds against the heads of two sibling repositories, checked
 # out beside this one as on the maintainer's machine: mitsuamia (the C#
-# layer), mitsuami-extras (whose C ABI library has mitsuami's in it) and
-# mitsuami (`../mitsuami` to extras), whose packaging scripts sign,
-# notarize and make the AppImages.
+# layer) and mitsuami-extras (whose C ABI library has mitsuami's in it, at
+# the release its manifest pins). mitsuami's checkout is for its packaging
+# scripts, which sign, notarize and make the AppImages, and for extras when
+# it builds against `../mitsuami` until a release is out.
 name: Edge
 
 on:
   workflow_dispatch:
     inputs:
       mitsuami:
-        description: mitsuami's branch, tag or commit
+        description: mitsuami's branch, tag or commit, for its packaging scripts
         default: main
       mitsuamia:
         description: mitsuamia's branch, tag or commit
