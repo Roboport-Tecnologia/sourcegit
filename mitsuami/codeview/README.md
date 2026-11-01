@@ -56,6 +56,13 @@ the cursor is among them, context, all lines, syntax, word wrap (with one pane),
 symbols, side by side, ignoring whitespace and the merge tool. Only ignoring whitespace asks
 git again. Upstream's shortcuts for them (Ctrl+Alt+Up…) aren't ported.
 
+A local change's Stage, Unstage and Discard are in the editor's right-click menu
+(`btv.contextmenu`), and on `gs`, `gu` and `gx`. They act on what's selected, or the run of
+changes under the cursor. The app says which it can do (`actions`, with its labels, so
+they're translated), the plugin says which lines (`chunk`), and
+`DiffView.ApplyChunk` makes upstream's patch of them for `git apply`. The diff then shows
+again with the same path, which keeps the cursor where it was.
+
 ## Preferences
 
 Preferences' Code View page sets the mode (modeless, vim, helix), font, size, colorscheme,

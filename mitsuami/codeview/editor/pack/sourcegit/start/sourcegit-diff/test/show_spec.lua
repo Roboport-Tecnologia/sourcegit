@@ -57,6 +57,7 @@ btv.test.describe("sourcegit-diff", function()
     btv.o.modeless = false
     btv.o.relativenumber = false
     diff.on_language = function(_) end
+    diff.send = function(_, _) end
   end)
 
   btv.test.describe("unified", function()
@@ -259,6 +260,312 @@ btv.test.describe("sourcegit-diff", function()
       expect(function()
         diff.layout({ wrap = "yes" })
       end).to_error("bad wrap")
+    end)
+  end)
+
+  btv.test.describe("staging", function()
+    local sent
+
+    btv.test.before_each(function()
+      sent = {}
+      diff.send = function(name, payload)
+        if name == "chunk" then
+          sent[#sent + 1] = payload
+        end
+      end
+    end)
+
+    local function heard(t, count)
+      t:wait_for(function()
+        return #sent >= (count or 1)
+      end, { message = "the app wasn't asked" })
+      return sent[#sent]
+    end
+
+    -- Line by text, as the fixture has them: `index` counts its one hunk header too.
+    local println = '    println!("{}", compute());'
+    local eprintln = '    eprintln!("{}", compute());'
+    local info = '    log::info!("done");'
+
+    local function goto_text(t, text)
+      for row, line in ipairs(t:lines()) do
+        if line == text then
+          t:feed(row .. "G")
+          return row
+        end
+      end
+      error("no line: " .. text)
+    end
+
+    btv.test.it("takes the run of changes under the cursor with nothing selected", function(t)
+      shown(t)
+      goto_text(t, eprintln)
+      t:feed("gs")
+      local chunk = heard(t)
+      expect(chunk.action).to_equal("stage")
+      expect(chunk.first).to_be(5)
+      expect(chunk.last).to_be(7)
+      expect(chunk.combined).to_be(true)
+    end)
+
+    btv.test.it("takes the selected lines only", function(t)
+      shown(t)
+      goto_text(t, eprintln)
+      t:feed("Vj")
+      t:feed("gu")
+      local chunk = heard(t)
+      expect(chunk.action).to_equal("unstage")
+      expect(chunk.first).to_be(6)
+      expect(chunk.last).to_be(7)
+    end)
+
+    btv.test.it("takes one line of a run, and selected upward", function(t)
+      shown(t)
+      goto_text(t, info)
+      t:feed("Vgx")
+      local chunk = heard(t)
+      expect(chunk.action).to_equal("discard")
+      expect(chunk.first).to_be(7)
+      expect(chunk.last).to_be(7)
+      goto_text(t, info)
+      t:feed("Vk")
+      t:feed("gs")
+      chunk = heard(t, 2)
+      expect(chunk.first).to_be(6)
+      expect(chunk.last).to_be(7)
+    end)
+
+    btv.test.it("leaves the selection once it has asked", function(t)
+      shown(t)
+      goto_text(t, eprintln)
+      t:feed("V")
+      t:feed("gs")
+      heard(t)
+      t:wait_for(function()
+        return t:mode() == "n"
+      end, { message = "still selecting" })
+    end)
+
+    btv.test.it("asks nothing where there's no change, and says so", function(t)
+      shown(t)
+      t:feed("gg")
+      t:feed("gs")
+      t:wait_for(function()
+        return (t:message() or ""):find("No change here to stage", 1, true)
+      end, { message = "it said nothing" })
+      expect(#sent).to_be(0)
+    end)
+
+    btv.test.it("doesn't take a selection of unchanged lines", function(t)
+      shown(t)
+      t:feed("ggVj")
+      t:feed("gs")
+      t:sleep(30)
+      expect(#sent).to_be(0)
+    end)
+
+    btv.test.it("takes what the app asks for", function(t)
+      shown(t)
+      goto_text(t, eprintln)
+      diff.act_on({ action = "discard" })
+      expect(heard(t).action).to_equal("discard")
+    end)
+
+    btv.test.it("refuses what this diff can't do, as a commit's can't stage", function(t)
+      local spec = spec_of()
+      spec.actions = { { action = "unstage", label = "Unstage" } }
+      diff.show(spec)
+      t:wait_for(function()
+        return t:decor(1).gutter
+      end)
+      goto_text(t, eprintln)
+      t:feed("gs")
+      t:wait_for(function()
+        return (t:message() or ""):find("can't stage", 1, true)
+      end, { message = "it said nothing" })
+      expect(#sent).to_be(0)
+    end)
+
+    btv.test.describe("the right-click menu", function()
+      local function menu_rows()
+        local out = {}
+        for _, entry in ipairs(btv.await(btv.contextmenu.entries(0))) do
+          out[#out + 1] = entry
+        end
+        return out
+      end
+
+      local function row_named(label)
+        for _, entry in ipairs(menu_rows()) do
+          if entry.label == label then
+            return entry
+          end
+        end
+        return nil
+      end
+
+      btv.test.it("offers what this diff can do, with its key, then the usual rows", function(t)
+        local spec = spec_of()
+        spec.actions =
+          { { action = "stage", label = "Pôr" }, { action = "discard", label = "Descartar" } }
+        diff.show(spec)
+        t:wait_for(function()
+          return t:decor(1).gutter
+        end)
+        goto_text(t, eprintln)
+        t:sleep(20)
+        local rows = menu_rows()
+        expect(rows[1].label).to_equal("Pôr")
+        expect(rows[1].detail).to_equal("gs")
+        expect(rows[2].label).to_equal("Descartar")
+        expect(row_named("Unstage")).to_be_nil()
+        expect(row_named("Select All") ~= nil).to_be(true)
+      end)
+
+      btv.test.it("offers none of them on a diff that can do nothing", function(t)
+        diff.show({ path = "a.txt", lines = { { kind = "added", text = "x", old = 0, new = 1 } } })
+        t:wait_for(function()
+          return t:decor(1).gutter
+        end)
+        t:sleep(20)
+        expect(row_named("Stage")).to_be_nil()
+        expect(row_named("Select All") ~= nil).to_be(true)
+      end)
+
+      btv.test.it("is greyed out where there's no change", function(t)
+        shown(t)
+        t:feed("gg")
+        t:sleep(20)
+        expect(row_named("Stage").enabled).to_be(false)
+        goto_text(t, eprintln)
+        t:sleep(20)
+        expect(row_named("Stage").enabled).to_be(true)
+      end)
+
+      btv.test.it("a real right-click on a change, then choosing the row", function(t)
+        shown(t)
+        local row = goto_text(t, eprintln)
+        t:feed("gg")
+        t:sleep(20)
+        local col = btv.win.textoff(btv.win.current()) + 6
+        t:mouse("right", "press", row - 1, col)
+        local menu = t:wait_for(function()
+          local m = t:menu()
+          return m and #m.items > 0 and m or nil
+        end, { message = "no menu opened" })
+        expect(menu.items[1]).to_equal("Stage")
+        -- Opened by the mouse, no row is picked until a key or the pointer moves to one.
+        t:feed("<Down><CR>")
+        local chunk = heard(t)
+        expect(chunk.action).to_equal("stage")
+        expect(chunk.first).to_be(5)
+        expect(chunk.last).to_be(7)
+      end)
+
+      btv.test.it("a real right-click in a selection keeps it, and acts on it", function(t)
+        shown(t)
+        local row = goto_text(t, eprintln)
+        t:feed("Vj")
+        t:sleep(20)
+        local col = btv.win.textoff(btv.win.current()) + 6
+        t:mouse("right", "press", row - 1, col)
+        t:wait_for(function()
+          local m = t:menu()
+          return m and #m.items > 0
+        end, { message = "no menu opened" })
+        -- Opened by the mouse, no row is picked until a key or the pointer moves to one.
+        t:feed("<Down><CR>")
+        local chunk = heard(t)
+        expect(chunk.first).to_be(6)
+        expect(chunk.last).to_be(7)
+      end)
+    end)
+
+    btv.test.it("works in Helix's selection too", function(t)
+      shown(t)
+      goto_text(t, eprintln)
+      btv.helix.enable()
+      t:sleep(20)
+      t:feed("v")
+      t:feed("j")
+      t:feed("gs")
+      local chunk = heard(t)
+      expect(chunk.first).to_be(6)
+      expect(chunk.last).to_be(7)
+    end)
+
+    btv.test.describe("side by side", function()
+      local function sides(t)
+        diff.layout({ side_by_side = true })
+        t:wait_for(function()
+          return #btv.win.list() == 2 and t:decor(1).gutter
+        end, { message = "no panes" })
+        t:sleep(20)
+      end
+
+      btv.test.it("takes the old side's lines from the left", function(t)
+        shown(t)
+        sides(t)
+        goto_text(t, println)
+        t:feed("gs")
+        local chunk = heard(t)
+        expect(chunk.combined).to_be(false)
+        expect(chunk.is_old).to_be(true)
+        expect(chunk.first).to_be(5)
+        expect(chunk.last).to_be(5)
+      end)
+
+      btv.test.it("takes the new side's lines from the right", function(t)
+        shown(t)
+        sides(t)
+        t:mouse("left", "press", 4, 60)
+        t:mouse("left", "release", 4, 60)
+        t:wait_for(function()
+          return t:lines()[5] == eprintln
+        end, { message = "not on the right" })
+        goto_text(t, eprintln)
+        t:feed("gs")
+        local chunk = heard(t)
+        expect(chunk.is_old).to_be(false)
+        expect(chunk.first).to_be(6)
+        expect(chunk.last).to_be(7)
+      end)
+    end)
+
+    btv.test.it("keeps its place when the same file shows again", function(t)
+      local spec = shown(t)
+      goto_text(t, "// olá, removed with no line to replace it")
+      local before = t:cursor()[1]
+      diff.show(spec)
+      t:sleep(40)
+      expect(t:cursor()[1]).to_be(before)
+    end)
+
+    btv.test.it("stays about there if its line went", function(t)
+      local spec = shown(t)
+      local row = goto_text(t, eprintln)
+      -- Staged: gone from the diff, with what's after it moving up.
+      local next_lines = {}
+      for _, line in ipairs(spec.lines) do
+        if line.text ~= eprintln then
+          next_lines[#next_lines + 1] = line
+        end
+      end
+      diff.show({ path = spec.path, lines = next_lines })
+      t:wait_for(function()
+        return t:lines()[row] ~= eprintln
+      end)
+      t:sleep(30)
+      expect(t:cursor()[1]).to_be(row)
+    end)
+
+    btv.test.it("starts at the first change for another file", function(t)
+      local spec = shown(t)
+      goto_text(t, "// olá, removed with no line to replace it")
+      diff.show({ path = "src/other.rs", lines = spec.lines })
+      t:wait_for(function()
+        return t:cursor()[1] == 5
+      end, { message = "it kept the other file's place" })
     end)
   end)
 

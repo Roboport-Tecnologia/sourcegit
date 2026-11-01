@@ -55,6 +55,8 @@ local state = {
   -- Which show this is, so what's late for an earlier one goes.
   generation = 0,
   moved = nil,
+  -- What this diff can do to its lines, as the app says: { { action, label } }.
+  actions = {},
   -- The change last told to the app, so it hears only as it changes.
   position = nil,
   sync = {},
@@ -73,10 +75,15 @@ end
 local sign_colours_listening = false
 
 -- Tells the app, or nobody in a plain terminal.
-local function send(name, payload)
+-- A field, so specs can hear it with no app.
+M.send = function(name, payload)
   if btv.host.name() then
     btv.host.send(name, payload)
   end
+end
+
+local function send(name, payload)
+  M.send(name, payload)
 end
 
 -- Raises on what the app got wrong, so a change on its side shows up here.
@@ -361,6 +368,100 @@ function M.go(where)
   end
 end
 
+-- The modes in which what's selected is what the user marked: vim's visual and select, and
+-- Helix's select. Helix's normal mode always has a selection, of a word or a line it moved over.
+local SELECTING = { v = true, V = true, ["\22"] = true, s = true, S = true, hs = true }
+
+local KEYS = { stage = "gs", unstage = "gu", discard = "gx" }
+
+-- The pane the cursor is in, and what's selected or under the cursor there: `{ first, last }`
+-- of what the app sent, or nil if that holds no change. `selecting` says whether it's a selection.
+local function chunk_here()
+  local win = btv.win.current()
+  local pane_index
+  for i, view in ipairs(state.views) do
+    if view:winid() == win then
+      pane_index = i
+    end
+  end
+  if not pane_index then
+    return nil
+  end
+  local first, last
+  if SELECTING[btv.mode().mode] then
+    first, last = btv.line("v"), btv.line(".")
+    if first > last then
+      first, last = last, first
+    end
+  end
+  return model.chunk(state.panes, pane_index, btv.line("."), first, last), pane_index, first ~= nil
+end
+
+local function allowed(action)
+  for _, entry in ipairs(state.actions) do
+    if entry.action == action then
+      return true
+    end
+  end
+  return false
+end
+
+-- Asks the app to do `action` ("stage", "unstage" or "discard") to the selection, or with none
+-- to the run of changes the cursor is in, if this diff can. It answers by showing the diff
+-- again.
+function M.act(action)
+  if not allowed(action) then
+    btv.notify("This diff can't " .. action)
+    return
+  end
+  local chunk, pane_index, selecting = chunk_here()
+  if selecting then
+    -- `:normal!` keys, as no Lua call leaves a selection.
+    btv.cmd("normal! \27")
+  end
+  if not chunk then
+    btv.notify("No change here to " .. action)
+    return
+  end
+  send("chunk", {
+    action = action,
+    first = chunk[1],
+    last = chunk[2],
+    combined = #state.panes == 1,
+    is_old = #state.panes > 1 and pane_index == 1,
+  })
+end
+
+-- This diff's rows in the editor's right-click menu: what it can do, greyed out where there's no
+-- change. A click in a selection keeps it, so the menu acts on it.
+btv.contextmenu.groups["sourcegit-diff"] = {
+  when = function()
+    return #state.actions > 0
+  end,
+  items = function()
+    local out = {}
+    for _, entry in ipairs(state.actions) do
+      out[#out + 1] = {
+        label = entry.label,
+        detail = KEYS[entry.action],
+        enabled = function()
+          return chunk_here() ~= nil
+        end,
+        action = function()
+          M.act(entry.action)
+        end,
+      }
+    end
+    return out
+  end,
+}
+
+-- `act`, as the app calls a plugin: { action }.
+function M.act_on(spec)
+  assert(type(spec) == "table", "sourcegit-diff: act_on takes a table")
+  M.act(spec.action)
+end
+
 -- The app's call for the toolbar: { where }.
 function M.go_to(spec)
   assert(type(spec) == "table", "sourcegit-diff: go_to takes a table")
@@ -423,6 +524,11 @@ end
 
 local function render(keep_cursor)
   local place = keep_cursor and cursor_place() or nil
+  local was_row = keep_cursor
+      and state.views[1]
+      and state.views[1]:winid()
+      and cursor_row(state.views[1]:winid())
+    or nil
   local generation = state.generation
   local context = not state.layout.all and state.layout.context or nil
   local visible = model.visible(state.lines, context)
@@ -471,13 +577,25 @@ local function render(keep_cursor)
             M.go("prev")
           end, { buffer = buf, desc = "sourcegit-diff: previous hunk" })
         end
+        for _, mode in ipairs({ "n", "x", "helix" }) do
+          for action, keys in pairs(KEYS) do
+            btv.keymap.set(mode, keys, function()
+              M.act(action)
+            end, { buffer = buf, desc = "sourcegit-diff: " .. action })
+          end
+        end
+        btv.contextmenu.set(
+          buf,
+          { "sourcegit-diff", table.unpack(btv.contextmenu.default_readonly) }
+        )
       end
       paint_syntax()
       local row = place and model.row_of(panes[1], place.old, place.new) or nil
       if not row and side_by_side and place then
         row = model.row_of(panes[2], place.old, place.new)
       end
-      row = row or state.hunks[1] or 1
+      -- Its line may be gone, staged away, say: stay about there, as the next change is close.
+      row = row or (was_row and math.min(was_row, #panes[1])) or state.hunks[1] or 1
       for _, view in ipairs(views) do
         btv.win.set_cursor(view:winid(), row, 0)
       end
@@ -529,13 +647,16 @@ local function colour()
     end)
 end
 
--- Shows `spec` ({ path, lines = { { kind, text, old, new, spans? } } }), in place of the diff
--- showing, at its first change, and says `shown` once it's on screen and `colored` once its
+-- Shows `spec` ({ path, lines = { { kind, text, old, new, spans? } }, actions? }), in place of
+-- the diff showing, at its first change, and says `shown` once it's on screen and `colored` once its
 -- colours are.
 function M.show(spec)
   check(spec)
   state.generation = state.generation + 1
+  -- The same file again is its diff changing, as after staging part of it: stay where it was.
+  local same_file = state.spec ~= nil and state.spec.path == spec.path
   state.spec = spec
+  state.actions = spec.actions or {}
   state.lines = model.lines(spec)
   state.syntax = nil
   state.language = btv.filetype.match(spec.path)
@@ -551,7 +672,7 @@ function M.show(spec)
       end,
     })
   end
-  render(false)
+  render(same_file)
   if state.language and state.layout.syntax then
     M.on_language(state.language)
   end

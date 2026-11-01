@@ -1531,5 +1531,19 @@
 "old": 249,
 "new": 250
 }
+],
+"actions": [
+{
+"action": "stage",
+"label": "Stage"
+},
+{
+"action": "unstage",
+"label": "Unstage"
+},
+{
+"action": "discard",
+"label": "Discard"
+}
 ]
 }

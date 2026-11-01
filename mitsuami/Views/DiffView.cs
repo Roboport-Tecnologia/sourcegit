@@ -1,7 +1,9 @@
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 
 using Mitsuamia;
 
@@ -20,7 +22,9 @@ namespace SourceGit.Views
     {
         /// <summary>The diff of what <paramref name="property"/> gives (a
         /// <see cref="ViewModels.DiffContext"/>, or nothing for the welcome).</summary>
-        public static Node Create(INotifyPropertyChanged source, string property, Func<object> diff)
+        /// <param name="repo">The repository, where a local change's lines can be staged and
+        /// discarded: the editor's menu offers that only with one.</param>
+        public static Node Create(INotifyPropertyChanged source, string property, Func<object> diff, ViewModels.Repository repo = null)
         {
             var pane = new CodePane();
             pane.Node.MinWidth = 100;
@@ -30,7 +34,7 @@ namespace SourceGit.Views
                 shown?.Destroy();
                 if (value is ViewModels.DiffContext context)
                 {
-                    shown = Diff(context, pane);
+                    shown = Diff(context, pane, repo);
                 }
                 else
                 {
@@ -51,7 +55,7 @@ namespace SourceGit.Views
             return column;
         }
 
-        private static Node Diff(ViewModels.DiffContext context, CodePane pane)
+        private static Node Diff(ViewModels.DiffContext context, CodePane pane, ViewModels.Repository repo)
         {
             var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             column.Grow = 1;
@@ -75,6 +79,8 @@ namespace SourceGit.Views
                 ToolTip = App.Text("Diff.UseMerger"),
             };
             merger.Click += context.OpenExternalMergeTool;
+            if (repo != null)
+                ApplyWhatThePluginAsks(context, pane, repo, header);
             var layout = Toolbar(pane);
             Bind.OneWay(context, nameof(context.IsTextDiff), () => context.IsTextDiff, text => layout.IsVisible = text, owner: layout);
             header.Add(layout);
@@ -96,7 +102,8 @@ namespace SourceGit.Views
                     shown?.Destroy();
                     shown = null;
                     body.IsVisible = false;
-                    pane.Code().ShowDiff(context.Title.Split(" → ")[^1], text.Data);
+                    var actions = repo == null ? [] : LineActions(text.Option);
+                    pane.Code().ShowDiff(context.Title.Split(" → ")[^1], text.Data, actions);
                     return;
                 }
                 // Loading: what's showing stays until the next is here, with no flash.
@@ -109,6 +116,80 @@ namespace SourceGit.Views
                 body.Add(shown);
             }, owner: body);
             return column;
+        }
+
+        /// <summary>Upstream's floating buttons for a local change, as the editor's own
+        /// right-click menu: staging or discarding, or unstaging if it's staged. Labelled
+        /// here, where the translations are.</summary>
+        private static (string, string)[] LineActions(Models.DiffOption option)
+        {
+            if (!option.IsLocalChange)
+                return [];
+            return option.IsUnstaged
+                ? [("stage", App.Text("Hunk.Stage")), ("discard", App.Text("Hunk.Discard"))]
+                : [("unstage", App.Text("Hunk.Unstage"))];
+        }
+
+        /// <summary>What the plugin's menu and keys ask for, while <paramref name="owner"/>,
+        /// this diff's header, is there.</summary>
+        private static void ApplyWhatThePluginAsks(ViewModels.DiffContext context, CodePane pane, ViewModels.Repository repo, Node owner)
+        {
+            void Heard(string name, string json)
+            {
+                if (name != "chunk" || JsonNode.Parse(json) is not { } chunk)
+                    return;
+                if (context.Content is not ViewModels.TextDiffContext { Data: { } diff, Option: { } option })
+                    return;
+                _ = ApplyToRepository(repo, option, diff,
+                    chunk["action"]?.GetValue<string>(),
+                    chunk["first"]?.GetValue<int>() ?? 0,
+                    chunk["last"]?.GetValue<int>() ?? 0,
+                    chunk["combined"]?.GetValue<bool>() ?? true,
+                    chunk["is_old"]?.GetValue<bool>() ?? false);
+            }
+            pane.PluginEvent += Heard;
+            owner.Forgotten += () => pane.PluginEvent -= Heard;
+        }
+
+        private static async Task ApplyToRepository(ViewModels.Repository repo, Models.DiffOption option, Models.TextDiff diff,
+            string action, int first, int last, bool combined, bool isOld)
+        {
+            using var lockWatcher = repo.LockWatcher();
+            if (await ApplyChunk(repo.FullPath, option, diff, action, first, last, combined, isOld))
+                repo.MarkWorkingCopyDirtyManually();
+        }
+
+        /// <summary>Upstream's stage, unstage and discard of a chunk
+        /// (<c>TextDiffView.axaml.cs</c>): a patch of those lines, which git applies. Whether it
+        /// did something; what doesn't fit the change, like staging what's staged, does
+        /// nothing.</summary>
+        internal static async Task<bool> ApplyChunk(string repo, Models.DiffOption option, Models.TextDiff diff,
+            string action, int first, int last, bool combined, bool isOld)
+        {
+            if (!option.IsLocalChange)
+                return false;
+            var (revert, args) = (action, option.IsUnstaged) switch
+            {
+                ("stage", true) => (false, "--cache --index"),
+                ("unstage", false) => (true, "--cache --index --reverse"),
+                ("discard", true) => (true, "--reverse"),
+                _ => (false, null),
+            };
+            if (args == null)
+                return false;
+            var patch = new Models.PatchGenerator(option, diff, first, last, combined, isOld);
+            if (!patch.IsValid)
+                return false;
+            var file = Path.GetTempFileName();
+            try
+            {
+                patch.Generate(file, revert);
+                return await new Commands.Apply(repo, file, true, "nowarn", args).ExecAsync();
+            }
+            finally
+            {
+                File.Delete(file);
+            }
         }
 
         /// <summary>Upstream's toolbar for a text diff, none of which asks git again:

@@ -82,9 +82,16 @@ namespace SourceGit.Views
         }
 
         /// <summary>Upstream's text diff, by the <c>sourcegit-diff</c> plugin.</summary>
-        public void ShowDiff(string path, Models.TextDiff diff)
+        /// <param name="actions">What can be done to its lines, as the plugin's menu shows them
+        /// (<c>stage</c>, <c>unstage</c> or <c>discard</c>, with their labels).</param>
+        public void ShowDiff(string path, Models.TextDiff diff, params (string Action, string Label)[] actions)
         {
-            _showing = ("sourcegit-diff", "show", DiffJson(path, diff));
+            var spec = JsonNode.Parse(DiffJson(path, diff)).AsObject();
+            var entries = new JsonArray();
+            foreach (var (action, label) in actions)
+                entries.Add(new JsonObject { ["action"] = action, ["label"] = label });
+            spec["actions"] = entries;
+            _showing = ("sourcegit-diff", "show", spec.ToJsonString());
             Send();
         }
 

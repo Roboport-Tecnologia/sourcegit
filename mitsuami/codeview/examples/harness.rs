@@ -91,6 +91,7 @@ fn window(editor: EditorHandle, session: bemtvi_mitsuami::Session, first: Option
         let settings = |label, json| plugin_button(label, "sourcegit-settings", "apply", json);
         // The diff view's toolbar.
         let toolbar = vec![
+            plugin_button("stage", "sourcegit-diff", "act_on", r#"{"action":"stage"}"#),
             plugin_button("first", "sourcegit-diff", "go_to", r#"{"where":"first"}"#),
             plugin_button("prev", "sourcegit-diff", "go_to", r#"{"where":"prev"}"#),
             plugin_button("next", "sourcegit-diff", "go_to", r#"{"where":"next"}"#),

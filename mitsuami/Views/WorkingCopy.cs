@@ -279,7 +279,7 @@ namespace SourceGit.Views
             var detail = new Column { AlignItems = Align.Stretch };
             detail.Grow = 1;
             detail.MinHeight = 100;
-            var diff = DiffView.Create(vm, nameof(vm.DetailContext), () => vm.DetailContext as ViewModels.DiffContext);
+            var diff = DiffView.Create(vm, nameof(vm.DetailContext), () => vm.DetailContext as ViewModels.DiffContext, vm.Repository);
             detail.Add(diff);
             Node conflict = null;
             Bind.OneWay(vm, nameof(vm.DetailContext), () => vm.DetailContext, context =>

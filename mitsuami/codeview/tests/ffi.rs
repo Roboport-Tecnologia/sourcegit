@@ -296,6 +296,22 @@ async fn the_toolbar_hears_where_the_cursor_is(app: TestApp) {
     assert!(mitsuami_destroy(id));
 }
 
+/// What to stage reaches the app, past a real host, with what makes its patch.
+#[mitsuami_test::test]
+async fn the_change_to_stage_reaches_the_app(app: TestApp) {
+    let id = mounted(&app).await;
+    call(&app, id, "sourcegit-diff", "show", FIXTURE).await;
+    until(&app, "shown", || event("shown").is_some()).await;
+    let (ok, result) = call(&app, id, "sourcegit-diff", "act_on", r#"{"action":"stage"}"#).await;
+    assert!(ok, "{result}");
+    until(&app, "the chunk", || event("chunk").is_some()).await;
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&event("chunk").unwrap()).unwrap(),
+        serde_json::json!({ "action": "stage", "first": 5, "last": 7, "combined": true, "is_old": false }),
+    );
+    assert!(mitsuami_destroy(id));
+}
+
 #[mitsuami_test::test]
 async fn destroyed_it_is_gone(app: TestApp) {
     let id = mounted(&app).await;
