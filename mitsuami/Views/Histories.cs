@@ -181,7 +181,7 @@ namespace SourceGit.Views
                 Style = ButtonStyle.Borderless,
                 ToolTip = App.Text("HistoriesDetailsStandalone"),
             };
-            open.Click += () => HistoryWindows.ShowDetails(repo, vm.DetailContext);
+            open.Click += async () => await HistoryWindows.ShowDetails(repo, vm.DetailContext);
             bar.Add(open);
 
             var collapse = new ToggleButton(App.Text("CommitDetail.CollapseToBottom"))

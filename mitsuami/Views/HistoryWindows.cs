@@ -20,6 +20,9 @@ namespace SourceGit.Views
         /// <summary>The window last opened, while it's open: for captures.</summary>
         public static Window Shown { get; private set; }
 
+        /// <summary>What the last details window shows, for tests.</summary>
+        internal static System.ComponentModel.INotifyPropertyChanged ShownDetails { get; private set; }
+
         public static void ShowFolder(ViewModels.Repository repo, string folder, string revision = null)
         {
             var vm = new ViewModels.DirHistories(repo, folder, revision);
@@ -94,24 +97,32 @@ namespace SourceGit.Views
         /// <c>RevisionCompareStandalone</c>: the commit or the two compared,
         /// in a window of their own that stays on them as the history's
         /// selection moves on.</summary>
-        public static void ShowDetails(ViewModels.Repository repo, object context)
+        public static async Task ShowDetails(ViewModels.Repository repo, object context)
         {
             System.ComponentModel.INotifyPropertyChanged shown;
             string title;
             switch (context)
             {
                 case ViewModels.CommitDetail detail:
-                    shown = detail.Clone();
+                    var clone = detail.Clone();
+                    shown = clone;
+                    KeepChanges(clone, nameof(clone.ChangeSelection), detail.ChangeSelection, () => clone.VisibleChanges, s => clone.ChangeSelection = s);
+                    if (!string.IsNullOrEmpty(detail.ViewRevisionFilePath)
+                        && await clone.GetRevisionFilesUnderFolderAsync(detail.ViewRevisionFilePath) is [var file])
+                        await clone.ViewRevisionFileAsync(file);
                     title = "HistoriesDetailsStandalone.CommitDetail";
                     break;
                 case ViewModels.RevisionCompare compare:
-                    shown = compare.Clone();
+                    var other = compare.Clone();
+                    shown = other;
+                    KeepChanges(other, nameof(other.ChangeSelection), compare.ChangeSelection, () => other.VisibleChanges, s => other.ChangeSelection = s);
                     title = "HistoriesDetailsStandalone.RevisionCompare";
                     break;
                 default:
                     return;
             }
 
+            ShownDetails = shown;
             var window = Open(App.Text(title));
             var column = new Column { AlignItems = Align.Stretch, Padding = Spacing.Md };
             column.Grow = 1;
@@ -121,6 +132,24 @@ namespace SourceGit.Views
             details.MinHeight = 0;
             column.Add(details);
             window.Content = column;
+        }
+
+        /// <summary>A copy picks its first change once its changes load, as a commit newly
+        /// shown does. It takes the ones picked in the original instead.</summary>
+        private static void KeepChanges(System.ComponentModel.INotifyPropertyChanged copy, string property, ViewModels.ChangeSelection picked,
+            Func<List<Models.Change>> visible, Action<ViewModels.ChangeSelection> select)
+        {
+            if (picked.Count == 0)
+                return;
+            var paths = picked.Changes.Select(c => c.Path).ToHashSet();
+            void Loaded(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+            {
+                if (e.PropertyName != property)
+                    return;
+                copy.PropertyChanged -= Loaded;
+                select(new(visible().Where(c => paths.Contains(c.Path)).ToList()));
+            }
+            copy.PropertyChanged += Loaded;
         }
 
         private static Window Open(string title)

@@ -25,8 +25,13 @@ namespace SourceGit.Views
         private bool _loaded;
         private int _loads;
 
+        /// <summary>The last tree made and what's picked in it, for tests.</summary>
+        internal static RevisionFiles Newest { get; private set; }
+        internal string PickedPath => _list.SelectedItem?.Backend.Path;
+
         private RevisionFiles(ViewModels.CommitDetail vm)
         {
+            Newest = this;
             _vm = vm;
             _list = new TreeView<ViewModels.RevisionFileTreeNode>(n => n.Backend.Path, n => n.IsFolder ? n.Children : null, Row,
                 itemAnimations: false)
@@ -149,6 +154,43 @@ namespace SourceGit.Views
                 _tree.Add(new ViewModels.RevisionFileTreeNode { Backend = obj });
             Sort(_tree);
             ShowRows(_tree);
+            // A window opened on what another had picked.
+            if (!string.IsNullOrEmpty(_vm.ViewRevisionFilePath))
+                await Reveal(_vm.ViewRevisionFilePath, load);
+        }
+
+        /// <summary>The file picked in the whole tree, its folders opened and loaded.</summary>
+        private async Task Reveal(string file, int load)
+        {
+            var nodes = _tree;
+            ViewModels.RevisionFileTreeNode node = null;
+            var routes = file.Split('/');
+            var path = string.Empty;
+            for (var i = 0; i < routes.Length; i++)
+            {
+                path += routes[i];
+                var route = path;
+                node = nodes.Find(n => n.Backend.Path == route);
+                if (node == null)
+                    return;
+                if (i == routes.Length - 1)
+                    break;
+                node.IsExpanded = true;
+                if (node.Children.Count == 0
+                    && await _vm.GetRevisionFilesUnderFolderAsync(route + "/") is { Count: > 0 } objects)
+                {
+                    if (load != _loads)
+                        return;
+                    foreach (var obj in objects)
+                        node.Children.Add(new ViewModels.RevisionFileTreeNode { Backend = obj });
+                    Sort(node.Children);
+                }
+                nodes = node.Children;
+                path += "/";
+            }
+            ShowRows(_tree);
+            _list.SelectedItems = [node];
+            _list.ScrollTo(node);
         }
 
         /// <summary>Upstream's search result: the file with its folders

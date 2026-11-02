@@ -30,6 +30,7 @@ namespace SourceGit.Tests
             Native.OS.GitExecutable = Native.OS.FindGitExecutable();
             ViewModels.Preferences.Instance.UseFullTextDiff = true;
             App.SetLocale("en_US");
+            Models.AvatarManager.Instance.Start();
             Host.Start();
 
             var tests = new List<(string Name, Func<Task> Run)>();
@@ -37,6 +38,7 @@ namespace SourceGit.Tests
             tests.AddRange(DiffViewTests.All());
             tests.AddRange(BlameTests.All());
             tests.AddRange(MessageTests.All());
+            tests.AddRange(DetailsWindowTests.All());
 
             var failed = 0;
             var ran = 0;
