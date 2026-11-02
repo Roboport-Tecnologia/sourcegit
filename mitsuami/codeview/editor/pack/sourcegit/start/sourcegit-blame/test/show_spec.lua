@@ -110,6 +110,19 @@ btv.test.describe("sourcegit-blame", function()
     expect(said("blame_line")[3].sha).to_equal("a1b2c3d4")
   end)
 
+  btv.test.it("says which commit the caret reached in modeless mode", function(t)
+    btv.o.modeless = true
+    t:sleep(20)
+    shown(t)
+    t:wait_for(function()
+      return #said("blame_line") == 1
+    end, { message = "no first line" })
+    t:feed("<Down><Down>")
+    t:wait_for(function()
+      return #said("blame_line") == 2
+    end, { message = "the arrows didn't tell" })
+  end)
+
   -- Modeless first: the runner's reset after Helix can leave it off in the next test.
   for _, mode in ipairs({
     { "modeless", function()

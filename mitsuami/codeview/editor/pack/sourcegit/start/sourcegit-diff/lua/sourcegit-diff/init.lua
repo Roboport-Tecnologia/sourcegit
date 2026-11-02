@@ -286,7 +286,7 @@ local function start_sync()
       end)
     end,
   })
-  state.sync[2] = btv.autocmd.create("CursorMoved", {
+  state.sync[2] = btv.autocmd.create({ "CursorMoved", "CursorMovedI" }, {
     callback = function()
       local win = btv.win.current()
       if state.syncing or not ours(win) then
@@ -759,7 +759,8 @@ function M.show(spec)
     end)
   end
   if not state.moved then
-    state.moved = btv.autocmd.create("CursorMoved", {
+    -- A modeless session rests in Insert, which has an event of its own.
+    state.moved = btv.autocmd.create({ "CursorMoved", "CursorMovedI" }, {
       callback = function()
         report_position()
       end,

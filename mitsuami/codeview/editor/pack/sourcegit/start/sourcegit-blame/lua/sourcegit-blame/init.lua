@@ -164,7 +164,8 @@ function M.show(spec)
     view:mount({ here = true })
   end
   if not moved then
-    moved = btv.autocmd.create("CursorMoved", { callback = follow_cursor })
+    -- A modeless session rests in Insert, which has an event of its own.
+    moved = btv.autocmd.create({ "CursorMoved", "CursorMovedI" }, { callback = follow_cursor })
   end
   local shown = view
   shown:set_lines(lines_of(spec.text))

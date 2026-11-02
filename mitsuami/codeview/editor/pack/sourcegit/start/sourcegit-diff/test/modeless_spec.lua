@@ -87,6 +87,31 @@ btv.test.describe("sourcegit-diff, modeless", function()
     end, { message = "[c didn't come back" })
   end)
 
+  btv.test.it("tells the toolbar where the caret went", function(t)
+    local spec = shown(t)
+    local at = function()
+      local last
+      for _, entry in ipairs(sent) do
+        if entry[1] == "change_position" then
+          last = entry[2].at
+        end
+      end
+      return last
+    end
+    t:wait_for(function()
+      return at() == 1
+    end, { message = "no first position" })
+    diff.go_to({ where = "next" })
+    t:wait_for(function()
+      return at() == 2
+    end, { message = "the toolbar's button didn't tell" })
+    t:feed("<Up>")
+    t:wait_for(function()
+      return at() == 1
+    end, { message = "the arrow didn't tell" })
+    expect(spec ~= nil).to_be(true)
+  end)
+
   btv.test.it("gs takes the run under the caret, with nothing selected", function(t)
     shown(t)
     btv.win.set_cursor(0, row_of(t, eprintln), 0)
