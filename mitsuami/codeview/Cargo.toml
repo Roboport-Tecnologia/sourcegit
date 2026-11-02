@@ -37,12 +37,15 @@ serde_json = "=1.0.154"
 [dev-dependencies]
 mitsuami-test = { path = "../../../mitsuami/crates/mitsuami-test" }
 
-# bemtvi takes mitsuami from crates.io, and the port the sibling checkout, whose C ABI
-# isn't published. Two mitsuamis in one process would be two cores, so bemtvi builds
-# against the sibling too.
+# bemtvi takes mitsuami from crates.io, extras its C ABI from a release's tag, and the port the
+# sibling checkout. Two mitsuamis in one process would be two cores, so they build against the
+# sibling too.
 [patch.crates-io]
 mitsuami = { path = "../../../mitsuami/crates/mitsuami" }
 mitsuami-test = { path = "../../../mitsuami/crates/mitsuami-test" }
+
+[patch."https://github.com/Roboport-Tecnologia/mitsuami"]
+mitsuami-ffi = { path = "../../../mitsuami/crates/mitsuami-ffi" }
 
 # bemtvi and its renderer are far too slow unoptimized to judge how the editor feels, so
 # everything but this crate is optimized in the build the harness and `run-port.sh` use.
