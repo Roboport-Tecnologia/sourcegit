@@ -54,6 +54,18 @@ namespace SourceGit.Tests
             return output.Result;
         }
 
+        /// <summary>For what's expected to fail, as a merge with conflicts does.</summary>
+        public void GitAllowingFailure(string args)
+        {
+            try
+            {
+                Git(args);
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
         public string Staged() => Git("diff --cached");
 
         public string Unstaged() => Git("diff");

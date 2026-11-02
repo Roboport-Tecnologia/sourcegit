@@ -39,6 +39,7 @@ namespace SourceGit.Tests
             tests.AddRange(BlameTests.All());
             tests.AddRange(MessageTests.All());
             tests.AddRange(DetailsWindowTests.All());
+            tests.AddRange(MergeEditorTests.All());
 
             var failed = 0;
             var ran = 0;

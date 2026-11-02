@@ -15,6 +15,7 @@ namespace SourceGit.Tests
         private static delegate* unmanaged[Cdecl]<void> s_settle;
         private static delegate* unmanaged[Cdecl]<uint, Str, uint> s_find;
         private static delegate* unmanaged[Cdecl]<uint, byte> s_activate;
+        private static delegate* unmanaged[Cdecl]<uint, byte> s_close;
         private static delegate* unmanaged[Cdecl]<uint, Str, byte> s_command;
 
         [StructLayout(LayoutKind.Sequential)]
@@ -33,6 +34,7 @@ namespace SourceGit.Tests
             s_settle = (delegate* unmanaged[Cdecl]<void>)NativeLibrary.GetExport(library, "sourcegit_test_host_settle");
             s_find = (delegate* unmanaged[Cdecl]<uint, Str, uint>)NativeLibrary.GetExport(library, "sourcegit_test_host_find");
             s_activate = (delegate* unmanaged[Cdecl]<uint, byte>)NativeLibrary.GetExport(library, "sourcegit_test_host_activate");
+            s_close = (delegate* unmanaged[Cdecl]<uint, byte>)NativeLibrary.GetExport(library, "sourcegit_test_host_close");
             s_command = (delegate* unmanaged[Cdecl]<uint, Str, byte>)NativeLibrary.GetExport(library, "sourcegit_codeview_command");
             if (s_start() == 0)
                 throw new InvalidOperationException("The headless UI didn't start");
@@ -51,6 +53,13 @@ namespace SourceGit.Tests
                 throw new InvalidOperationException($"Nothing named '{name}'");
             if (s_activate(id) == 0)
                 throw new InvalidOperationException($"'{name}' can't be pressed");
+        }
+
+        /// <summary>Clicks a window's close button, as the user would.</summary>
+        public static void Close(Window window)
+        {
+            if (s_close(window.Id) == 0)
+                throw new InvalidOperationException("The window can't be closed");
         }
 
         /// <summary>An ex command in an editor, as <c>:</c> runs it.</summary>

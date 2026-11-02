@@ -73,9 +73,12 @@ namespace SourceGit.Views
             var useMine = new Button(Popups.ButtonText("WorkingCopy.Conflicts.UseMine")) { Icon = Icons.Get("Local", 12) };
             useMine.Click += () => _ = vm.UseMineAsync();
             buttons.Add(useMine);
-            // Upstream's merge editor waits for bemtvi.
             var merge = new SplitButton(Popups.ButtonText("WorkingCopy.Conflicts.Merge")) { Icon = Icons.Get("Conflict", 12), Style = ButtonStyle.Prominent };
-            merge.Click += () => _ = Dialogs.Alert(null, "The merge editor isn't ported to mitsuami yet.", "", [App.Text("Sure")]);
+            merge.Click += () =>
+            {
+                if (vm.CreateOpenMergeEditorRequest() is { } editor)
+                    MergeEditor.Show(repo, editor);
+            };
             merge.Menu = [new MenuItem(App.Text("WorkingCopy.Conflicts.MergeExternal"), () => _ = vm.MergeExternalAsync())];
             buttons.Add(merge);
             conflicted.Add(buttons);
@@ -107,7 +110,7 @@ namespace SourceGit.Views
         /// <summary>A side: a commit's refs, its short SHA (a link to it in
         /// upstream's orange) and subject; or what it is, after the changes
         /// icon ("Stash or Patch").</summary>
-        private static void Side(Row row, ViewModels.Repository repo, object side)
+        internal static void Side(Row row, ViewModels.Repository repo, object side)
         {
             foreach (var child in row.Children.ToArray())
                 child.Destroy();

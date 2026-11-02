@@ -68,6 +68,20 @@ pub unsafe extern "C" fn sourcegit_test_host_find(window: u32, name: MitsuamiStr
     .unwrap_or(0)
 }
 
+/// Clicks a window's close button, as the user would.
+#[unsafe(no_mangle)]
+pub extern "C" fn sourcegit_test_host_close(window: u32) -> bool {
+    guard(|| {
+        HOST.with(|h| {
+            let host = h.borrow();
+            let (_, handle) = host.as_ref().ok_or("no host")?;
+            TestHooks::close_window(handle, NodeId::from_raw(window));
+            Ok(())
+        })
+    })
+    .is_some()
+}
+
 /// Presses a control, as assistive technology does.
 #[unsafe(no_mangle)]
 pub extern "C" fn sourcegit_test_host_activate(node: u32) -> bool {

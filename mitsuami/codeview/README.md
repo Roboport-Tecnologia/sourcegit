@@ -68,6 +68,29 @@ The first mouse click, anywhere, ends it for as long as that editor lives. It's 
 float, not `btv.ui.float`, which has no top-right placement. Its sentences are English; the
 labels in them are the app's.
 
+## The merge editor
+
+`sourcegit-conflict` shows a conflicted file's two sides over the result, in three panes of one
+editor that line up row for row and scroll together. `MergeEditor.cs` owns the window and uses
+upstream's `MergeConflictEditor` as is: it parses the file, holds what's chosen, and saves. Each
+choice makes it give new lines, which `show` puts in the panes, keeping the cursor.
+
+Upstream floats buttons over the chunk under the pointer. Nothing native may draw over the
+editor, so the choices are native buttons above it, which act on the conflict the cursor is in
+(`conflict_at`), the right-click menu, and keys: `gm` mine, `gt` theirs, `gb` and `gB` both,
+`gu` undo, `]c` and `[c` to move. The result isn't edited by hand, as upstream's isn't.
+Closing the window asks first once something's been chosen (`Window.CanClose`).
+
+Mine's lines are signed `-` on a faint red and theirs `+` on a faint green. In the conflict the
+cursor is in those are stronger, and its markers and empty rows have a very subtle grey: a click on
+the toolbar leaves the editor with no cursor to show it. Other rows have no background.
+
+Going to a conflict puts it at the top of the panes, as `zt`.
+
+Each pane is parsed for colours as a file of its own, without the markers and filler. The
+result with a conflict open holds both sides, so its colours there are only as good as the
+grammar's recovery.
+
 ## The commit message
 
 `sourcegit-message` edits a commit message, in the local changes' box and the interactive

@@ -115,6 +115,14 @@ namespace SourceGit.Views
         /// <summary>What a new editor starts on after <c>:q</c>, with this one already there.</summary>
         internal void KeepMessage(string json) => _showing = ("sourcegit-message", "show", json);
 
+        /// <summary>A conflicted file, by the <c>sourcegit-conflict</c> plugin. Each choice shows
+        /// it again.</summary>
+        internal void ShowConflict(string json)
+        {
+            _showing = ("sourcegit-conflict", "show", json);
+            Send();
+        }
+
         /// <summary>The diff's cursor to a change: first, prev, next or last.</summary>
         public void GoToChange(string where) =>
             CallPlugin("sourcegit-diff", "go_to", new JsonObject { ["where"] = where }.ToJsonString());
