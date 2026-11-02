@@ -10,6 +10,7 @@ btv.o.relativenumber = false
 local diff = require("sourcegit-diff")
 local file = require("sourcegit-file")
 local blame = require("sourcegit-blame")
+local message = require("sourcegit-message")
 local grammars = require("sourcegit-grammars")
 require("sourcegit-settings").setup()
 diff.setup()
@@ -18,4 +19,5 @@ grammars.setup()
 diff.on_language = grammars.ensure
 file.on_language = grammars.ensure
 blame.on_language = grammars.ensure
+message.on_language = grammars.ensure
 grammars.on_ready = diff.recolor

@@ -308,21 +308,18 @@ namespace SourceGit.Views
         }
 
         /// <summary>Upstream's commit message editor, a sheet on the
-        /// rebase's: the whole message in the platform's text view.</summary>
+        /// rebase's: the whole message in the code view's editor.</summary>
         private static void EditMessage(Window owner, ViewModels.InteractiveRebaseItem item)
         {
-            // As tall as its content: a text view that grows has nothing to
-            // grow into in a sheet, and showed one line.
+            // As tall as its content: an editor that grows has nothing to
+            // grow into in a sheet.
             var sheet = new Window(owner, App.Text("CodeEditor"), 640);
             Editing = sheet;
             sheet.Closed += () => Editing = null;
             var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
-            var editor = new TextAreaWithPlaceholder(App.Text("CommitMessageTextBox.Placeholder"));
-            editor.Height = 280;
-            var message = editor.Area;
-            message.Value = item.FullMessage;
-            message.AccessibleName = App.Text("CodeEditor");
-            column.Add(editor);
+            var message = new MessageEditor(item.FullMessage, App.Text("CommitMessageTextBox.Placeholder"));
+            message.Node.Height = 280;
+            column.Add(message.Node);
 
             var buttons = new Row { Gap = Metrics.DialogButtonGap, Justify = Justify.End };
             var cancel = new Button(Popups.ButtonText("Cancel")) { Role = ButtonRole.Cancel };
@@ -330,7 +327,7 @@ namespace SourceGit.Views
             var sure = new Button(Popups.ButtonText("Sure")) { Role = ButtonRole.Default };
             sure.Click += () =>
             {
-                var text = message.Value.Trim();
+                var text = message.Text.Trim();
                 if (!string.IsNullOrEmpty(text) && !text.Equals(item.FullMessage, StringComparison.Ordinal))
                 {
                     item.FullMessage = text;

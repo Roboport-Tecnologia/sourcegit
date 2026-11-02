@@ -35,7 +35,17 @@ pub fn checkout_editor_dir() -> PathBuf {
 /// nothing with the user's bemtvi but its grammars (`:TSInstall`, which
 /// `sourcegit-grammars` runs).
 pub fn session(config: PathBuf) -> Result<Session, String> {
-    SessionOptions::views_only()
+    start(SessionOptions::views_only(), config)
+}
+
+/// An editor for the one file `file`, in the same lockdown, for what's edited: a commit
+/// message.
+pub fn file_session(config: PathBuf, file: String) -> Result<Session, String> {
+    start(SessionOptions::single_file(file), config)
+}
+
+fn start(options: SessionOptions, config: PathBuf) -> Result<Session, String> {
+    options
         .config(Config::Dir(config))
         .shada(Shada::Off)
         .host(HOST)
@@ -107,23 +117,27 @@ fn editor(id: u32) -> Result<EditorHandle, String> {
     EDITORS.with(|e| e.borrow().get(&id).cloned()).ok_or_else(|| format!("{id} isn't a code view"))
 }
 
-/// A code view, with `config` as its editor's config directory. It fills what its row or
+/// A code view, with `config` as its editor's config directory, editing `file`, or showing
+/// only what its plugins put in views if that's empty. It fills what its row or
 /// column has left; mitsuami's functions place it, focus it and destroy it, which stops
 /// its editor. `on_event` runs on the UI thread until then. 0 on failure.
 ///
 /// # Safety
-/// `config` is a string as mitsuami's functions take them; `user` is what `on_event`
+/// `config` and `file` are strings as mitsuami's functions take them; `user` is what `on_event`
 /// expects.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn sourcegit_codeview_create(
     config: MitsuamiStr,
+    file: MitsuamiStr,
     on_event: EventCallback,
     user: *mut c_void,
 ) -> u32 {
     let user = user as usize;
     guard(|| {
         let ui = ui()?;
-        let session = session(PathBuf::from(unsafe { string(config)? }))?;
+        let config = PathBuf::from(unsafe { string(config)? });
+        let file = unsafe { string(file)? };
+        let session = if file.is_empty() { session(config)? } else { file_session(config, file)? };
         let handle = EditorHandle::new();
         let owner = Owner::new_root();
         let node = owner.with(|| {

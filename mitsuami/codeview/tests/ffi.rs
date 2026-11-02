@@ -63,7 +63,7 @@ async fn mounted(app: &TestApp) -> u32 {
     attach(app.ui());
     let dir = checkout_editor_dir();
     let dir = dir.to_str().unwrap();
-    let id = unsafe { sourcegit_codeview_create(str(dir), heard, std::ptr::null_mut()) };
+    let id = unsafe { sourcegit_codeview_create(str(dir), str(""), heard, std::ptr::null_mut()) };
     assert_ne!(id, 0, "{}", last_error());
     app.mount(move || Adopt(id));
     app.settle().await;
@@ -167,6 +167,39 @@ async fn the_preferences_reach_the_editor(app: TestApp) {
     assert!(!ok);
     assert!(result.contains("unknown mode: emacs"), "{result}");
     assert!(mitsuami_destroy(id));
+}
+
+/// A message's editor: its file, whose name says the filetype, and the plugin takes it.
+#[mitsuami_test::test]
+async fn a_message_is_a_gitcommit_buffer(app: TestApp) {
+    attach(app.ui());
+    let dir = std::env::temp_dir().join(format!("sourcegit-ffi-message-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("COMMIT_EDITMSG");
+    std::fs::write(&file, "").unwrap();
+    let handle = bemtvi_mitsuami::EditorHandle::new();
+    let session = file_session(checkout_editor_dir(), file.to_string_lossy().into_owned()).unwrap();
+    let editor = bemtvi_mitsuami::Editor::new(session, || {}).handle(handle.clone());
+    app.mount(move || editor);
+    app.settle().await;
+    let future = handle.exec_lua(
+        "require('sourcegit-message').show({ text = 'subject', revision = 1 }); \
+         return btv.bo[0].filetype .. '|' .. btv.buf.name(0)",
+    );
+    let mut future = std::pin::pin!(future);
+    let mut cx = std::task::Context::from_waker(std::task::Waker::noop());
+    let deadline = Instant::now() + Duration::from_secs(20);
+    let said = loop {
+        if let std::task::Poll::Ready(value) = future.as_mut().poll(&mut cx) {
+            break value.unwrap();
+        }
+        assert!(Instant::now() < deadline, "the editor did not answer");
+        app.settle().await;
+    };
+    let said = said.as_str().unwrap().to_owned();
+    assert!(said.starts_with("gitcommit|"), "{said}");
+    assert!(said.ends_with("COMMIT_EDITMSG"), "{said}");
+    std::fs::remove_dir_all(&dir).unwrap();
 }
 
 /// bemtvi's single-file lockdown, with no file: a code view opens nothing.

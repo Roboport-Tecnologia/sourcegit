@@ -28,7 +28,7 @@ namespace SourceGit.Views
         }
 
         [LibraryImport(Lib, EntryPoint = "sourcegit_codeview_create")]
-        private static partial uint Create(Str config, delegate* unmanaged[Cdecl]<nint, Str, Str, void> onEvent, nint user);
+        private static partial uint Create(Str config, Str file, delegate* unmanaged[Cdecl]<nint, Str, Str, void> onEvent, nint user);
 
         [LibraryImport(Lib, EntryPoint = "sourcegit_codeview_call")]
         [return: MarshalAs(UnmanagedType.U1)]
@@ -62,9 +62,12 @@ namespace SourceGit.Views
         private ForeignNode _editor;
         private GCHandle _self;
         private (string Module, string Function, string Json)? _showing;
+        private readonly string _file;
 
-        public CodeView()
+        /// <param name="file">The one file it edits, or none: it only shows its plugins' views.</param>
+        public CodeView(string file = null)
         {
+            _file = file;
             var holder = new Column { AlignItems = Align.Stretch };
             holder.Grow = 1;
             holder.MinHeight = 0;
@@ -101,6 +104,16 @@ namespace SourceGit.Views
             _showing = ("sourcegit-file", "show", new JsonObject { ["path"] = path, ["text"] = text }.ToJsonString());
             Send();
         }
+
+        /// <summary>A message to edit, by the <c>sourcegit-message</c> plugin.</summary>
+        internal void ShowMessage(string json)
+        {
+            KeepMessage(json);
+            Send();
+        }
+
+        /// <summary>What a new editor starts on after <c>:q</c>, with this one already there.</summary>
+        internal void KeepMessage(string json) => _showing = ("sourcegit-message", "show", json);
 
         /// <summary>The diff's cursor to a change: first, prev, next or last.</summary>
         public void GoToChange(string where) =>
@@ -211,6 +224,9 @@ namespace SourceGit.Views
             CallPlugin("sourcegit-settings", "apply", SettingsJson());
             CallPlugin("sourcegit-grammars", "configure", GrammarsJson());
             CallPlugin("sourcegit-diff", "layout", LayoutJson());
+            // The preferences set every window's numbers, and a message box has none.
+            if (_file != null)
+                CallPlugin("sourcegit-message", "dress", "null");
         }
 
         /// <summary>What <c>sourcegit-diff</c>'s layout takes: the diff view's
@@ -232,7 +248,7 @@ namespace SourceGit.Views
         private void Start()
         {
             var config = Path.Combine(AppContext.BaseDirectory, "codeview-editor");
-            var id = WithStr(config, s => Create(s, &Heard, GCHandle.ToIntPtr(_self)));
+            var id = WithStr(config, c => WithStr(_file ?? "", f => Create(c, f, &Heard, GCHandle.ToIntPtr(_self))));
             _editor = new ForeignNode(id);
             _editor.Grow = 1;
             _editor.MinHeight = 0;

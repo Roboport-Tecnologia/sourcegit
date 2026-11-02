@@ -36,6 +36,7 @@ namespace SourceGit.Tests
             tests.AddRange(ChunkTests.All());
             tests.AddRange(DiffViewTests.All());
             tests.AddRange(BlameTests.All());
+            tests.AddRange(MessageTests.All());
 
             var failed = 0;
             var ran = 0;

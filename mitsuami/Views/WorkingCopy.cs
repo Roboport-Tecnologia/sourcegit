@@ -297,12 +297,12 @@ namespace SourceGit.Views
         }
 
         /// <summary>
-        /// Upstream's commit message box, 128 points high: the platform's
-        /// text view, then a 24-point footer with the message's helpers
+        /// Upstream's commit message box, 128 points high: the code view's
+        /// editor, then a 24-point footer with the message's helpers
         /// (templates and recent messages, the AI assistant, conventional
         /// commits) and the subject's length against the guide, with a
         /// warning past it. Upstream's guide line in the text and its
-        /// suggestions aren't ported: a native text view has neither.
+        /// suggestions aren't ported.
         /// </summary>
         private static Node MessageBox(ViewModels.WorkingCopy vm)
         {
@@ -312,14 +312,22 @@ namespace SourceGit.Views
             box.Height = 128;
             box.Shrink = 0;
 
-            // Upstream's placeholder, on every platform: mitsuami-extras'.
-            var editor = new TextAreaWithPlaceholder(App.Text("CommitMessageTextBox.Placeholder"));
-            editor.Grow = 1;
-            editor.MinHeight = 0;
-            var message = editor.Area;
-            message.AccessibleName = App.Text("WorkingCopy.CommitMessageHelper");
-            Bind.Value(message, vm, nameof(vm.CommitMessage), () => vm.CommitMessage, v => vm.CommitMessage = v);
-            box.Add(editor);
+            var editor = new MessageEditor(vm.CommitMessage, App.Text("CommitMessageTextBox.Placeholder"));
+            Bind.OneWay(vm, nameof(vm.CommitMessage), () => vm.CommitMessage, v => editor.Text = v, owner: editor.Node);
+            editor.Changed += v => vm.CommitMessage = v;
+            // The editor takes every key it's given, so the page's shortcuts come from its plugin.
+            editor.Action += action =>
+            {
+                switch (action)
+                {
+                    case "commit": Commit(vm, false, false); break;
+                    case "commit_stage": Commit(vm, true, false); break;
+                    case "commit_push": Commit(vm, false, true); break;
+                    case "stage_all": _ = vm.StageChangesAsync(vm.VisibleUnstaged, null); break;
+                    case "unstage_all": _ = vm.UnstageChangesAsync(vm.VisibleStaged, null); break;
+                }
+            };
+            box.Add(editor.Node);
 
             var footer = new Row { AlignItems = Align.Center, Gap = Spacing.Xs };
             footer.Shrink = 0;

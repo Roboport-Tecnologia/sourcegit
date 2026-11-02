@@ -68,6 +68,24 @@ The first mouse click, anywhere, ends it for as long as that editor lives. It's 
 float, not `btv.ui.float`, which has no top-right placement. Its sentences are English; the
 labels in them are the app's.
 
+## The commit message
+
+`sourcegit-message` edits a commit message, in the local changes' box and the interactive
+rebase's sheet (`MessageEditor`). This editor is `single_file`, on an empty `COMMIT_EDITMSG`
+in a temporary directory of its own, as an editor that edits needs a file. The app owns the
+text: what's typed goes to it with each key, and its changes (a template, a commit clearing it)
+replace the buffer. Each text the app sends has a revision, and what was typed on an older one
+is dropped. So nothing reads the file, `<C-s>` stays freed, and the buffer is never modified,
+so `:q` doesn't ask; it starts a new editor on the same text.
+
+The buffer's filetype is `gitcommit`, set by the plugin, so `sourcegit-grammars` installs that
+grammar if the preference is on, and the editor colours it. The editor takes every key, so the
+page's shortcuts (commit, stage all…) are the plugin's maps, sent as `message_action`.
+
+The box has no bars or numbers, whatever the preferences say (`dress`). Tab types a tab here,
+so it doesn't move focus out of the box. The stash, tag and branch description fields are still
+native text areas.
+
 ## Preferences
 
 Preferences' Code View page sets the mode (modeless, vim, helix), font, size, colorscheme,
