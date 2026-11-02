@@ -109,10 +109,12 @@ The whole port on this library: `./run-port.sh [repository]`.
 - `editor/pack/sourcegit/start/<plugin>/test/*_spec.lua`, on a real editor
   (`bemtvi --test-plugin <plugin>`): what a plugin shows, and its keys;
 - `tests/ffi.rs`, the ABI on mitsuami's headless backend: the real plugins, calls and
-  their errors, events, quitting, destroying. No pixels: headless has no surface.
-
-Nothing checks `CodeView.DiffJson` against the plugin yet, as the port has no test
-project. The plugin raises on what it doesn't understand, naming it.
+  their errors, events, quitting, destroying. No pixels: headless has no surface;
+- `../tests/`, the port's C# on the same backend, through the library's `test-host` feature,
+  with real git in temporary repositories, and temporary preferences: what `ApplyChunk` does
+  to the index and the file; a change from git through `DiffJson`, the plugin and back to
+  `git apply`; the toolbar; a pane keeping its editor; the blame window. An argument to it runs
+  the tests with that in their name.
 
 ## Adding a plugin
 

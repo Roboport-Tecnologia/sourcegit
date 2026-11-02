@@ -1,6 +1,6 @@
 #!/bin/sh
-# Every automated test of the code view: each plugin's specs, then the C ABI's on
-# mitsuami's headless backend. Neither opens a window.
+# Every automated test of the code view: each plugin's specs, the C ABI's on mitsuami's
+# headless backend, then the port's C# views on it, with real git. None opens a window.
 set -e
 cd "$(dirname "$0")"
 # The bemtvi worktree the library embeds: the plugins use what it adds. NXVIM runs the
@@ -13,3 +13,9 @@ for plugin in editor/pack/sourcegit/start/*/; do
   "$bemtvi" --test-plugin "$plugin"
 done
 cargo test --test ffi
+# `run-port.sh` builds the library again without the headless host.
+cargo build --lib --features test-host
+target=$(cargo metadata --format-version 1 --no-deps | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')
+library="$target/debug/libsourcegit_codeview.so"
+[ "$(uname)" = Darwin ] && library="$target/debug/libsourcegit_codeview.dylib"
+MITSUAMI_FFI="$library" dotnet run --project ../tests/SourceGit.Mitsuami.Tests.csproj

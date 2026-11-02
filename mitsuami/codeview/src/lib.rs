@@ -19,6 +19,9 @@ use mitsuami_ffi::extend::{guard, keep, string, ui};
 
 pub use mitsuami_extras_ffi;
 
+#[cfg(feature = "test-host")]
+mod test_host;
+
 /// The name plugins see as `btv.host.name()`.
 pub const HOST: &str = "sourcegit";
 

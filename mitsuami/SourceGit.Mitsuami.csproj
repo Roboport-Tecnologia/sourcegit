@@ -26,7 +26,8 @@
     <Compile Include="../src/Native/**/*.cs" />
     <Compile Include="../src/App.JsonCodeGen.cs" />
     <Compile Include="../src/App.Extensions.cs" />
-    <Compile Include="**/*.cs" Exclude="bin/**;obj/**;codeview/**" />
+    <Compile Include="**/*.cs" Exclude="bin/**;obj/**;codeview/**;tests/**" />
+    <InternalsVisibleTo Include="SourceGit.Mitsuami.Tests" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5530,6 +5530,7 @@ dependencies = [
  "mitsuami",
  "mitsuami-extras-ffi",
  "mitsuami-ffi",
+ "mitsuami-headless",
  "mitsuami-test",
  "serde_json",
 ]

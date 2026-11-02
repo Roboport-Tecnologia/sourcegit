@@ -109,6 +109,12 @@ namespace SourceGit.Views
         /// <summary>What a plugin said (its name and JSON), on the UI thread.</summary>
         public event Action<string, string> PluginEvent;
 
+        /// <summary>The editors running, for tests.</summary>
+        internal static IReadOnlyList<CodeView> Live => s_live;
+
+        /// <summary>This editor's node, for tests.</summary>
+        internal uint EditorId => _editor?.Id ?? 0;
+
         /// <summary>Upstream's blame, by the <c>sourcegit-blame</c> plugin.</summary>
         public void ShowBlame(string path, Models.BlameData blame)
         {
@@ -241,7 +247,7 @@ namespace SourceGit.Views
                 CallPlugin(call.Module, call.Function, call.Json);
         }
 
-        private void CallPlugin(string module, string function, string json)
+        internal void CallPlugin(string module, string function, string json)
         {
             if (_editor == null)
                 return;
