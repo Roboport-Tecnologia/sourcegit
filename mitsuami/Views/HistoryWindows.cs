@@ -90,6 +90,39 @@ namespace SourceGit.Views
             column.Add(split);
         }
 
+        /// <summary>Upstream's <c>CommitDetailStandalone</c> and
+        /// <c>RevisionCompareStandalone</c>: the commit or the two compared,
+        /// in a window of their own that stays on them as the history's
+        /// selection moves on.</summary>
+        public static void ShowDetails(ViewModels.Repository repo, object context)
+        {
+            System.ComponentModel.INotifyPropertyChanged shown;
+            string title;
+            switch (context)
+            {
+                case ViewModels.CommitDetail detail:
+                    shown = detail.Clone();
+                    title = "HistoriesDetailsStandalone.CommitDetail";
+                    break;
+                case ViewModels.RevisionCompare compare:
+                    shown = compare.Clone();
+                    title = "HistoriesDetailsStandalone.RevisionCompare";
+                    break;
+                default:
+                    return;
+            }
+
+            var window = Open(App.Text(title));
+            var column = new Column { AlignItems = Align.Stretch, Padding = Spacing.Md };
+            column.Grow = 1;
+            // What shows never changes, so nothing is named to follow.
+            var details = CommitDetail.Create(shown, "", () => shown, () => repo.Remotes.Count == 1, tips: false);
+            details.Grow = 1;
+            details.MinHeight = 0;
+            column.Add(details);
+            window.Content = column;
+        }
+
         private static Window Open(string title)
         {
             var window = Shown = new Window(title, 1280, 720);

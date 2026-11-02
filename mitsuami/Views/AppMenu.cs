@@ -55,6 +55,7 @@ namespace SourceGit.Views
                 else if (e.PropertyName == nameof(launcher.ActiveWorkspace))
                     Set();
             };
+            ViewModels.Preferences.Instance.PropertyChanged += Changed;
             Watch();
         }
 
@@ -83,6 +84,9 @@ namespace SourceGit.Views
             nameof(ViewModels.Repository.SelectedViewIndex),
             nameof(ViewModels.Histories.IsSearchingCommits),
             nameof(ViewModels.Histories.SelectedCommits),
+            nameof(ViewModels.Histories.IsCollapseDetails),
+            nameof(ViewModels.Histories.IsOpenAsStandaloneVisible),
+            nameof(ViewModels.Preferences.UseTwoColumnsLayoutInHistories),
         ];
 
         private static void Changed(object sender, PropertyChangedEventArgs e)
@@ -243,6 +247,14 @@ namespace SourceGit.Views
                 null,
                 new("Go to Parent", Shortcut.Of(Key.Down).WithAlt(), () => _ = GoToParent(Repo()), OneCommit) { Description = App.Text("Hotkeys.Repo.GoToParent") },
                 new("Go to Child", Shortcut.Of(Key.Up).WithAlt(), () => _ = GoToChild(Repo()), OneCommit) { Description = App.Text("Hotkeys.Repo.GoToChild") },
+                null,
+                new(App.Text("HistoriesDetailsStandalone"), Primary('n'), () => HistoryWindows.ShowDetails(Repo(), Repo().Histories.DetailContext),
+                    () => History() && Repo().Histories.IsOpenAsStandaloneVisible),
+                new(App.Text("CommitDetail.CollapseToBottom"), Primary('j'), () => Repo().Histories.IsCollapseDetails = !Repo().Histories.IsCollapseDetails,
+                    () => History() && !ViewModels.Preferences.Instance.UseTwoColumnsLayoutInHistories, () => Repo()?.Histories?.IsCollapseDetails == true)
+                {
+                    Description = App.Text("Hotkeys.Repo.ToggleCommitDetailPanel"),
+                },
             };
 
             return

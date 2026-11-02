@@ -158,7 +158,56 @@ namespace SourceGit.Views
                     Halve();
                 }, owner: split);
             page.Add(split);
+            page.Add(DetailsBar(repo, vm, details));
             return page;
+        }
+
+        /// <summary>Upstream's two buttons for the details: in a window of
+        /// their own, and collapsed (not in two columns, where upstream's
+        /// view model refuses it). Upstream lays them over its tab strip and
+        /// keeps the strip when collapsed; a platform's tabs have no room to
+        /// spare and no least height of a strip, so they're on a line of
+        /// their own that stays, and the details' pane collapses as a split's
+        /// does, keeping the divider's place.</summary>
+        private static Node DetailsBar(ViewModels.Repository repo, ViewModels.Histories vm, Node details)
+        {
+            var bar = new Row { AlignItems = Align.Center, Justify = Justify.End, Gap = Spacing.Xs };
+            bar.Padding = new Thickness(Spacing.None, Spacing.Sm, Spacing.Xs, Spacing.Sm);
+
+            var open = new Button(App.Text("HistoriesDetailsStandalone"))
+            {
+                Icon = Icons.Get("OpenAsStandalone", 12),
+                IconOnly = true,
+                Style = ButtonStyle.Borderless,
+                ToolTip = App.Text("HistoriesDetailsStandalone"),
+            };
+            open.Click += () => HistoryWindows.ShowDetails(repo, vm.DetailContext);
+            bar.Add(open);
+
+            var collapse = new ToggleButton(App.Text("CommitDetail.CollapseToBottom"))
+            {
+                Icon = Icons.Get("CollapseToBottom", 12),
+                IconOnly = true,
+                Style = ButtonStyle.Borderless,
+                ToolTip = App.Text("CommitDetail.CollapseToBottom"),
+            };
+            collapse.Changed += on => vm.IsCollapseDetails = on;
+            bar.Add(collapse);
+
+            var pref = ViewModels.Preferences.Instance;
+            void Show()
+            {
+                var across = pref.UseTwoColumnsLayoutInHistories;
+                open.IsVisible = vm.IsOpenAsStandaloneVisible;
+                collapse.IsVisible = !across;
+                collapse.IsChecked = vm.IsCollapseDetails;
+                details.IsVisible = across || !vm.IsCollapseDetails;
+                bar.IsVisible = !across || vm.IsOpenAsStandaloneVisible;
+            }
+            Bind.OneWay(vm, nameof(vm.IsCollapseDetails), () => vm.IsCollapseDetails, _ => Show(), owner: bar);
+            Bind.OneWay(vm, nameof(vm.IsOpenAsStandaloneVisible), () => vm.IsOpenAsStandaloneVisible, _ => Show(), owner: bar);
+            Bind.OneWay(pref, nameof(pref.UseTwoColumnsLayoutInHistories), () => pref.UseTwoColumnsLayoutInHistories, _ => Show(), owner: bar);
+            return bar;
         }
 
         /// <summary>The graph's part in the row, the commit's branches and
