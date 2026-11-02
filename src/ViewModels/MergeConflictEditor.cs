@@ -244,6 +244,7 @@ namespace SourceGit.ViewModels
                     var region = new Models.ConflictRegion
                     {
                         StartLineInOriginal = i,
+                        StartRow = oursLines.Count,
                         StartMarker = line,
                     };
 
@@ -301,6 +302,7 @@ namespace SourceGit.ViewModels
                         i++;
                     }
 
+                    region.RowCount = oursLines.Count - region.StartRow;
                     _conflictRegions.Add(region);
                 }
                 else
@@ -340,13 +342,13 @@ namespace SourceGit.ViewModels
                 if (conflictIdx < _conflictRegions.Count)
                 {
                     var region = _conflictRegions[conflictIdx];
-                    if (region.StartLineInOriginal == currentLine)
+                    if (region.StartRow == currentLine)
                         currentRegion = region;
                 }
 
                 if (currentRegion != null)
                 {
-                    int regionLines = currentRegion.EndLineInOriginal - currentRegion.StartLineInOriginal + 1;
+                    int regionLines = currentRegion.RowCount;
                     if (currentRegion.IsResolved)
                     {
                         var oldLineCount = resultLines.Count;
@@ -440,7 +442,7 @@ namespace SourceGit.ViewModels
                         _lineStates.Add(Models.ConflictLineState.ConflictBlockEnd);
                     }
 
-                    currentLine = currentRegion.EndLineInOriginal + 1;
+                    currentLine = currentRegion.StartRow + currentRegion.RowCount;
                     conflictIdx++;
                 }
                 else

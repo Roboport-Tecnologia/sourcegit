@@ -81,6 +81,10 @@ namespace SourceGit.Models
         public int StartLineInOriginal { get; set; }
         public int EndLineInOriginal { get; set; }
 
+        // Where it is in the panes, which leave out a diff3 style's base section.
+        public int StartRow { get; set; }
+        public int RowCount { get; set; }
+
         public string StartMarker { get; set; } = "<<<<<<<";
         public string SeparatorMarker { get; set; } = "=======";
         public string EndMarker { get; set; } = ">>>>>>>";
