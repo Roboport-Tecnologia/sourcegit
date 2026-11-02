@@ -37,10 +37,10 @@ serde_json = "=1.0.154"
 [dev-dependencies]
 mitsuami-test = { path = "../../../mitsuami/crates/mitsuami-test" }
 
-# A stopgap until bemtvi takes mitsuami 2 by a caret: it pins a GitHub revision of
-# 1.3.7. Two mitsuamis in one process would be two cores, so bemtvi builds against
-# the sibling too.
-[patch."https://github.com/Roboport-Tecnologia/mitsuami"]
+# bemtvi takes mitsuami from crates.io, and the port the sibling checkout, whose C ABI
+# isn't published. Two mitsuamis in one process would be two cores, so bemtvi builds
+# against the sibling too.
+[patch.crates-io]
 mitsuami = { path = "../../../mitsuami/crates/mitsuami" }
 mitsuami-test = { path = "../../../mitsuami/crates/mitsuami-test" }
 

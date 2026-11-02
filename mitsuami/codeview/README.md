@@ -132,6 +132,5 @@ building the `Editor` outside a view all came from here.
 `../mitsuami` and `../mitsuami-extras` are sibling checkouts. bemtvi is the worktree
 `/mnt/data2/david/work/nxvim-ts-grammars`, by an absolute path for now, which `edge.yml`'s
 checkout doesn't have. The
-`[patch]` in `Cargo.toml` is a stopgap: bemtvi pins a GitHub revision of mitsuami 1.3.7,
-and builds against the sibling's 2.0.0 here. It goes when bemtvi takes mitsuami 2 by a
-caret.
+`[patch.crates-io]` in `Cargo.toml` is what keeps one mitsuami: bemtvi takes 2.0.0 from
+crates.io, and builds against the sibling here, whose C ABI isn't published.
