@@ -388,7 +388,12 @@ local function chunk_here()
     return nil
   end
   local first, last
-  if SELECTING[btv.mode().mode] then
+  -- Modeless selections end between characters: one at the start of a line leaves that line out.
+  local selection = btv.o.modeless and btv.win.selection()
+  if selection then
+    first = selection[1] + 1
+    last = selection[4] == 0 and math.max(selection[3], first) or selection[3] + 1
+  elseif SELECTING[btv.mode().mode] then
     first, last = btv.line("v"), btv.line(".")
     if first > last then
       first, last = last, first
@@ -455,6 +460,77 @@ btv.contextmenu.groups["sourcegit-diff"] = {
     return out
   end,
 }
+
+-- The right-click menu is hard to find, so a diff that can stage says so, in a float at the top
+-- right. The first mouse click, anywhere, ends it for as long as this editor lives: by then
+-- the point has been made, and it would only cover text. Set to true, it never shows.
+M.hint_seen = false
+
+local hint
+local hint_listening = false
+
+local function close_hint()
+  if hint then
+    hint:close()
+    hint = nil
+  end
+end
+
+local function hint_clicked()
+  M.hint_seen = true
+  close_hint()
+end
+
+local function hint_lines()
+  local labels = {}
+  for _, entry in ipairs(state.actions) do
+    labels[#labels + 1] = entry.label
+  end
+  local keys = {}
+  for _, entry in ipairs(state.actions) do
+    keys[#keys + 1] = KEYS[entry.action] .. " " .. entry.label
+  end
+  return {
+    "Right-click a change: " .. table.concat(labels, ", "),
+    "Select lines first to take only those",
+    "Keys: " .. table.concat(keys, ", "),
+  }
+end
+
+local function show_hint()
+  if M.hint_seen or #state.actions == 0 then
+    close_hint()
+    return
+  end
+  local lines = hint_lines()
+  if hint then
+    hint:set_lines(lines)
+    return
+  end
+  local width = 0
+  for _, line in ipairs(lines) do
+    width = math.max(width, utf8.len(line) or #line)
+  end
+  -- Mounting focuses a view, and the diff has to keep the keys.
+  local current = btv.win.current()
+  hint = btv.view.create({ name = "Staging" })
+  hint:set_lines(lines)
+  hint:mount({
+    float = {
+      relative = "editor",
+      align = "top-right",
+      width = width,
+      height = #lines,
+      title = " Staging ",
+      focusable = false,
+      grab = false,
+    },
+  })
+  btv.win.set_current(current)
+  for _, mode in ipairs({ "n", "x", "helix", "modeless" }) do
+    btv.keymap.set(mode, "<LeftMouse>", hint_clicked, { buffer = hint })
+  end
+end
 
 -- `act`, as the app calls a plugin: { action }.
 function M.act_on(spec)
@@ -568,8 +644,8 @@ local function render(keep_cursor)
         btv.wo[win].signcolumn = "yes"
         -- Set by hand in `start_sync`: smooth scrolling would have the panes apart.
         btv.wo[win].scrollanim = not side_by_side
-        -- Helix's modes have a keymap bucket of their own.
-        for _, mode in ipairs({ "n", "helix" }) do
+        -- Helix's modes and modeless have a keymap bucket of their own.
+        for _, mode in ipairs({ "n", "helix", "modeless" }) do
           btv.keymap.set(mode, "]c", function()
             M.go("next")
           end, { buffer = buf, desc = "sourcegit-diff: next hunk" })
@@ -577,7 +653,7 @@ local function render(keep_cursor)
             M.go("prev")
           end, { buffer = buf, desc = "sourcegit-diff: previous hunk" })
         end
-        for _, mode in ipairs({ "n", "x", "helix" }) do
+        for _, mode in ipairs({ "n", "x", "helix", "modeless" }) do
           for action, keys in pairs(KEYS) do
             btv.keymap.set(mode, keys, function()
               M.act(action)
@@ -588,7 +664,15 @@ local function render(keep_cursor)
           buf,
           { "sourcegit-diff", table.unpack(btv.contextmenu.default_readonly) }
         )
+        -- A left click's default still runs: the press placed the caret before any map, and
+        -- a single click does nothing more. A drag isn't this key.
+        if not M.hint_seen and #state.actions > 0 then
+          for _, mode in ipairs({ "n", "x", "helix", "modeless" }) do
+            btv.keymap.set(mode, "<LeftMouse>", hint_clicked, { buffer = buf })
+          end
+        end
       end
+      show_hint()
       paint_syntax()
       local row = place and model.row_of(panes[1], place.old, place.new) or nil
       if not row and side_by_side and place then
@@ -665,6 +749,15 @@ function M.show(spec)
     sign_colours()
     btv.on("ColorScheme", sign_colours)
   end
+  if not hint_listening then
+    hint_listening = true
+    -- A right-click's default opens the menu, so a map on it would take the menu away.
+    btv.on("MenuPopup", {}, function()
+      if hint then
+        hint_clicked()
+      end
+    end)
+  end
   if not state.moved then
     state.moved = btv.autocmd.create("CursorMoved", {
       callback = function()
@@ -729,6 +822,7 @@ end
 -- Takes the diff off the screen.
 function M.close()
   stop_sync()
+  close_hint()
   if state.moved then
     btv.autocmd.del(state.moved)
     state.moved = nil

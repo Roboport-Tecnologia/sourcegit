@@ -11,6 +11,7 @@ local diff = require("sourcegit-diff")
 local file = require("sourcegit-file")
 local blame = require("sourcegit-blame")
 local grammars = require("sourcegit-grammars")
+require("sourcegit-settings").setup()
 diff.setup()
 grammars.setup()
 -- Plugins are tested alone, so they meet here.

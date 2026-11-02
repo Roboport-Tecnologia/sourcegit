@@ -5,6 +5,16 @@ local M = {}
 
 local MODES = { vim = true, modeless = true, helix = true }
 
+-- Modeless chords for what a code view doesn't have: its one view is what it shows, and it
+-- saves and opens nothing. `<C-w>` would close the view and leave the pane empty.
+local FREED = { "<C-w>", "<D-w>", "<C-s>", "<D-s>", "<C-p>", "<D-p>", "<C-Tab>", "<C-S-Tab>" }
+
+function M.setup()
+  for _, key in ipairs(FREED) do
+    btv.keymap.set("modeless", key, function() end, { desc = "sourcegit-settings: nothing here" })
+  end
+end
+
 local function set_mode(mode)
   assert(MODES[mode], "sourcegit-settings: unknown mode: " .. tostring(mode))
   btv.helix.disable()

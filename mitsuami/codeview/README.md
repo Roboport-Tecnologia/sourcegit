@@ -63,10 +63,18 @@ they're translated), the plugin says which lines (`chunk`), and
 `DiffView.ApplyChunk` makes upstream's patch of them for `git apply`. The diff then shows
 again with the same path, which keeps the cursor where it was.
 
+The menu is hard to find, so a diff with `actions` shows a float at the top right saying so.
+The first mouse click, anywhere, ends it for as long as that editor lives. It's a `btv.view`
+float, not `btv.ui.float`, which has no top-right placement. Its sentences are English; the
+labels in them are the app's.
+
 ## Preferences
 
 Preferences' Code View page sets the mode (modeless, vim, helix), font, size, colorscheme,
-tab width and relative line numbers. `CodeView` sends them to `sourcegit-settings` as each editor starts and
+tab width and relative line numbers. Modeless has no Normal mode, read-only buffers included, so the plugins bind their keys in its
+`modeless` layer too. `sourcegit-settings` frees its chords for what a code view doesn't have
+(`<C-w>` would close the view showing, and `<C-s>`, `<C-p>` and the buffer keys have nothing to
+act on). `CodeView` sends them to `sourcegit-settings` as each editor starts and
 as they change. In a diff, relative numbers go beside the file's old and new ones.
 
 "Fetch and build syntax highlighting" is off by default, as it downloads code to build:

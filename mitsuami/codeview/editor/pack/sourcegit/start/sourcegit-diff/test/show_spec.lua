@@ -58,6 +58,7 @@ btv.test.describe("sourcegit-diff", function()
     btv.o.relativenumber = false
     diff.on_language = function(_) end
     diff.send = function(_, _) end
+    diff.hint_seen = true
   end)
 
   btv.test.describe("unified", function()
@@ -141,14 +142,16 @@ btv.test.describe("sourcegit-diff", function()
       expect(t:cursor()[1]).to_be(5)
     end)
 
-    for name, turn_on in pairs({
-      helix = function()
-        btv.helix.enable()
-      end,
-      modeless = function()
+    -- Modeless first: the runner's reset after Helix can leave it off in the next test.
+    for _, mode in ipairs({
+      { "modeless", function()
         btv.o.modeless = true
-      end,
+      end },
+      { "helix", function()
+        btv.helix.enable()
+      end },
     }) do
+      local name, turn_on = mode[1], mode[2]
       btv.test.it("moves between changes in " .. name .. " mode, read-only still", function(t)
         shown(t)
         turn_on()

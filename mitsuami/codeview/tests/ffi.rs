@@ -143,6 +143,20 @@ async fn quitting_with_a_diff_showing_tells_the_app(app: TestApp) {
     assert!(mitsuami_destroy(id));
 }
 
+/// The float saying where staging is doesn't count as a window to leave open.
+#[mitsuami_test::test]
+async fn quitting_with_the_staging_hint_showing_tells_the_app(app: TestApp) {
+    let id = mounted(&app).await;
+    let mut spec: serde_json::Value = serde_json::from_str(FIXTURE).unwrap();
+    spec["actions"] = serde_json::json!([{ "action": "stage", "label": "Stage" }]);
+    let (ok, result) = call(&app, id, "sourcegit-diff", "show", &spec.to_string()).await;
+    assert!(ok, "{result}");
+    until(&app, "shown", || event("shown").is_some()).await;
+    assert!(unsafe { sourcegit_codeview_command(id, str("q")) });
+    until(&app, "exit", || event("exit").is_some()).await;
+    assert!(mitsuami_destroy(id));
+}
+
 #[mitsuami_test::test]
 async fn the_preferences_reach_the_editor(app: TestApp) {
     let id = mounted(&app).await;

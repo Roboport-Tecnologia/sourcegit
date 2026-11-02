@@ -110,15 +110,17 @@ btv.test.describe("sourcegit-blame", function()
     expect(said("blame_line")[3].sha).to_equal("a1b2c3d4")
   end)
 
-  for name, turn_on in pairs({
-    vim = function() end,
-    helix = function()
-      btv.helix.enable()
-    end,
-    modeless = function()
+  -- Modeless first: the runner's reset after Helix can leave it off in the next test.
+  for _, mode in ipairs({
+    { "modeless", function()
       btv.o.modeless = true
-    end,
+    end },
+    { "vim", function() end },
+    { "helix", function()
+      btv.helix.enable()
+    end },
   }) do
+    local name, turn_on = mode[1], mode[2]
     btv.test.it("asks to go to a commit, or blame there, in " .. name .. " mode", function(t)
       shown(t)
       turn_on()

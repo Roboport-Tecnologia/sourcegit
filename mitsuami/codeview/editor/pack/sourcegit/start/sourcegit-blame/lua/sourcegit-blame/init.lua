@@ -182,7 +182,7 @@ function M.show(spec)
       btv.wo[win].number = true
       btv.wo[win].relativenumber = btv.o.relativenumber
       shown:set_decor(ns, gutter_marks(spec.lines))
-      for _, mode in ipairs({ "n", "helix" }) do
+      for _, mode in ipairs({ "n", "helix", "modeless" }) do
         btv.keymap.set(mode, "<CR>", function()
           ask("blame_goto")
         end, { buffer = buf, desc = "sourcegit-blame: go to this line's commit" })
