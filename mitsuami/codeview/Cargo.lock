@@ -349,6 +349,7 @@ dependencies = [
  "rmpv",
  "tokio",
  "ttf-parser",
+ "unicode-script",
  "unicode-segmentation",
  "unicode-width",
  "wgpu",
