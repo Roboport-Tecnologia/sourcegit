@@ -51,6 +51,12 @@ agrees with git's whitespace and CRLF options:
   paints one group per cell.
 - **Scroll lock:** panes have the same rows, with filler where one side has fewer.
 
+Every change has a faint tint. The one the cursor is in has a stronger one, with a very subtle
+grey on its empty rows, as the merge editor's current conflict does, since the toolbar's buttons
+leave the editor with no cursor to show it. Going to a change puts it at the top of the panes, as
+`zt`. A file's history passes a `place` with each revision, here and in `sourcegit-file`: each
+comes back where it was left while the window lives, and a new one starts at the top of the file.
+
 The diff view's toolbar is upstream's: first, previous, next and last change with where
 the cursor is among them, context, all lines, syntax, word wrap (with one pane), hidden
 symbols, side by side, ignoring whitespace and the merge tool. Only ignoring whitespace asks

@@ -87,21 +87,29 @@ namespace SourceGit.Views
         /// <summary>Upstream's text diff, by the <c>sourcegit-diff</c> plugin.</summary>
         /// <param name="actions">What can be done to its lines, as the plugin's menu shows them
         /// (<c>stage</c>, <c>unstage</c> or <c>discard</c>, with their labels).</param>
-        public void ShowDiff(string path, Models.TextDiff diff, params (string Action, string Label)[] actions)
+        /// <param name="place">For one of several shown in turn, as a file's revisions: each comes
+        /// back where it was left, and starts at the top of the file.</param>
+        public void ShowDiff(string path, Models.TextDiff diff, (string Action, string Label)[] actions = null, string place = null)
         {
             var spec = JsonNode.Parse(DiffJson(path, diff)).AsObject();
             var entries = new JsonArray();
-            foreach (var (action, label) in actions)
+            foreach (var (action, label) in actions ?? [])
                 entries.Add(new JsonObject { ["action"] = action, ["label"] = label });
             spec["actions"] = entries;
+            if (place != null)
+                spec["place"] = place;
             _showing = ("sourcegit-diff", "show", spec.ToJsonString());
             Send();
         }
 
         /// <summary>A file as a revision has it, by the <c>sourcegit-file</c> plugin.</summary>
-        public void ShowFile(string path, string text)
+        /// <param name="place">As <see cref="ShowDiff"/>'s.</param>
+        public void ShowFile(string path, string text, string place = null)
         {
-            _showing = ("sourcegit-file", "show", new JsonObject { ["path"] = path, ["text"] = text }.ToJsonString());
+            var spec = new JsonObject { ["path"] = path, ["text"] = text };
+            if (place != null)
+                spec["place"] = place;
+            _showing = ("sourcegit-file", "show", spec.ToJsonString());
             Send();
         }
 

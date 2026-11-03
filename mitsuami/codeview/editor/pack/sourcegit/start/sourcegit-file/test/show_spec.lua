@@ -42,6 +42,48 @@ btv.test.describe("sourcegit-file", function()
     end, { message = "no filetype" })
   end)
 
+  btv.test.describe("with a place to remember", function()
+    local text = {}
+    for i = 1, 300 do
+      text[i] = "line " .. i
+    end
+    text = table.concat(text, "\n") .. "\n"
+
+    local function view()
+      return btv.win.call(btv.win.current(), btv.win.saveview)
+    end
+
+    local function revision(t, key)
+      local before = t:lines()[1]
+      file.show({ path = "a.txt", text = key .. "\n" .. text, place = key })
+      t:wait_for(function()
+        return t:lines()[1] == key and t:lines()[1] ~= before and btv.wo[0].number
+      end, { message = "it never showed: " .. key })
+      t:sleep(20)
+    end
+
+    btv.test.before_each(function()
+      file.forget_places()
+    end)
+
+    btv.test.it("starts at the top, and comes back where it was", function(t)
+      revision(t, "a")
+      btv.win.set_cursor(btv.win.current(), 100, 0)
+      btv.win.set_topline(btv.win.current(), 90)
+      t:wait_for(function()
+        return view().topline == 90
+      end, { message = "never scrolled" })
+      revision(t, "b")
+      t:wait_for(function()
+        return btv.line(".") == 1 and view().topline == 1
+      end, { message = "it kept the last one's place" })
+      revision(t, "a")
+      t:wait_for(function()
+        return btv.line(".") == 100 and view().topline == 90
+      end, { message = "it lost its place" })
+    end)
+  end)
+
   btv.test.it("is read-only", function(t)
     shown(t, "a.txt", "one\n")
     t:feed("ix<Esc>")

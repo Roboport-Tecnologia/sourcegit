@@ -140,21 +140,30 @@ local function row_changed(panes, row)
   return false
 end
 
+-- The rows of the run of changes `row` is in, or nil outside one.
+function M.run(panes, row)
+  if not row_changed(panes, row) then
+    return nil
+  end
+  local first, last = row, row
+  while first > 1 and row_changed(panes, first - 1) do
+    first = first - 1
+  end
+  while last < #panes[1] and row_changed(panes, last + 1) do
+    last = last + 1
+  end
+  return first, last
+end
+
 -- Which of what the app sent a selection means in pane `pane_index`, for it to make a patch of:
 -- `{ first, last }`, 0-based, or nil if it holds no change that pane shows. Rows `first..last`
 -- are the selection, or with none (`first` nil), the run of changes `row` is in. What isn't a
 -- line of the file (a gap, a filler) can't start or end one.
 function M.chunk(panes, pane_index, row, first, last)
   if not first then
-    if not row_changed(panes, row) then
+    first, last = M.run(panes, row)
+    if not first then
       return nil
-    end
-    first, last = row, row
-    while first > 1 and row_changed(panes, first - 1) do
-      first = first - 1
-    end
-    while last < #panes[1] and row_changed(panes, last + 1) do
-      last = last + 1
     end
   end
   local pane = panes[pane_index]

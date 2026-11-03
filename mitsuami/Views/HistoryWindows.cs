@@ -258,7 +258,7 @@ namespace SourceGit.Views
             // Each tab keeps its editor from one revision to the next.
             var filePane = new CodePane();
             content.Add(filePane.Node);
-            var diffPane = DiffView.Create(vm, nameof(vm.ViewContent), () => vm.ViewContent as ViewModels.DiffContext);
+            var diffPane = DiffView.Create(vm, nameof(vm.ViewContent), () => vm.ViewContent as ViewModels.DiffContext, rememberPlaces: true);
             change.Add(diffPane);
             Node shown = null;
             Bind.OneWay(vm, nameof(vm.ViewContent), () => vm.ViewContent, value =>
@@ -320,7 +320,8 @@ namespace SourceGit.Views
             }
             column.Add(header);
             if (file.Content is Models.RevisionTextFile text)
-                pane.Code().ShowFile(text.FileName, text.Content ?? "");
+                // The revision's text is what tells them apart: same text, same place.
+                pane.Code().ShowFile(text.FileName, text.Content ?? "", $"{text.FileName}:{(text.Content ?? "").GetHashCode()}");
             else
             {
                 pane.HideCode();

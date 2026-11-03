@@ -24,7 +24,9 @@ namespace SourceGit.Views
         /// <see cref="ViewModels.DiffContext"/>, or nothing for the welcome).</summary>
         /// <param name="repo">The repository, where a local change's lines can be staged and
         /// discarded: the editor's menu offers that only with one.</param>
-        public static Node Create(INotifyPropertyChanged source, string property, Func<object> diff, ViewModels.Repository repo = null)
+        /// <param name="rememberPlaces">For what's picked from a list of revisions: each diff comes
+        /// back where it was left, and starts at the top of the file.</param>
+        public static Node Create(INotifyPropertyChanged source, string property, Func<object> diff, ViewModels.Repository repo = null, bool rememberPlaces = false)
         {
             var pane = new CodePane();
             pane.Node.MinWidth = 100;
@@ -34,7 +36,7 @@ namespace SourceGit.Views
                 shown?.Destroy();
                 if (value is ViewModels.DiffContext context)
                 {
-                    shown = Diff(context, pane, repo);
+                    shown = Diff(context, pane, repo, rememberPlaces);
                 }
                 else
                 {
@@ -55,7 +57,7 @@ namespace SourceGit.Views
             return column;
         }
 
-        private static Node Diff(ViewModels.DiffContext context, CodePane pane, ViewModels.Repository repo)
+        private static Node Diff(ViewModels.DiffContext context, CodePane pane, ViewModels.Repository repo, bool rememberPlaces)
         {
             var column = new Column { AlignItems = Align.Stretch, Gap = Spacing.Xs };
             column.Grow = 1;
@@ -103,7 +105,7 @@ namespace SourceGit.Views
                     shown = null;
                     body.IsVisible = false;
                     var actions = repo == null ? [] : LineActions(text.Option);
-                    pane.Code().ShowDiff(context.Title.Split(" → ")[^1], text.Data, actions);
+                    pane.Code().ShowDiff(context.Title.Split(" → ")[^1], text.Data, actions, rememberPlaces ? text.Option.ToString() : null);
                     return;
                 }
                 // Loading: what's showing stays until the next is here, with no flash.

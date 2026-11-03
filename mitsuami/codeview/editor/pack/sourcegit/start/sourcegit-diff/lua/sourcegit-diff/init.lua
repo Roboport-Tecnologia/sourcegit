@@ -25,12 +25,23 @@ M.on_language = function(_) end
 local ns = btv.ns.create("sourcegit-diff")
 M.namespace = ns
 local ns_syntax = btv.ns.create("sourcegit-diff-syntax")
+local ns_current = btv.ns.create("sourcegit-diff-current")
 
 local KINDS = {
   normal = {},
   indicator = {},
-  added = { line = "DiffAdd", sign = "+", sign_group = "Added" },
-  deleted = { line = "DiffDelete", sign = "-", sign_group = "Removed" },
+  added = {
+    line = "SourceGitDiffAdded",
+    current = "SourceGitDiffAddedCurrent",
+    sign = "+",
+    sign_group = "Added",
+  },
+  deleted = {
+    line = "SourceGitDiffDeleted",
+    current = "SourceGitDiffDeletedCurrent",
+    sign = "-",
+    sign_group = "Removed",
+  },
 }
 
 local state = {
@@ -59,6 +70,11 @@ local state = {
   actions = {},
   -- The change last told to the app, so it hears only as it changes.
   position = nil,
+  -- The first row of the change marked as current, false for none.
+  current = false,
+  -- Where each `place` was left, while this editor lives, and the `place` on screen.
+  places = {},
+  on_screen = nil,
   sync = {},
   syncing = false,
   echoes = {},
@@ -70,6 +86,16 @@ local function sign_colours()
   local palette = btv.hl.palette()
   btv.hl.fallback("Added", { fg = palette.green })
   btv.hl.fallback("Removed", { fg = palette.red })
+  -- Every change has a faint tint, and the one the cursor is in a stronger one, with a very subtle
+  -- grey on its empty rows: the toolbar's buttons leave the editor with no cursor to show it.
+  local function tint(name, colour, ratio)
+    btv.hl.fallback("SourceGitDiff" .. name, { bg = btv.hl.blend(colour, palette.bg, ratio) })
+  end
+  tint("Added", palette.green, 0.08)
+  tint("AddedCurrent", palette.green, 0.3)
+  tint("Deleted", palette.red, 0.08)
+  tint("DeletedCurrent", palette.red, 0.3)
+  tint("FillerCurrent", palette.fg, 0.04)
 end
 
 local sign_colours_listening = false
@@ -319,6 +345,25 @@ local function change_at(row)
   return at
 end
 
+-- Marks the change in rows `first..last` in every pane; no `first` for none.
+local function paint_current(first, last)
+  for i, view in ipairs(state.views) do
+    local pane = state.panes[i]
+    local marks = {}
+    for row = first or 1, first and last or 0 do
+      local cell = pane and pane[row]
+      local group = cell
+        and (cell.filler and "SourceGitDiffFillerCurrent" or (KINDS[cell.kind] or {}).current)
+      if group then
+        marks[#marks + 1] = { line = row - 1, col = 0, line_hl_group = group, priority = 120 }
+      end
+    end
+    if view:bufnr() then
+      view:set_decor(ns_current, marks)
+    end
+  end
+end
+
 -- Tells the app where the cursor is among the changes, for the toolbar's `2/5`. `row` is
 -- where it's on its way to: a move is queued, and reading it now would say where it was.
 local function report_position(row)
@@ -330,7 +375,13 @@ local function report_position(row)
   if not ours then
     return
   end
-  local at = change_at(row or cursor_row(win))
+  row = row or cursor_row(win)
+  local first, last = model.run(state.panes, row)
+  if (first or false) ~= state.current then
+    state.current = first or false
+    paint_current(first, last)
+  end
+  local at = change_at(row)
   if at ~= state.position then
     state.position = at
     send("change_position", { at = at, total = #state.hunks })
@@ -364,7 +415,11 @@ function M.go(where)
     error("sourcegit-diff: can't go to: " .. tostring(where))
   end
   if target then
+    -- At the top of the pane, as `zt`, with as much of it as fits below.
+    -- The cursor first, as a cursor out of its view scrolls the view back to it.
     btv.win.set_cursor(win, target, 0)
+    btv.win.set_topline(win, target)
+    report_position(target)
   end
 end
 
@@ -598,7 +653,7 @@ local function cursor_place()
   return nil
 end
 
-local function render(keep_cursor)
+local function render(keep_cursor, restoring)
   local place = keep_cursor and cursor_place() or nil
   local was_row = keep_cursor
       and state.views[1]
@@ -680,11 +735,25 @@ local function render(keep_cursor)
       end
       -- Its line may be gone, staged away, say: stay about there, as the next change is close.
       row = row or (was_row and math.min(was_row, #panes[1])) or state.hunks[1] or 1
-      for _, view in ipairs(views) do
-        btv.win.set_cursor(view:winid(), row, 0)
+      -- With a `place`, it's where that was left, or the top of the file.
+      local top
+      local key = state.spec.place
+      if key and restoring then
+        local left = state.places[key]
+        row = left and math.min(left.row, #panes[1]) or 1
+        top = left and left.top or 1
       end
+      for _, view in ipairs(views) do
+        -- The cursor first, as a cursor out of its view scrolls the view back to it.
+        btv.win.set_cursor(view:winid(), row, 0)
+        if top then
+          btv.win.set_topline(view:winid(), top)
+        end
+      end
+      state.on_screen = key
       send("shown", { path = state.spec.path, lines = #panes[1], hunks = #state.hunks })
       state.position = nil
+      state.current = nil
       report_position(row)
     end)
     :catch(function(e)
@@ -731,12 +800,29 @@ local function colour()
     end)
 end
 
--- Shows `spec` ({ path, lines = { { kind, text, old, new, spans? } }, actions? }), in place of
--- the diff showing, at its first change, and says `shown` once it's on screen and `colored` once its
--- colours are.
+-- What's on screen goes back to where it is, if it has a `place`.
+local function leave_place()
+  local win = state.views[1] and state.views[1]:winid()
+  if state.on_screen and win then
+    local at = btv.win.call(win, btv.win.saveview)
+    state.places[state.on_screen] = { row = at.lnum, top = at.topline }
+  end
+  state.on_screen = nil
+end
+
+function M.forget_places()
+  state.places = {}
+  state.on_screen = nil
+end
+
+-- Shows `spec` ({ path, lines = { { kind, text, old, new, spans? } }, actions?, place? }), in place
+-- of the diff showing, at its first change, and says `shown` once it's on screen and `colored` once
+-- its colours are. With a `place`, one of several shown in turn (a file's revisions), it's where
+-- that was left, or the top of the file.
 function M.show(spec)
   check(spec)
   state.generation = state.generation + 1
+  leave_place()
   -- The same file again is its diff changing, as after staging part of it: stay where it was.
   local same_file = state.spec ~= nil and state.spec.path == spec.path
   state.spec = spec
@@ -766,7 +852,7 @@ function M.show(spec)
       end,
     })
   end
-  render(same_file)
+  render(same_file and not spec.place, spec.place ~= nil)
   if state.language and state.layout.syntax then
     M.on_language(state.language)
   end
@@ -834,6 +920,7 @@ function M.close()
   end
   state.views, state.panes, state.hunks = {}, {}, {}
   state.spec, state.lines, state.syntax, state.language = nil, nil, nil, nil
+  state.on_screen = nil
 end
 
 -- `:SourceGitDiff {file}` in a plain terminal: there's no app to send it a diff.
