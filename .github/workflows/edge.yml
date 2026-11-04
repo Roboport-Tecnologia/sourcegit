@@ -3,12 +3,14 @@
 # (`gh workflow run edge.yml --ref mitsuami`). Upstream's workflows build
 # its Avalonia app and stay as they are.
 #
-# The port builds against the heads of two sibling repositories, checked
-# out beside this one as on the maintainer's machine: mitsuamia (the C#
-# layer) and mitsuami-extras (whose C ABI library has mitsuami's in it, at
-# the release its manifest pins). mitsuami's checkout is for its packaging
-# scripts, which sign, notarize and make the AppImages, and for extras when
-# it builds against `../mitsuami` until a release is out.
+# The port builds against the heads of sibling repositories, checked out
+# beside this one as on the maintainer's machine: mitsuamia (the C# layer),
+# mitsuami-extras (whose C ABI library has mitsuami's in it), bemtvi (the code
+# view's editor) and mitsuami. The code view's manifest patches bemtvi's
+# mitsuami, from crates.io, and extras' C ABI, from a release's tag, to the
+# mitsuami checkout: one mitsuami in the process. So mitsuami's ref has to be
+# the release those take, or a compatible one. Its packaging scripts sign,
+# notarize and make the AppImages.
 name: Edge
 
 on:
@@ -22,6 +24,9 @@ on:
         default: main
       extras:
         description: mitsuami-extras' branch, tag or commit
+        default: main
+      bemtvi:
+        description: bemtvi's branch, tag or commit
         default: main
 
 permissions:
@@ -46,6 +51,7 @@ jobs:
       mitsuami: ${{ steps.pin.outputs.mitsuami }}
       mitsuamia: ${{ steps.pin.outputs.mitsuamia }}
       extras: ${{ steps.pin.outputs.extras }}
+      bemtvi: ${{ steps.pin.outputs.bemtvi }}
       version: ${{ steps.pin.outputs.version }}
     steps:
       - uses: actions/checkout@v7.0.1
@@ -57,18 +63,20 @@ jobs:
           MITSUAMI: ${{ inputs.mitsuami }}
           MITSUAMIA: ${{ inputs.mitsuamia }}
           EXTRAS: ${{ inputs.extras }}
+          BEMTVI: ${{ inputs.bemtvi }}
         run: |
           # A branch's or tag's commit (an annotated tag's comes last), or
           # the commit itself.
           pin() {
             local sha
-            sha=$(git ls-remote "https://github.com/Roboport-Tecnologia/$1.git" \
+            sha=$(git ls-remote "https://github.com/$1.git" \
               "refs/heads/$2" "refs/tags/$2" "refs/tags/$2^{}" | tail -1 | cut -f1)
             echo "${sha:-$2}"
           }
-          echo "mitsuami=$(pin mitsuami "$MITSUAMI")" >> "$GITHUB_OUTPUT"
-          echo "mitsuamia=$(pin mitsuamia "$MITSUAMIA")" >> "$GITHUB_OUTPUT"
-          echo "extras=$(pin mitsuami-extras "$EXTRAS")" >> "$GITHUB_OUTPUT"
+          echo "mitsuami=$(pin Roboport-Tecnologia/mitsuami "$MITSUAMI")" >> "$GITHUB_OUTPUT"
+          echo "mitsuamia=$(pin Roboport-Tecnologia/mitsuamia "$MITSUAMIA")" >> "$GITHUB_OUTPUT"
+          echo "extras=$(pin Roboport-Tecnologia/mitsuami-extras "$EXTRAS")" >> "$GITHUB_OUTPUT"
+          echo "bemtvi=$(pin bemtvi/bemtvi "$BEMTVI")" >> "$GITHUB_OUTPUT"
           # Upstream's version and the run: a bundle's version is numbers
           # and dots only.
           echo "version=$(tr -d '[:space:]' < VERSION).$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
@@ -122,7 +130,8 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           repository: bemtvi/bemtvi
-          path: nxvim
+          ref: ${{ needs.refs.outputs.bemtvi }}
+          path: bemtvi
       - &setup-dotnet
         uses: actions/setup-dotnet@v6.0.0
         with:
@@ -334,6 +343,7 @@ jobs:
           MITSUAMI: ${{ needs.refs.outputs.mitsuami }}
           MITSUAMIA: ${{ needs.refs.outputs.mitsuamia }}
           EXTRAS: ${{ needs.refs.outputs.extras }}
+          BEMTVI: ${{ needs.refs.outputs.bemtvi }}
         run: |
           gh release delete edge --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
           cat > notes.md <<EOF
@@ -343,6 +353,7 @@ jobs:
           - mitsuami [\`${MITSUAMI::10}\`](https://github.com/Roboport-Tecnologia/mitsuami/commit/$MITSUAMI)
           - mitsuamia [\`${MITSUAMIA::10}\`](https://github.com/Roboport-Tecnologia/mitsuamia/commit/$MITSUAMIA)
           - mitsuami-extras [\`${EXTRAS::10}\`](https://github.com/Roboport-Tecnologia/mitsuami-extras/commit/$EXTRAS)
+          - bemtvi [\`${BEMTVI::10}\`](https://github.com/bemtvi/bemtvi/commit/$BEMTVI)
 
           The macOS apps are added once they're built.
 

@@ -26,8 +26,9 @@ harness = false
 # mitsuami's C ABIs aren't published, and neither is bemtvi.
 [dependencies]
 anyhow = "=1.0.104"
-# The branch in progress, in a worktree, while bemtvi's `main` is others' to work on.
-bemtvi-mitsuami = { path = "/mnt/data2/david/work/nxvim-ts-grammars/crates/bemtvi-mitsuami" }
+# A sibling `bemtvi` checkout, as `edge.yml` makes one. On the maintainer's Linux machine it's a
+# link to the worktree with the branch in progress, as bemtvi's `main` is others' to work on.
+bemtvi-mitsuami = { path = "../../../bemtvi/crates/bemtvi-mitsuami" }
 mitsuami = { path = "../../../mitsuami/crates/mitsuami" }
 mitsuami-ffi = { path = "../../../mitsuami/crates/mitsuami-ffi" }
 mitsuami-extras-ffi = { path = "../../../mitsuami-extras/crates/mitsuami-extras-ffi" }

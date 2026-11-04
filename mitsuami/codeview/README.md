@@ -143,7 +143,7 @@ cargo run --example harness [fixtures/edit.json]
 In a terminal, with no app around it:
 
 ```sh
-BEMTVI_CONFIG=editor cargo run --manifest-path /mnt/data2/david/work/nxvim-ts-grammars/Cargo.toml -p bemtvi
+BEMTVI_CONFIG=editor cargo run --manifest-path ../../../bemtvi/Cargo.toml -p bemtvi
 :SourceGitDiff fixtures/edit.json
 ```
 
@@ -171,13 +171,11 @@ fixture, and call it with `CodeView`'s `Call` (`require(module)[function](json)`
 ## What belongs in bemtvi
 
 What a plugin or the ABI would have to work around goes in bemtvi instead
-(the `nxvim-ts-grammars` worktree, on its branch, not `main`), with its tests and docs: `views_only`, `mount{ here }`, `exec_lua_with` and
+(the `../../../bemtvi` checkout, on its branch, not `main`), with its tests and docs: `views_only`, `mount{ here }`, `exec_lua_with` and
 building the `Editor` outside a view all came from here.
 
 ## Dependencies
 
-`../mitsuami` and `../mitsuami-extras` are sibling checkouts. bemtvi is the worktree
-`/mnt/data2/david/work/nxvim-ts-grammars`, by an absolute path for now, which `edge.yml`'s
-checkout doesn't have. The
-The `[patch]` sections in `Cargo.toml` are what keep one mitsuami: bemtvi takes 2.1 from
+`../mitsuami`, `../mitsuami-extras` and `../bemtvi` are sibling checkouts, as `edge.yml` makes
+them. The `[patch]` sections in `Cargo.toml` are what keep one mitsuami: bemtvi takes 2.1 from
 crates.io and extras its C ABI from the release's tag, and both build against the sibling here.
