@@ -2,7 +2,9 @@
   <!-- SourceGit on mitsuami: upstream's models, view models and git
        commands, compiled where they are; our views and app here. -->
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <!-- As upstream's: no console window on Windows. git still reads the
+         askpass's answer through the pipe it gives it. -->
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>SourceGit</AssemblyName>
     <RootNamespace>SourceGit</RootNamespace>
