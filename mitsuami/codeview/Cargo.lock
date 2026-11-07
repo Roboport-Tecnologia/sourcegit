@@ -3651,7 +3651,7 @@ dependencies = [
 
 [[package]]
 name = "mitsuami"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "mitsuami-appkit",
  "mitsuami-core",
@@ -3665,7 +3665,7 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-appkit"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "block2",
  "dispatch2",
@@ -3678,11 +3678,12 @@ dependencies = [
  "objc2-game-controller",
  "objc2-quick-look-thumbnailing",
  "objc2-uniform-type-identifiers",
+ "objc2-user-notifications",
 ]
 
 [[package]]
 name = "mitsuami-core"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "fluent-bundle",
  "fluent-langneg",
@@ -3713,7 +3714,7 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-ffi"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "mitsuami",
  "png",
@@ -3721,7 +3722,7 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-gtk"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "gtk4",
  "libadwaita",
@@ -3733,14 +3734,14 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-headless"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "mitsuami-core",
 ]
 
 [[package]]
 name = "mitsuami-kirigami"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "cc",
  "mitsuami-core",
@@ -3751,7 +3752,7 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-linux"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "mitsuami-core",
  "wayland-backend",
@@ -3762,7 +3763,7 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-macros"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "fluent-syntax",
  "proc-macro2",
@@ -3773,14 +3774,14 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-reactive"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "slotmap",
 ]
 
 [[package]]
 name = "mitsuami-test"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "inventory",
  "mitsuami-appkit",
@@ -3797,7 +3798,7 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-test-macros"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3806,7 +3807,7 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-widgets"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "mitsuami-core",
  "mitsuami-reactive",
@@ -3814,7 +3815,7 @@ dependencies = [
 
 [[package]]
 name = "mitsuami-winui"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "mitsuami-core",
  "mitsuami-widgets",
@@ -4312,6 +4313,18 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7902ac02859fc1f7045f8b598c63f1ae0cc7efeaa06a9bc9f3d9a3c955974fa4"
 dependencies = [
+ "block2",
+ "objc2",
+ "objc2-foundation",
+]
+
+[[package]]
+name = "objc2-user-notifications"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9df9128cbbfef73cda168416ccf7f837b62737d748333bfe9ab71c245d76613e"
+dependencies = [
+ "bitflags 2.13.2",
  "block2",
  "objc2",
  "objc2-foundation",
