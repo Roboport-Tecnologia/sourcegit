@@ -8,7 +8,7 @@ using Mitsuamia;
 namespace SourceGit
 {
     /// <summary>
-    /// Upstream's own icons (<c>Resources/Icons.axaml</c>, copied next to the
+    /// Upstream's own icons (<c>Resources/Icons.axaml</c>, embedded in the
     /// app): path data that mitsuami draws as each platform draws its
     /// symbolic icons. Upstream's paths fill their 16-point boxes (a
     /// <c>Path</c> stretched uniformly), so they're fitted to their bounds.
@@ -52,7 +52,7 @@ namespace SourceGit
         private static Dictionary<string, VectorIcon> Load()
         {
             var icons = new Dictionary<string, VectorIcon>(StringComparer.Ordinal);
-            var file = Path.Combine(AppContext.BaseDirectory, "Icons.axaml");
+            using var file = EmbeddedFiles.Open("Icons.axaml");
             XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
             foreach (var element in XDocument.Load(file).Root!.Elements())
             {

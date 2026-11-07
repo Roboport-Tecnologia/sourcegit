@@ -54,23 +54,23 @@ namespace Avalonia.Platform
 
     /// <summary>
     /// Opens <c>avares://SourceGit/…</c> resources from the files the
-    /// project copies next to the app (<c>Resources/Images</c>), where
-    /// Avalonia embeds them.
+    /// project embeds (<c>Resources/Images</c>), as Avalonia does. A missing
+    /// one throws, as Avalonia's does.
     /// </summary>
     public static class AssetLoader
     {
         public static Stream Open(Uri uri, Uri baseUri = null)
         {
-            var path = uri.IsAbsoluteUri ? uri.AbsolutePath : uri.OriginalString;
-            path = Uri.UnescapeDataString(path).TrimStart('/');
-            return File.OpenRead(Path.Combine(AppContext.BaseDirectory, path));
+            var path = PathOf(uri);
+            return SourceGit.EmbeddedFiles.Open(path) ?? throw new FileNotFoundException($"No embedded {path}", path);
         }
 
-        public static bool Exists(Uri uri, Uri baseUri = null)
+        public static bool Exists(Uri uri, Uri baseUri = null) => SourceGit.EmbeddedFiles.Exists(PathOf(uri));
+
+        private static string PathOf(Uri uri)
         {
             var path = uri.IsAbsoluteUri ? uri.AbsolutePath : uri.OriginalString;
-            path = Uri.UnescapeDataString(path).TrimStart('/');
-            return File.Exists(Path.Combine(AppContext.BaseDirectory, path));
+            return Uri.UnescapeDataString(path);
         }
     }
 }

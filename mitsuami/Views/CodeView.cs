@@ -92,9 +92,11 @@ namespace SourceGit.Views
         public void ShowDiff(string path, Models.TextDiff diff, (string Action, string Label)[] actions = null, string place = null)
         {
             var spec = JsonNode.Parse(DiffJson(path, diff)).AsObject();
+            // Added as JsonNodes here and below: JsonArray's generic Add needs
+            // reflection, which AOT apps don't have.
             var entries = new JsonArray();
             foreach (var (action, label) in actions ?? [])
-                entries.Add(new JsonObject { ["action"] = action, ["label"] = label });
+                entries.Add((JsonNode)new JsonObject { ["action"] = action, ["label"] = label });
             spec["actions"] = entries;
             if (place != null)
                 spec["place"] = place;
@@ -150,7 +152,7 @@ namespace SourceGit.Views
             var lines = new JsonArray();
             foreach (var line in blame.LineInfos)
             {
-                lines.Add(new JsonObject
+                lines.Add((JsonNode)new JsonObject
                 {
                     ["sha"] = line.CommitSHA,
                     ["author"] = line.Author,
@@ -193,11 +195,11 @@ namespace SourceGit.Views
                         var end = Math.Min(range.End + 1, line.Content.Length);
                         var start = Math.Min(range.Start, end);
                         var first = Encoding.UTF8.GetByteCount(line.Content.AsSpan(0, start));
-                        spans.Add(new JsonArray(first, Encoding.UTF8.GetByteCount(line.Content.AsSpan(0, end))));
+                        spans.Add((JsonNode)new JsonArray(first, Encoding.UTF8.GetByteCount(line.Content.AsSpan(0, end))));
                     }
                     entry["spans"] = spans;
                 }
-                lines.Add(entry);
+                lines.Add((JsonNode)entry);
             }
             return new JsonObject { ["path"] = path, ["lines"] = lines }.ToJsonString();
         }
@@ -231,7 +233,7 @@ namespace SourceGit.Views
         {
             var tried = new JsonArray();
             foreach (var lang in s_triedGrammars)
-                tried.Add(lang);
+                tried.Add((JsonNode)lang);
             return new JsonObject { ["enabled"] = PortSettings.Instance.EditorInstallGrammars, ["tried"] = tried }.ToJsonString();
         }
 

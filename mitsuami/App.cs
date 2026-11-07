@@ -17,7 +17,7 @@ namespace SourceGit
     {
         /// <summary>
         /// A message from upstream's locale dictionaries
-        /// (<c>Resources/Locales/*.axaml</c>, copied next to the app), as
+        /// (<c>Resources/Locales/*.axaml</c>, embedded in the app), as
         /// upstream's <c>App.Text</c>: the active locale over en_US, and the
         /// key itself when neither has it.
         /// </summary>
@@ -202,8 +202,8 @@ namespace SourceGit
         private static Dictionary<string, string> LoadLocale(string key)
         {
             var strings = new Dictionary<string, string>(StringComparer.Ordinal);
-            var file = Path.Combine(AppContext.BaseDirectory, "Locales", $"{key}.axaml");
-            if (!File.Exists(file))
+            using var file = EmbeddedFiles.Open($"Locales/{key}.axaml");
+            if (file == null)
                 return strings;
 
             XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";

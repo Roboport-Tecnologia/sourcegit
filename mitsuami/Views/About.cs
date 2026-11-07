@@ -100,7 +100,9 @@ namespace SourceGit.Views
         {
             try
             {
-                var bytes = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "App.ico"));
+                using var stream = new MemoryStream();
+                EmbeddedFiles.Open("App.ico").CopyTo(stream);
+                var bytes = stream.ToArray();
                 // The icon's first image, which is a PNG.
                 var size = BitConverter.ToInt32(bytes, 14);
                 var offset = BitConverter.ToInt32(bytes, 18);

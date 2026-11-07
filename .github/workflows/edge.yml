@@ -144,16 +144,17 @@ jobs:
           rustup target add ${{ matrix.rust }}
           cargo build --release --lib --target ${{ matrix.rust }}
 
-      # The library goes beside the app under mitsuami's name, where .NET
-      # finds it without MITSUAMI_FFI. `setsid` is upstream's
-      # (package.osx-app.sh), for the terminals it opens.
+      # Native AOT, as upstream's: one executable, cross-compiled for
+      # x86_64 on this arm64 runner. The library goes beside it under
+      # mitsuami's name, where .NET finds it without MITSUAMI_FFI. `setsid`
+      # is upstream's (package.osx-app.sh), for the terminals it opens.
       - name: Publish
         run: |
-          dotnet publish "$PROJECT" -c Release -r ${{ matrix.runtime }} --self-contained -o publish
+          dotnet publish "$PROJECT" -c Release -r ${{ matrix.runtime }} -o publish
           cp sourcegit/mitsuami/codeview/target/${{ matrix.rust }}/release/libsourcegit_codeview.dylib publish/libmitsuami_ffi.dylib
           clang -arch ${{ matrix.arch }} sourcegit/tools/setsid-macos/setsid.c -o publish/setsid \
             -mmacosx-version-min="$MACOSX_DEPLOYMENT_TARGET"
-          rm -f publish/*.pdb
+          rm -rf publish/*.pdb publish/*.dSYM
 
       # As mitsuami's release, when the secrets are there; without them,
       # the app is signed ad hoc, as upstream's is.
@@ -214,7 +215,9 @@ jobs:
           gh release upload edge ./*.dmg --repo "$GITHUB_REPOSITORY" --clobber
 
   # WinUI loads the Windows App Runtime 2.x installed on the machine
-  # (mitsuami's ARCHITECTURE.md §15, WinUI), so the zip has only the app.
+  # (mitsuami's ARCHITECTURE.md §15, WinUI), so the zip has only the app:
+  # its executable (Native AOT, as upstream's), the library and the code
+  # view's editor config.
   windows:
     name: Build for Windows (x86_64)
     needs: refs
@@ -239,7 +242,7 @@ jobs:
       - name: Publish and package
         run: |
           out=SourceGit-mitsuami-windows-x86_64
-          dotnet publish "$PROJECT" -c Release -r win-x64 --self-contained -o "$out"
+          dotnet publish "$PROJECT" -c Release -r win-x64 -o "$out"
           cp sourcegit/mitsuami/codeview/target/release/sourcegit_codeview.dll "$out/mitsuami_ffi.dll"
           rm -f "$out"/*.pdb
           7z a "$out.zip" "$out"
@@ -253,7 +256,8 @@ jobs:
   # release builds it (its release.yml says why those distributions). The
   # Kirigami library has GTK in it too: mitsuami-ffi asks for mitsuami's
   # default features, which extras can't turn off. .NET finds the system's
-  # ICU, as upstream's AppImage does.
+  # ICU, as upstream's AppImage does. Native AOT links with clang, as
+  # upstream's build does.
   linux:
     name: Build for Linux (${{ matrix.toolkit }})
     needs: refs
@@ -266,13 +270,13 @@ jobs:
             features: ""
             install: >-
               apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends
-              curl ca-certificates git build-essential pkg-config file patchelf libicu74 libgtk-4-dev libadwaita-1-dev
+              curl ca-certificates git build-essential clang zlib1g-dev pkg-config file patchelf libicu74 libgtk-4-dev libadwaita-1-dev
           - toolkit: kde
             image: fedora:42
             features: --features kde
             qmake: /usr/lib64/qt6/bin/qmake
             install: >-
-              dnf install -y gcc gcc-c++ pkgconf curl git tar gzip file findutils patchelf libicu gtk4-devel libadwaita-devel
+              dnf install -y gcc gcc-c++ clang zlib-devel pkgconf curl git tar gzip file findutils patchelf libicu gtk4-devel libadwaita-devel
               qt6-qtbase-devel qt6-qtbase-private-devel qt6-qtdeclarative-devel qt6-qtwayland qt6-qtsvg
               kf6-kirigami-devel kf6-qqc2-desktop-style plasma-breeze plasma-integration
     runs-on: ubuntu-24.04
@@ -303,11 +307,9 @@ jobs:
 
       - name: Publish
         run: |
-          dotnet publish "$PROJECT" -c Release -r linux-x64 --self-contained -o publish
+          dotnet publish "$PROJECT" -c Release -r linux-x64 -o publish
           cp sourcegit/mitsuami/codeview/target/release/libsourcegit_codeview.so publish/libmitsuami_ffi.so
-          # .NET's LTTng tracing, which it loads only where LTTng is
-          # installed: linuxdeploy can't find what it links.
-          rm -f publish/*.pdb publish/libcoreclrtraceptprovider.so
+          rm -f publish/*.pdb publish/*.dbg
 
       - name: Package
         run: |

@@ -31,14 +31,28 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Upstream's strings and images, read from files next to the app
-         where Avalonia embeds them (App.Text, AssetLoader). -->
-    <None Include="../src/Resources/Locales/*.axaml" Link="Locales/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../src/Resources/Icons.axaml" Link="Icons.axaml" CopyToOutputDirectory="PreserveNewest" />
-    <!-- The code view's editor config, plugins but not their tests. -->
+    <!-- Upstream's strings and images, embedded as Avalonia embeds them and
+         named by their paths (EmbeddedFiles). -->
+    <EmbeddedResource Include="../src/Resources/Locales/*.axaml" LogicalName="Locales/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../src/Resources/Icons.axaml" LogicalName="Icons.axaml" />
+    <EmbeddedResource Include="../src/App.ico" LogicalName="App.ico" />
+    <EmbeddedResource Include="../src/Resources/Images/**/*" LogicalName="Resources/Images/%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- The code view's editor config, plugins but not their tests: bemtvi
+         reads it from a directory. -->
     <None Include="codeview/editor/**/*" Exclude="codeview/editor/**/test/**" Link="codeview-editor/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../src/App.ico" Link="App.ico" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../src/Resources/Images/**/*" Link="Resources/Images/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- As upstream's: the app, the runtime and its libraries in one
+       executable. DisableAOT=true publishes them as files. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(DisableAOT)' != 'true'">
+    <PublishAot>true</PublishAot>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>link</TrimMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Upstream's: what its view models reach by reflection stays. -->
+    <TrimmerRootAssembly Include="SourceGit" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SourceGit
 {
@@ -60,7 +61,7 @@ namespace SourceGit
             try
             {
                 if (File.Exists(FilePath))
-                    return JsonSerializer.Deserialize<PortSettings>(File.ReadAllText(FilePath)) ?? new();
+                    return JsonSerializer.Deserialize(File.ReadAllText(FilePath), PortSettingsJson.Default.PortSettings) ?? new();
             }
             catch (Exception e)
             {
@@ -75,12 +76,20 @@ namespace SourceGit
                 return;
             try
             {
-                File.WriteAllText(FilePath, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
+                File.WriteAllText(FilePath, JsonSerializer.Serialize(this, PortSettingsJson.Default.PortSettings));
             }
             catch (Exception e)
             {
                 Native.OS.LogException(e);
             }
         }
+    }
+
+    /// <summary>The settings' JSON, generated at build time: an AOT app
+    /// has no reflection to serialize with.</summary>
+    [JsonSourceGenerationOptions(WriteIndented = true)]
+    [JsonSerializable(typeof(PortSettings))]
+    internal partial class PortSettingsJson : JsonSerializerContext
+    {
     }
 }

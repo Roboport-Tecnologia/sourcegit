@@ -221,7 +221,7 @@ namespace SourceGit.Views
                 if (state is Models.ConflictLineState.ConflictBlockStart or Models.ConflictLineState.ResolvedBlockStart)
                     first = i + 1;
                 else if (state is Models.ConflictLineState.ConflictBlockEnd or Models.ConflictLineState.ResolvedBlockEnd)
-                    regions.Add(new JsonObject
+                    regions.Add((JsonNode)new JsonObject
                     {
                         ["first"] = first,
                         ["last"] = i + 1,
@@ -254,7 +254,7 @@ namespace SourceGit.Views
             var out_ = new JsonArray();
             foreach (var line in lines)
             {
-                out_.Add(new JsonObject
+                out_.Add((JsonNode)new JsonObject
                 {
                     ["kind"] = line.Type switch
                     {
