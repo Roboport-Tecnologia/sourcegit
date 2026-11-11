@@ -61,7 +61,7 @@ namespace SourceGit.Views
                             pref.OpenAIServices.Add(service);
                             return service;
                         },
-                        Remove = s => pref.OpenAIServices.Remove(s),
+                        Remove = s => RemoveService(pref, s),
                     })));
             var column = new Column { Padding = Metrics.Panel, AlignItems = Align.Stretch };
             column.Add(tabs);
@@ -115,7 +115,6 @@ namespace SourceGit.Views
                         await new Commands.Config(null).SetAsync($"gpg.{git.Format.Value}.program", git.Program);
                 }
             }
-            pref.UpdateAvailableAIModels();
             pref.Save();
             PortSettings.Instance.Save();
         }
@@ -408,38 +407,23 @@ namespace SourceGit.Views
             return page;
         }
 
-        /// <summary>Upstream's AI service form. The key is a password field,
-        /// or the variable it's read from.</summary>
+        /// <summary>Upstream's AI service form. The key is kept apart from
+        /// the service, by server (<see cref="AI.ApiKeyManager"/>), and edited
+        /// in a sheet of its own.</summary>
         private static Node Service(AI.Service service)
         {
             var column = new Column { Gap = Metrics.FormGap, AlignItems = Align.Stretch };
             column.Add(Stacked(App.Text("Preferences.AI.Name"), TextValue(service.Name, v => service.Name = v)));
-            column.Add(Stacked(App.Text("Preferences.AI.Server"), TextValue(service.Server, v => service.Server = v)));
-            var keyColumn = new Column { Gap = Metrics.LabelGap, AlignItems = Align.Stretch };
-            keyColumn.Add(new Text(App.Text("Preferences.AI.ApiKey").Trim()));
-            var keyField = new Column { AlignItems = Align.Stretch };
-            keyColumn.Add(keyField);
-            void ShowKey()
-            {
-                Empty(keyField);
-                if (service.ReadApiKeyFromEnv)
-                {
-                    keyField.Add(TextValue(service.ApiKey, v => service.ApiKey = v));
-                }
-                else
-                {
-                    var password = new PasswordInput { Value = service.ApiKey ?? "" };
-                    password.Changed += v => service.ApiKey = v;
-                    keyField.Add(password);
-                }
-            }
-            ShowKey();
-            keyColumn.Add(Check(App.Text("Preferences.AI.ReadApiKeyFromEnv"), service.ReadApiKeyFromEnv, v =>
-            {
-                service.ReadApiKeyFromEnv = v;
-                ShowKey();
-            }));
-            column.Add(keyColumn);
+            var server = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            var serverText = TextValue(service.Server, v => service.Server = v);
+            serverText.Grow = 1;
+            server.Add(serverText);
+            var key = new Button(App.Text("Preferences.AI.ApiKey").Trim());
+            void ShowKey() => key.Icon = Icons.Get(service.HasValidApiKey ? "Edit" : "Plus", 12);
+            Bind.OneWay(service, nameof(service.HasValidApiKey), () => service.HasValidApiKey, _ => ShowKey(), owner: key);
+            key.Click += () => EditApiKey(service, ShowKey);
+            server.Add(key);
+            column.Add(Stacked(App.Text("Preferences.AI.Server"), server));
             var modelColumn = Stacked(App.Text("Preferences.AI.Model"), TextValue(service.Model, v => service.Model = v));
             modelColumn.Add(Check(App.Text("Preferences.AI.Model.AutoFetchAvailableModels"), service.AutoFetchAvailableModels, v => service.AutoFetchAvailableModels = v));
             column.Add(modelColumn);
@@ -449,6 +433,113 @@ namespace SourceGit.Views
             column.Add(Stacked(App.Text("Preferences.AI.AdditionalPrompt"), TextBlock(service.AdditionalPrompt, 6, v => service.AdditionalPrompt = v)));
             column.Add(Stacked(App.Text("Preferences.AI.ExtraHeaders"), TextBlock(service.ExtraHeaders, 3, v => service.ExtraHeaders = v)));
             return column;
+        }
+
+        /// <summary>Upstream's removal: the service, and its server's key
+        /// once no other service uses it.</summary>
+        private static void RemoveService(ViewModels.Preferences pref, AI.Service service)
+        {
+            var server = service.Server;
+            pref.OpenAIServices.Remove(service);
+            if (pref.OpenAIServices.Any(s => s.Server.Equals(server, StringComparison.Ordinal)))
+                return;
+            try
+            {
+                AI.ApiKeyManager.Remove(server);
+            }
+            catch (Exception ex)
+            {
+                _ = Dialogs.Alert(Over(), ex.Message, "", [Popups.ButtonText("Sure")]);
+            }
+        }
+
+        /// <summary>Upstream's API key window (<c>Views/EditApiKey.axaml</c>)
+        /// as a sheet: where the server's key is kept (an environment
+        /// variable, the system's keychain, or as typed) and the variable or
+        /// the key.</summary>
+        private static void EditApiKey(AI.Service service, Action changed)
+        {
+            var edit = new AI.ApiKey { Service = service.Server };
+            try
+            {
+                if (AI.ApiKeyManager.Get(service.Server) is { } exist)
+                {
+                    edit.Storage = exist.Storage;
+                    edit.KeyToAccess = exist.Storage == AI.ApiKeyStorage.SystemKeychain ? exist.GetRawApiKey() : exist.KeyToAccess;
+                }
+            }
+            catch (Exception ex)
+            {
+                _ = Dialogs.Alert(Over(), ex.Message, "", [Popups.ButtonText("Sure")]);
+                return;
+            }
+
+            var title = App.Text("EditApiKey");
+            var sheet = new Window(Over(), title, 512);
+            var column = new Column { Padding = Metrics.Panel, Gap = Metrics.PanelGap, AlignItems = Align.Stretch };
+            column.Add(new Text(title) { Style = TextStyle.Headline });
+            column.Add(Field(App.Text("EditApiKey.Server"), new TextInput { Value = edit.Service, ReadOnly = true }));
+            // Upstream's names, which it doesn't translate.
+            column.Add(Field(App.Text("EditApiKey.Storage"), Choice(App.Text("EditApiKey.Storage"),
+                ["Environment Variable", "System Keychain", "Plain Text"], (int)edit.Storage, i => edit.Storage = (AI.ApiKeyStorage)i)));
+            var variable = TextValue(edit.KeyToAccess, v => edit.KeyToAccess = v);
+            var variableRow = Field(App.Text("EditApiKey.EnvironmentVariable"), variable);
+            column.Add(variableRow);
+            var password = new PasswordInput { Value = edit.KeyToAccess ?? "" };
+            password.Changed += v => edit.KeyToAccess = v;
+            var passwordRow = Field(App.Text("EditApiKey.ApiKey"), password);
+            column.Add(passwordRow);
+            var invalid = new Row { Gap = Spacing.Sm, AlignItems = Align.Center };
+            invalid.Add(new Icon(Icons.Get("Error")) { Size = 12, Color = Color.Warning });
+            var invalidText = new Text(App.Text("EditApiKey.InvalidStorage")) { Color = Color.SecondaryLabel };
+            invalidText.Shrink = 1;
+            invalid.Add(invalidText);
+            var invalidRow = Field("", invalid);
+            column.Add(invalidRow);
+
+            var buttons = new Row { Justify = Justify.End, Gap = Metrics.DialogButtonGap };
+            var cancel = new Button(Popups.ButtonText("Cancel"));
+            cancel.Click += sheet.Destroy;
+            var sure = new Button(Popups.ButtonText("Sure")) { Role = ButtonRole.Default };
+            sure.Click += () =>
+            {
+                if (!edit.IsValidStorage)
+                    return;
+                try
+                {
+                    AI.ApiKeyManager.AddOrUpdate(edit);
+                    // The services on this server read the new key next time.
+                    foreach (var s in ViewModels.Preferences.Instance.OpenAIServices)
+                    {
+                        if (s.Server.Equals(edit.Service, StringComparison.Ordinal))
+                            s.CachedApiKey = string.Empty;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _ = Dialogs.Alert(sheet, ex.Message, "", [Popups.ButtonText("Sure")]);
+                    return;
+                }
+                changed();
+                sheet.Destroy();
+            };
+            // The variable's name and the key share upstream's one field.
+            Bind.OneWay(edit, nameof(edit.Storage), () => edit.Storage, storage =>
+            {
+                var env = storage == AI.ApiKeyStorage.EnvironmentVariable;
+                variableRow.IsVisible = env;
+                passwordRow.IsVisible = !env;
+                if (env)
+                    variable.Value = edit.KeyToAccess ?? "";
+                else
+                    password.Value = edit.KeyToAccess ?? "";
+                password.IsEnabled = sure.IsEnabled = edit.IsValidStorage;
+                invalidRow.IsVisible = !edit.IsValidStorage;
+            }, owner: sheet);
+            buttons.Add(cancel);
+            buttons.Add(sure);
+            column.Add(buttons);
+            sheet.Content = column;
         }
     }
 }

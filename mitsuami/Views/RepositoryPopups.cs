@@ -413,10 +413,12 @@ namespace SourceGit.Views
                 branch.Add(new Text(target.TrackStatusDescription) { Style = TextStyle.Caption, Color = Color.SecondaryLabel });
 
             var form = Rows((App.Text("DeleteBranch.Branch"), branch));
-            if (target.IsLocal)
-                form.Add(Field("", Check(vm, nameof(vm.Force), App.Text("DeleteBranch.Force"), () => vm.Force, v => vm.Force = v, "--force")));
             if (vm.Upstream != null)
                 form.Add(Field("", Check(vm, nameof(vm.DeleteUpstream), vm.DeleteUpstreamTip, () => vm.DeleteUpstream, v => vm.DeleteUpstream = v)));
+            if (vm.AttachedWorktree != null)
+                form.Add(Field("", Check(vm, nameof(vm.DeleteWorktree), App.Text("DeleteBranch.DeleteAttachedWorktree"), () => vm.DeleteWorktree, v => vm.DeleteWorktree = v)));
+            if (target.IsLocal)
+                form.Add(Field("", Check(vm, nameof(vm.Force), App.Text("DeleteBranch.Force"), () => vm.Force, v => vm.Force = v, "--force")));
             if (!target.IsLocal)
                 form.Add(Field("", Warning(App.Text("DeleteBranch.IsRemoteTip"))));
             return form;

@@ -68,13 +68,22 @@ namespace SourceGit.Views
                 }
             };
             // Upstream's keys: Delete (and Backspace, the Mac's) deletes the
-            // branches or the remote, F2 renames a local branch.
+            // branches or the remote, F2 renames a local branch, Ctrl+C (⌘C)
+            // copies a branch's name.
             View.OnKey(Shortcut.Of(Key.Delete), Delete);
             View.OnKey(Shortcut.Of(Key.Backspace), Delete);
             View.OnKey(Shortcut.Function(2), () =>
             {
                 if (Current(View.SelectedItems) is [{ Backend: Models.Branch { IsLocal: true } branch }] && _repo.CanCreatePopup())
                     _repo.ShowPopup(new ViewModels.RenameBranch(_repo, branch));
+            });
+            View.OnKey(Shortcut.Of('c').WithPrimary(), () =>
+            {
+                var branches = new List<Models.Branch>();
+                foreach (var node in Current(View.SelectedItems))
+                    SidebarMenus.Collect(branches, node);
+                if (branches.Count == 1)
+                    Clipboard.SetText(branches[0].Name);
             });
         }
 

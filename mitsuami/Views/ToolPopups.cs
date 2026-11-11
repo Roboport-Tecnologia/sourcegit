@@ -134,6 +134,13 @@ namespace SourceGit.Views
             Bind.OneWay(vm, nameof(vm.FromClipboard), () => vm.FromClipboard, c => source.SelectedIndex = c ? 1 : 0, owner: source);
             source.Changed += i => vm.FromClipboard = i == 1;
             var file = FileField(sheet, vm, nameof(vm.PatchFile), () => vm.PatchFile, v => vm.PatchFile = v, App.Text("Apply.File.Placeholder"));
+            // Upstream's: one .patch or .diff file dropped on the field.
+            file.FileDrop = new FileDrop(false, ["patch", "diff"]);
+            file.FilesDropped += paths =>
+            {
+                if (paths is [var path])
+                    vm.PatchFile = path;
+            };
             var fileRow = Field("", file);
             Bind.OneWay(vm, nameof(vm.FromClipboard), () => vm.FromClipboard, c => fileRow.IsVisible = !c, owner: fileRow);
             var mode = Choice(App.Text("Apply.WS"), vm, nameof(vm.SelectedWhiteSpaceMode), Models.ApplyWhiteSpaceMode.Supported,
@@ -148,6 +155,13 @@ namespace SourceGit.Views
                 v => vm.IgnoreWhiteSpace = v, "--ignore-whitespace")));
             form.Add(Field("", Check(vm, nameof(vm.ThreeWayMerge), App.Text("Apply.3Way"), () => vm.ThreeWayMerge,
                 v => vm.ThreeWayMerge = v, "--3way")));
+            // A patch from git format-patch can be committed (git am).
+            var commit = Field("", Check(vm, nameof(vm.CommitChanges), App.Text("Apply.CommitChanges"), () => vm.CommitChanges,
+                v => vm.CommitChanges = v, App.Text("Apply.CommitChanges.Tip")));
+            void ShowCommit() => commit.IsVisible = !vm.FromClipboard && vm.CanCreateCommit;
+            Bind.OneWay(vm, nameof(vm.FromClipboard), () => vm.FromClipboard, _ => ShowCommit(), owner: commit);
+            Bind.OneWay(vm, nameof(vm.CanCreateCommit), () => vm.CanCreateCommit, _ => ShowCommit(), owner: commit);
+            form.Add(commit);
             return form;
         }
 

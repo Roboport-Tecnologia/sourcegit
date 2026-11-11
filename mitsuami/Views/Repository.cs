@@ -147,6 +147,18 @@ namespace SourceGit.Views
                 if (vm.CurrentBranch is { } head)
                     vm.NavigateToCommit(head.Head);
             });
+            // Upstream's: only the current branch and its upstream in the
+            // history, until a branch or tag filter is set.
+            var focus = new ToggleButton(App.Text("Repository.FocusOnCurrentBranch"))
+            {
+                Icon = Icons.Get("Magic", 14),
+                IconOnly = true,
+                Style = ButtonStyle.Borderless,
+                ToolTip = App.Text("Repository.FocusOnCurrentBranch"),
+            };
+            Bind.OneWay(vm, nameof(vm.FocusOnCurrentBranch), () => vm.FocusOnCurrentBranch, on => focus.IsChecked = on, owner: focus);
+            focus.Changed += on => vm.FocusOnCurrentBranch = on;
+            end.Add(focus);
             // The history's own buttons, while it's the page showing, as
             // upstream's sit over the history.
             var history = new Row { AlignItems = Align.Center };
@@ -890,6 +902,7 @@ namespace SourceGit.Views
                     ViewModels.RebaseInProgress => (App.Text("InProgress.Rebase"), null, null),
                     ViewModels.RevertInProgress r => ($"{App.Text("InProgress.Revert")} {App.Text("InProgress.Revert.Head")}", r.Head, null),
                     ViewModels.MergeInProgress m => ($"{App.Text("InProgress.Merge")} {App.Text("InProgress.Merge.Operating")}", m.Source, m.SourceName),
+                    ViewModels.AmInProgress a => ($"{App.Text("InProgress.Am")} {a.Progress}", null, null),
                     _ => ("", (Models.Commit)null, (string)null),
                 };
                 text.Value = message;
@@ -904,7 +917,7 @@ namespace SourceGit.Views
                 if (context is ViewModels.MergeInProgress merge)
                     current.Value = merge.Current;
                 skip.IsVisible = context is ViewModels.CherryPickInProgress or ViewModels.RevertInProgress
-                    || context is ViewModels.RebaseInProgress { StoppedAt: not null };
+                    || context is ViewModels.RebaseInProgress { StoppedAt: not null } or ViewModels.AmInProgress { CanSkip: true };
                 resolve.IsVisible = !vm.IsWorkingCopyVisible;
                 var busy = vm.IsSkippingOrAbortingMerge;
                 spinner.IsVisible = busy;

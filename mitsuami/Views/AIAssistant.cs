@@ -68,18 +68,20 @@ namespace SourceGit.Views
             buttons.Add(new Text(Popups.ButtonText("AIAssistant.Model")));
             var model = new Select(App.Text("AIAssistant.Model")) { MinWidth = 0 };
             model.Grow = 1;
-            Bind.OneWay(vm, nameof(vm.AvailableModels), () => vm.AvailableModels, models =>
+            // The view model fetches the models on its first run, and asks
+            // again when another is picked.
+            void ShowModels()
             {
-                model.Options = models ?? [];
-                model.SelectedIndex = System.Math.Max(0, (models ?? []).IndexOf(vm.CurrentModel));
-            }, owner: model);
+                var models = vm.AvailableModels ?? [];
+                model.Options = models;
+                model.SelectedIndex = System.Math.Max(0, models.IndexOf(vm.SelectedModel));
+            }
+            Bind.OneWay(vm, nameof(vm.AvailableModels), () => vm.AvailableModels, _ => ShowModels(), owner: model);
+            Bind.OneWay(vm, nameof(vm.SelectedModel), () => vm.SelectedModel, _ => ShowModels(), owner: model);
             model.Changed += i =>
             {
-                if (vm.AvailableModels is { } models && i < models.Count && models[i] != vm.CurrentModel)
-                {
-                    vm.CurrentModel = models[i];
-                    _ = vm.GenAsync();
-                }
+                if (vm.AvailableModels is { } models && i < models.Count && models[i] != vm.SelectedModel)
+                    vm.SelectedModel = models[i];
             };
             buttons.Add(model);
             var spinner = new Spinner();

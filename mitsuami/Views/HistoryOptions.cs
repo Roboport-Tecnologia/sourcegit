@@ -67,7 +67,7 @@ namespace SourceGit.Views
                 Radio("Repository.HistoriesLayout.Vertical", !horizontal, () => prefs.UseTwoColumnsLayoutInHistories = false),
                 MenuSeparator.Instance,
                 Heading("Repository.ShowFlags"),
-                Flag("Repository.ShowLostCommits", Models.HistoryShowFlags.Reflog),
+                Flag("Repository.ShowLostCommits", Models.HistoryShowFlags.Reflog) with { Enabled = vm.CanToggleReflog },
                 Flag("Repository.ShowFirstParentOnly", Models.HistoryShowFlags.FirstParentOnly),
                 Flag("Repository.ShowDecoratedCommitsOnly", Models.HistoryShowFlags.SimplifyByDecoration),
                 MenuSeparator.Instance,
