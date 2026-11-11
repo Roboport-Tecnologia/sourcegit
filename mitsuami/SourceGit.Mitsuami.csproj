@@ -13,6 +13,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>disable</Nullable>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- Upstream's: the executable's own icon, in Explorer and the taskbar. -->
+    <ApplicationIcon>../src/App.ico</ApplicationIcon>
     <!-- Upstream's, which the about window shows. -->
     <Product>SourceGit</Product>
     <Description>OpenSource GIT client</Description>
