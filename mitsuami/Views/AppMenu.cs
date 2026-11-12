@@ -248,7 +248,7 @@ namespace SourceGit.Views
                 new("Go to Parent", Shortcut.Of(Key.Down).WithAlt(), () => _ = GoToParent(Repo()), OneCommit) { Description = App.Text("Hotkeys.Repo.GoToParent") },
                 new("Go to Child", Shortcut.Of(Key.Up).WithAlt(), () => _ = GoToChild(Repo()), OneCommit) { Description = App.Text("Hotkeys.Repo.GoToChild") },
                 null,
-                new(App.Text("HistoriesDetailsStandalone"), Primary('n'), () => HistoryWindows.ShowDetails(Repo(), Repo().Histories.DetailContext),
+                new(App.Text("HistoriesDetailsStandalone"), Primary('n'), () => _ = HistoryWindows.ShowDetails(Repo(), Repo().Histories.DetailContext),
                     () => History() && Repo().Histories.IsOpenAsStandaloneVisible),
                 new(App.Text("CommitDetail.CollapseToBottom"), Primary('j'), () => Repo().Histories.IsCollapseDetails = !Repo().Histories.IsCollapseDetails,
                     () => History() && !ViewModels.Preferences.Instance.UseTwoColumnsLayoutInHistories, () => Repo()?.Histories?.IsCollapseDetails == true)

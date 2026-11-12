@@ -52,6 +52,9 @@
     <PublishAot>true</PublishAot>
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>link</TrimMode>
+    <!-- As upstream's: its view models' reflection (ObservableValidator)
+         warns, and stays, rooted below. -->
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -65,7 +68,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="OpenAI" Version="2.10.0" />
     <PackageReference Include="Pfim" Version="0.11.4" />
-    <PackageReference Include="StbImageSharp" Version="2.30.15" />
+    <PackageReference Include="StbImageSharp" Version="2.30.16" />
     <ProjectReference Include="../../mitsuamia/src/Mitsuamia/Mitsuamia.csproj" />
   </ItemGroup>
   <!-- What mitsuamia's package will bring in on its own (buildTransitive). -->
